@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="zh-Hans" data-theme="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>为什么是纯文本 — 枫子十一</title>
+<meta name="description" content="一个只放文字的站点，在图片、公式与代码高亮触手可及的时候，这个选择需要理由。">
+<link rel="canonical" href="https://fengzishiyi.github.io/compsci/why-plain-text/">
+<meta name="theme-color" content="#FBFAF9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141413" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<meta name="author" content="fengzishiyi">
+<meta property="og:site_name" content="枫子十一">
+<meta property="og:type" content="article">
+<meta property="og:title" content="为什么是纯文本 — 枫子十一">
+<meta property="og:description" content="一个只放文字的站点，在图片、公式与代码高亮触手可及的时候，这个选择需要理由。">
+<meta property="og:url" content="https://fengzishiyi.github.io/compsci/why-plain-text/">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="alternate" type="application/rss+xml" title="枫子十一" href="/rss.xml">
+<link rel="stylesheet" href="/assets/tokens.css">
+<link rel="stylesheet" href="/assets/base.css">
+<link rel="stylesheet" href="/assets/prose.css">
+<link rel="stylesheet" href="/assets/components.css">
+<link rel="stylesheet" href="/assets/search.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"ScholarlyArticle","headline":"为什么是纯文本","abstract":"一个只放文字的站点，在图片、公式与代码高亮触手可及的时候，这个选择需要理由。","datePublished":"2026-03-10","inLanguage":"zh-Hans","author":{"@type":"Person","name":"fengzishiyi"},"url":"https://fengzishiyi.github.io/compsci/why-plain-text/","keywords":"纯文本, 长期主义, 数字人文","license":"CC BY-NC-SA 4.0"}</script>
+<!-- No analytics, no fonts, no CDN, no third-party script. See /about/ . -->
+</head>
+<body>
+<a class="skip" href="#main">跳到正文</a>
+
+<header class="mast">
+  <div class="wrap mast__in">
+    <a class="mast__home" href="/">枫子十一</a>
+    <nav class="mast__nav" aria-label="主导航">
+      <a href="/literature/">文学</a>
+      <a href="/philosophy/">哲学</a>
+      <a href="/compsci/" aria-current="page">计算机科学</a>
+      <a href="/tags/">标签</a>
+      <a href="/archive/">归档</a>
+      <a href="/search/">搜索</a>
+    </nav>
+  </div>
+</header>
+
+<div class="toolbar" data-toolbar hidden>
+  <div class="wrap toolbar__in">
+    <span class="toolbar__title" data-toolbar-title></span>
+    <span class="toolbar__group" role="group" aria-label="阅读设置">
+      <button type="button" data-size="-1" aria-label="正文缩小">A−</button>
+      <button type="button" data-size="1" aria-label="正文放大">A+</button>
+      <button type="button" data-measure="-1" aria-label="行宽变窄">窄</button>
+      <button type="button" data-measure="1" aria-label="行宽变宽">宽</button>
+      <button type="button" data-theme-toggle aria-label="切换明暗主题" aria-pressed="false">主题</button>
+      <button type="button" data-notes-toggle aria-label="切换边注显示方式" aria-pressed="true">边注</button>
+      <a class="toolbar__top" href="#top" aria-label="回到顶部">↑</a>
+    </span>
+  </div>
+  <div class="progress" data-progress aria-hidden="true"></div>
+</div>
+<a id="top"></a>
+<main id="main" class="wrap article">
+  <header class="arthead">
+    <p class="arthead__kicker">
+      <a href="/compsci/">计算机科学</a>
+      <span aria-hidden="true"> · </span>技术文章
+      <span aria-hidden="true"> · </span><span class="status status--in-progress">进行中</span>
+    </p>
+    <h1 class="arthead__title" data-toolbar-title-text="为什么是纯文本">为什么是纯文本</h1>
+    <p class="arthead__desc">一个只放文字的站点，在图片、公式与代码高亮触手可及的时候，这个选择需要理由。</p>
+<ul class="taglist" aria-label="标签">
+      <li><a href="/tags/%E7%BA%AF%E6%96%87%E6%9C%AC/">纯文本</a></li>
+      <li><a href="/tags/%E9%95%BF%E6%9C%9F%E4%B8%BB%E4%B9%89/">长期主义</a></li>
+      <li><a href="/tags/%E6%95%B0%E5%AD%97%E4%BA%BA%E6%96%87/">数字人文</a></li>
+  </ul>
+  </header>
+
+  <div class="artbody">
+    <div class="artmain prose">
+<p>把站点改成纯文本，是在第三次改版时做的决定。前两次改版都在加东西 —— 加图墙、加封面、加杂志版式。这一次在减。</p>
+<p>减到只剩文字，需要一个理由。</p>
+</section><section class="sec" aria-labelledby="sec-1"><h2 id="sec-1"><a class="anchor" href="#sec-1" aria-label="本节链接：理由不是怀旧">#</a>理由不是怀旧</h2>
+<p>纯文本经常被当成一种情怀：绿字黑屏、命令行、老派程序员。但怀旧不是理由，因为它不可检验。</p>
+<p>可检验的理由有三个。</p>
+<div class="marginnote">格式的寿命比工具长。</div>
+
+
+
+<p><strong>第一，格式的寿命比工具长。</strong> 一份 markdown 文件在二十年后的任何编辑器里都能打开。而一个 2015 年用某个框架写的站点，今天能不能跑起来，取决于包管理器的历史。这不是说框架不好，是说它的寿命不由你决定。</p>
+<p><strong>第二，纯文本可以被 diff。</strong> 版本记录的价值在于<strong>能看出改了什么</strong>。一张图片改了，你只能看到二进制文件变了；一段文字改了，你能看到改了哪个词。<a class="ref" href="/compsci/why-the-wall-moved/" data-preview="why-the-wall-moved">那个八像素的偏移</a>，如果只是一张截图，谁也不会记得它出现在哪一版。</p>
+<p><strong>第三，排版的责任转移了。</strong> 当你不能用图片、公式和代码高亮的时候，你只能靠句子把话说清楚。这是一个约束，而约束通常让文字变好。</p>
+<aside class="note note--block" id="fn1" role="doc-footnote" aria-label="脚注 1"><span class="note__n" aria-hidden="true">1</span><div class="note__body">
+
+<p>还有第四个理由，比较私人：纯文本让我在十年后仍然愿意打开这个仓库。带一堆构建步骤的项目，隔一年回来需要先花半小时想起来当时是怎么跑起来的。这件事的代价不是半小时，是不想回来。</p>
+<p>一个个人站点的最大威胁从来不是技术过时，是作者不再想打开它。</p>
+</div></aside>
+
+<p><sup class="fnref"><a id="fnref1" href="#fn1" aria-describedby="fn1">[1]</a></sup></p>
+</section><section class="sec" aria-labelledby="sec-2"><h2 id="sec-2"><a class="anchor" href="#sec-2" aria-label="本节链接：代价是真实的">#</a>代价是真实的</h2>
+<p>不假装没有代价。</p>
+<p>不能放图，意味着描述一幅画只能用文字。不能写公式，意味着数学只能讲思路。不能上代码高亮，意味着代码块是等宽的灰字。</p>
+<p>这三条里最痛的是第一条。有些东西用文字描述起来就是比放一张图差很多，这是事实，不是懒惰。</p>
+<p>我的判断是：这个站点主要是<strong>写想法的地方</strong>，不是<strong>展示东西的地方</strong>。展示有别的渠道 —— 而想法如果没有被写下来，它就不存在。</p>
+<div class="marginnote">能写下来的东西比能展示的东西活得更久。</div>
+
+
+
+</section><section class="sec" aria-labelledby="sec-3"><h2 id="sec-3"><a class="anchor" href="#sec-3" aria-label="本节链接：剩下的交给排版">#</a>剩下的交给排版</h2>
+<p>去掉图片和公式之后，页面上的层次只能来自排版：字号、行宽、留白、分隔线。</p>
+<p>这也解释了为什么本站的排版规则定得这么细 —— 每行 30 到 34 个汉字、边注放在页边而不是文末、章节可以折叠 —— 因为这些<strong>是</strong>这个站点仅有的表现手段了。<a class="ref" href="/philosophy/monochrome-screen/" data-preview="monochrome-screen">单色那一篇</a></p>
+<p><a class="ref" href="/philosophy/plain-text-rebuttal/" data-preview="plain-text-rebuttal">反驳：纯文本也是一种格式</a></p>
+<p>限制不是缺点。它是一个把话说清楚的理由。</p>
+</section>
+    </div>
+
+    <aside class="rail" aria-label="页面工具">
+<dl class="meta-block">
+    <div class="meta-block__row"><dt>领域</dt><dd>计算机科学 · 技术文章</dd></div>
+    <div class="meta-block__row"><dt>始作</dt><dd><time datetime="2026-03-10">2026 年 3 月 10 日</time></dd></div>
+    <div class="meta-block__row"><dt>状态</dt><dd><span class="status status--in-progress">进行中</span></dd></div>
+    <div class="meta-block__row"><dt>把握</dt><dd>很可能</dd></div>
+    <div class="meta-block__row"><dt>重要度</dt><dd>5 / 10</dd></div>
+    <div class="meta-block__row"><dt>系列</dt><dd><a href="/series/个人站点的三次改版/">个人站点的三次改版</a></dd></div>
+    <div class="meta-block__row"><dt>篇幅</dt><dd>971 字</dd></div>
+    <div class="meta-block__row"><dt>修订</dt><dd>—</dd></div>
+  </dl>
+<nav class="outline" aria-label="本篇目录">
+    <h2 class="rail__h">目录</h2>
+    <ol>
+      <li><a href="#sec-1">理由不是怀旧</a></li>
+      <li><a href="#sec-2">代价是真实的</a></li>
+      <li><a href="#sec-3">剩下的交给排版</a></li>
+    </ol>
+  </nav>
+<section class="railsec" id="sources" aria-labelledby="sources-h">
+  <h2 class="rail__h" id="sources-h">本篇引用 <span class="meta">3</span></h2>
+  <ol class="srclist">
+    <li><a href="/compsci/why-the-wall-moved/">为什么这面墙一直在动</a></li>
+    <li><a href="/philosophy/monochrome-screen/">单色的界面，彩色的画面</a></li>
+    <li><a href="/philosophy/plain-text-rebuttal/">反驳：纯文本也是一种格式</a></li>
+  </ol>
+</section>
+<section class="railsec" id="backlinks" aria-labelledby="backlinks-h">
+  <h2 class="rail__h" id="backlinks-h">反向链接 <span class="meta">3</span></h2>
+  <ul class="backlist">
+    <li>
+      <a href="/philosophy/plain-text-rebuttal/">反驳：纯文本也是一种格式</a>
+      <span class="backlist__meta meta">评论</span>
+      <p class="backlist__ctx">上一篇主张纯文本有三个可检验的优点。我认为其中至少第一条站不住。</p>
+    </li>
+    <li>
+      <a href="/compsci/why-the-wall-moved/">为什么这面墙一直在动</a>
+      <span class="backlist__meta meta">踩坑</span>
+      <p class="backlist__ctx">写上面这些的时候，我以为问题已经解决了。但真正的问题不在动效，在于它占了一整块版面，却什么也没说。纯文本那篇里写了后来的结论：一个用来放文字的站点，不该让一面墙去吸引本该给句子的注意力。</p>
+    </li>
+    <li>
+      <a href="/philosophy/monochrome-screen/">单色的界面，彩色的画面</a>
+      <span class="backlist__meta meta">札记</span>
+      <p class="backlist__ctx">纯文本那篇</p>
+    </li>
+  </ul>
+</section>
+<section class="railsec" id="cite" aria-labelledby="cite-h">
+  <h2 class="rail__h" id="cite-h">引用</h2>
+  <p class="cite__perm">永久链接 <a href="/compsci/why-plain-text/" data-permalink>https://fengzishiyi.github.io/compsci/why-plain-text/</a> <span class="meta">· 访问 2026-10-03</span></p>
+    <div class="cite__row">
+      <span class="cite__label">BibTeX</span>
+      <code class="cite__code">@misc{whyplaintext2026,
+  author = {fengzishiyi},
+  title  = {{为什么是纯文本}},
+  year   = {2026},
+  note   = {计算机科学 · 技术文章},
+  url    = {https://fengzishiyi.github.io/compsci/why-plain-text/}
+}</code>
+      <button type="button" class="cite__copy" data-copy="@misc{whyplaintext2026,
+  author = {fengzishiyi},
+  title  = {{为什么是纯文本}},
+  year   = {2026},
+  note   = {计算机科学 · 技术文章},
+  url    = {https://fengzishiyi.github.io/compsci/why-plain-text/}
+}">复制</button>
+    </div>
+    <div class="cite__row">
+      <span class="cite__label">GB/T 7714</span>
+      <code class="cite__code">fengzishiyi. 为什么是纯文本[EB/OL]. 2026-03-10. https://fengzishiyi.github.io/compsci/why-plain-text/.</code>
+      <button type="button" class="cite__copy" data-copy="fengzishiyi. 为什么是纯文本[EB/OL]. 2026-03-10. https://fengzishiyi.github.io/compsci/why-plain-text/.">复制</button>
+    </div>
+    <div class="cite__row">
+      <span class="cite__label">Chicago</span>
+      <code class="cite__code">fengzishiyi. 「为什么是纯文本」. 2026 年 3 月 10 日. https://fengzishiyi.github.io/compsci/why-plain-text/.</code>
+      <button type="button" class="cite__copy" data-copy="fengzishiyi. 「为什么是纯文本」. 2026 年 3 月 10 日. https://fengzishiyi.github.io/compsci/why-plain-text/.">复制</button>
+    </div>
+    <div class="cite__row">
+      <span class="cite__label">Markdown</span>
+      <code class="cite__code">[为什么是纯文本](https://fengzishiyi.github.io/compsci/why-plain-text/) — fengzishiyi，2026-03-10</code>
+      <button type="button" class="cite__copy" data-copy="[为什么是纯文本](https://fengzishiyi.github.io/compsci/why-plain-text/) — fengzishiyi，2026-03-10">复制</button>
+    </div>
+</section>
+<section class="railsec" id="revisions" aria-labelledby="rev-h">
+  <h2 class="rail__h" id="rev-h">修订记录</h2>
+  <p class="meta">没有可用的 Git 历史。</p>
+</section>
+      <p class="railsec lic"><span class="meta">许可</span> CC BY-NC-SA 4.0</p>
+    </aside>
+  </div>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <nav class="foot__nav" aria-label="页脚导航">
+      <a href="/">首页</a>
+      <a href="/literature/">文学</a>
+      <a href="/philosophy/">哲学</a>
+      <a href="/compsci/">计算机科学</a>
+      <a href="/tags/">标签</a>
+      <a href="/archive/">归档</a>
+      <a href="/search/">搜索</a>
+      <a href="/series/">系列</a>
+      <a href="/changelog/">更新</a>
+      <a href="/about/">自述</a>
+      <a href="/rss.xml">RSS</a>
+    </nav>
+    <p class="foot__note">
+      枫子十一 · 个人写作 ·
+      <a href="/about/#license">CC BY-NC-SA 4.0</a> ·
+      <span class="meta">© 2026 fengzishiyi</span>
+    </p>
+    <p class="foot__note meta">
+      纯文本站点：没有图片、没有公式、没有代码高亮、没有第三方脚本、没有追踪。
+      用 Markdown 写作，用 Git 存档。
+    </p>
+    <nav class="foot__chrono" aria-label="相邻文章">
+      <a rel="prev" href="/compsci/static-site-failure-locality/">← 静态站点的一个好处被说反了</a>
+      <a rel="next" href="/philosophy/plain-text-rebuttal/">反驳：纯文本也是一种格式 →</a>
+    </nav>
+  </div>
+</footer>
+<script src="/assets/site.js" defer></script>
+</body>
+</html>

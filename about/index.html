@@ -1,77 +1,117 @@
 <!doctype html>
-<html lang="zh-Hans">
+<html lang="zh-Hans" data-theme="auto">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>本刊 — 枫子十一</title>
-<meta name="description" content="关于这本杂志，以及它为什么长成现在这样。">
+<title>自述 — 枫子十一</title>
+<meta name="description" content="关于这个站点，以及它为什么长成现在这样。">
 <link rel="canonical" href="https://fengzishiyi.github.io/about/">
-<meta name="theme-color" content="#F9F8F6">
-<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#FBFAF9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141413" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<meta name="author" content="fengzishiyi">
 <meta property="og:site_name" content="枫子十一">
 <meta property="og:type" content="website">
-<meta property="og:title" content="本刊 — 枫子十一">
-<meta property="og:description" content="关于这本杂志，以及它为什么长成现在这样。">
+<meta property="og:title" content="自述 — 枫子十一">
+<meta property="og:description" content="关于这个站点，以及它为什么长成现在这样。">
 <meta property="og:url" content="https://fengzishiyi.github.io/about/">
-
 <meta name="twitter:card" content="summary">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="alternate" type="application/rss+xml" title="枫子十一" href="/rss.xml">
 <link rel="stylesheet" href="/assets/tokens.css">
 <link rel="stylesheet" href="/assets/base.css">
-<link rel="stylesheet" href="/assets/spread.css">
-<link rel="stylesheet" href="/assets/article.css">
-<link rel="stylesheet" href="/assets/lightbox.css">
+<link rel="stylesheet" href="/assets/prose.css">
+<link rel="stylesheet" href="/assets/components.css">
+<link rel="stylesheet" href="/assets/search.css">
 
+<!-- No analytics, no fonts, no CDN, no third-party script. See /about/ . -->
 </head>
 <body>
 <a class="skip" href="#main">跳到正文</a>
 
-<header class="masthead">
-  <div class="shell masthead__in">
-    <a class="wordmark" href="/">枫子十一</a>
-    <span class="masthead__issue label" aria-hidden="true">VOL.1 / NO.02</span>
-    <nav class="masthead__nav" aria-label="主导航">
-      <a class="navlink" href="/contents/">目录</a>
-      <a class="navlink" href="/archive/">往期</a>
-      <a class="navlink" href="/about/" aria-current="page">本刊</a>
+<header class="mast">
+  <div class="wrap mast__in">
+    <a class="mast__home" href="/">枫子十一</a>
+    <nav class="mast__nav" aria-label="主导航">
+      <a href="/literature/">文学<span class="mast__n">2</span></a>
+      <a href="/philosophy/">哲学<span class="mast__n">3</span></a>
+      <a href="/compsci/">计算机科学<span class="mast__n">3</span></a>
+      <a href="/tags/">标签<span class="mast__n">20</span></a>
+      <a href="/archive/">归档<span class="mast__n">8</span></a>
+      <a href="/search/">搜索<span class="mast__n">8</span></a>
     </nav>
   </div>
 </header>
-<main id="main" class="shell article" style="padding-top:calc(var(--nav-h) + 72px)">
-  <article>
-    <div class="article__body" style="padding-top:0">
-      <div class="article__main prose">
-        <h1 class="page-title" style="margin-bottom:0.4em">本刊</h1>
-        <p class="lead">一本只有一个人的杂志。封面、目录、栏目、跨页，都按印刷刊物的规矩来。</p>
-        <p>这里按<strong>期号</strong>组织内容：年份是卷，月份是期。每一期里有若干栏目，每个栏目下是文章。一篇文章就是一页，有自己的封面图、标题、导语与正文。</p>
-        <h2 id="how">怎么办刊</h2>
-        <p>没有框架，没有构建服务，没有网络字体。一套 Node 脚本把 <code>_images/</code> 里的原图压成 WebP，把 <code>_articles/</code> 里的 markdown 排成页面，然后把结果推到这个仓库的根目录。</p>
-        <ul>
-          <li>字体：系统衬线体（中文回退到宋体）配系统无衬线体，零网络请求。</li>
-          <li>配色：只有暖米色的底和柔和的黑，加上一串黑的不同深度。<em>颜色全部来自图片。</em></li>
-          <li>冲击力来自字号落差、不对称栏位与整版出血，不来自阴影、渐变或圆角。</li>
-        </ul>
-        <h2 id="colophon">版本信息</h2>
-        <div class="deflist">
-          <div class="deflist__row"><span class="deflist__k">期数</span><span class="deflist__v">2</span></div>
-          <div class="deflist__row"><span class="deflist__k">文章</span><span class="deflist__v">2 篇</span></div>
-          <div class="deflist__row"><span class="deflist__k">图片</span><span class="deflist__v">14 张</span></div>
-          <div class="deflist__row"><span class="deflist__k">创刊</span><span class="deflist__v">2026</span></div>
-        </div>
-        <p><a class="ulink" href="/contents/">目录</a> · <a class="ulink" href="/archive/">往期</a></p>
-      </div>
-      <aside class="article__side"></aside>
-    </div>
-  </article>
+<a id="top"></a>
+<main id="main" class="wrap prose narrow">
+  <header class="pagehead">
+    <h1>自述</h1>
+    <p class="pagehead__desc">个人站点，非商业。</p>
+  </header>
+
+  <section id="what">
+    <h2 id="s1">这是什么<a class="anchor" href="#s1" aria-label="本节链接">#</a></h2>
+    <p>一个写字的地方，按三个领域组织：<a href="/literature/">文学</a>、<a href="/philosophy/">哲学</a>、<a href="/compsci/">计算机科学</a>。以纯文本为主 —— 没有图片、没有公式、没有代码高亮。文字本身是目的。</p>
+    <p>目前有 8 篇文章、20 个标签。</p>
+  </section>
+
+  <section id="not">
+    <h2 id="s2">这里没有什么<a class="anchor" href="#s2" aria-label="本节链接">#</a></h2>
+    <p>没有广告、赞助、会员、付费墙、捐赠、推广链接；没有评论、点赞、分享、关注；不需要注册，没有推送；没有任何追踪分析，没有 A/B 测试，没有 SEO 营销。页面不加载第三方脚本，不请求外部字体。</p>
+  </section>
+
+  <section id="how">
+    <h2 id="s3">怎么做的<a class="anchor" href="#s3" aria-label="本节链接">#</a></h2>
+    <ul>
+      <li>用 Markdown 写作，用 Git 存档，静态生成后托管在 GitHub Pages 上。</li>
+      <li>每个页面都有稳定的永久链接与一份从 Git 提交自动生成的修订记录。</li>
+      <li>文章之间双向互链：你说到别人，别人页面上就会出现你。</li>
+      <li>排版手法参考 <a href="https://gwern.net/design">gwern.net</a>：元信息块、边注、可折叠章节、语义缩放；但中文字距、行宽与边注规则是重新定的，不照搬拉丁版式。</li>
+    </ul>
+  </section>
+
+  <section id="a11y">
+    <h2 id="s4">无障碍<a class="anchor" href="#s4" aria-label="本节链接">#</a></h2>
+    <ul>
+      <li>语义化 HTML，每页只有一个一级标题，标题层级不跳级。</li>
+      <li>对比度达标：正文与次要文字都过 WCAG AA，明亮与暗色主题分别实测。</li>
+      <li>键盘可达：折叠、悬浮预览、搜索、主题切换都能只用键盘操作。</li>
+      <li>关闭 JavaScript 后正文、脚注、目录、标签与互链仍然完整可读。</li>
+      <li>尊重系统的「减弱动态效果」设置。</li>
+    </ul>
+  </section>
+
+  <section id="license">
+    <h2 id="s5">许可<a class="anchor" href="#s5" aria-label="本节链接">#</a></h2>
+    <p>本站文字按 <strong>CC BY-NC-SA 4.0</strong> 授权。代码部分见 <a href="https://github.com/fengzishiyi/fengzishiyi.github.io">GitHub 仓库</a>（MIT）。</p>
+  </section>
 </main>
 
-<footer class="colophon">
-  <div class="shell">
-    <div class="colophon__grid">
-      <span class="wordmark">枫子十一</span>
-      <p class="colophon__note">文章、图画与一些想不清楚的事。界面是单色的，颜色全部来自图片。 界面为纯单色，颜色全部来自图片。</p>
-      <p class="colophon__note">第 1 卷 · 第 02 期 · <a class="ulink" href="https://github.com/fengzishiyi/fengzishiyi.github.io">GitHub</a> · <a class="ulink" href="/sitemap.xml">Sitemap</a> · <span class="meta">© 2026 fengzishiyi</span></p>
-    </div>
+<footer class="foot">
+  <div class="wrap">
+    <nav class="foot__nav" aria-label="页脚导航">
+      <a href="/">首页</a>
+      <a href="/literature/">文学</a>
+      <a href="/philosophy/">哲学</a>
+      <a href="/compsci/">计算机科学</a>
+      <a href="/tags/">标签</a>
+      <a href="/archive/">归档</a>
+      <a href="/search/">搜索</a>
+      <a href="/series/">系列</a>
+      <a href="/changelog/">更新</a>
+      <a href="/about/">自述</a>
+      <a href="/rss.xml">RSS</a>
+    </nav>
+    <p class="foot__note">
+      枫子十一 · 个人写作 ·
+      <a href="/about/#license">CC BY-NC-SA 4.0</a> ·
+      <span class="meta">© 2026 fengzishiyi</span>
+    </p>
+    <p class="foot__note meta">
+      纯文本站点：没有图片、没有公式、没有代码高亮、没有第三方脚本、没有追踪。
+      用 Markdown 写作，用 Git 存档。
+    </p>
+    
   </div>
 </footer>
 <script src="/assets/site.js" defer></script>

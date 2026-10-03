@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="zh-Hans" data-theme="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>为什么这面墙一直在动 — 枫子十一</title>
+<meta name="description" content="自动移动的内容在网页上几乎总是错的。当年那面图墙是个例外，但理由必须说清楚。">
+<link rel="canonical" href="https://fengzishiyi.github.io/compsci/why-the-wall-moved/">
+<meta name="theme-color" content="#FBFAF9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141413" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<meta name="author" content="fengzishiyi">
+<meta property="og:site_name" content="枫子十一">
+<meta property="og:type" content="article">
+<meta property="og:title" content="为什么这面墙一直在动 — 枫子十一">
+<meta property="og:description" content="自动移动的内容在网页上几乎总是错的。当年那面图墙是个例外，但理由必须说清楚。">
+<meta property="og:url" content="https://fengzishiyi.github.io/compsci/why-the-wall-moved/">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="alternate" type="application/rss+xml" title="枫子十一" href="/rss.xml">
+<link rel="stylesheet" href="/assets/tokens.css">
+<link rel="stylesheet" href="/assets/base.css">
+<link rel="stylesheet" href="/assets/prose.css">
+<link rel="stylesheet" href="/assets/components.css">
+<link rel="stylesheet" href="/assets/search.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"ScholarlyArticle","headline":"为什么这面墙一直在动","abstract":"自动移动的内容在网页上几乎总是错的。当年那面图墙是个例外，但理由必须说清楚。","datePublished":"2026-02-18","dateModified":"2026-03-02","inLanguage":"zh-Hans","author":{"@type":"Person","name":"fengzishiyi"},"url":"https://fengzishiyi.github.io/compsci/why-the-wall-moved/","keywords":"动效, 排版, 无障碍","license":"CC BY-NC-SA 4.0"}</script>
+<!-- No analytics, no fonts, no CDN, no third-party script. See /about/ . -->
+</head>
+<body>
+<a class="skip" href="#main">跳到正文</a>
+
+<header class="mast">
+  <div class="wrap mast__in">
+    <a class="mast__home" href="/">枫子十一</a>
+    <nav class="mast__nav" aria-label="主导航">
+      <a href="/literature/">文学</a>
+      <a href="/philosophy/">哲学</a>
+      <a href="/compsci/" aria-current="page">计算机科学</a>
+      <a href="/tags/">标签</a>
+      <a href="/archive/">归档</a>
+      <a href="/search/">搜索</a>
+    </nav>
+  </div>
+</header>
+
+<div class="toolbar" data-toolbar hidden>
+  <div class="wrap toolbar__in">
+    <span class="toolbar__title" data-toolbar-title></span>
+    <span class="toolbar__group" role="group" aria-label="阅读设置">
+      <button type="button" data-size="-1" aria-label="正文缩小">A−</button>
+      <button type="button" data-size="1" aria-label="正文放大">A+</button>
+      <button type="button" data-measure="-1" aria-label="行宽变窄">窄</button>
+      <button type="button" data-measure="1" aria-label="行宽变宽">宽</button>
+      <button type="button" data-theme-toggle aria-label="切换明暗主题" aria-pressed="false">主题</button>
+      <button type="button" data-notes-toggle aria-label="切换边注显示方式" aria-pressed="true">边注</button>
+      <a class="toolbar__top" href="#top" aria-label="回到顶部">↑</a>
+    </span>
+  </div>
+  <div class="progress" data-progress aria-hidden="true"></div>
+</div>
+<a id="top"></a>
+<main id="main" class="wrap article">
+  <header class="arthead">
+    <p class="arthead__kicker">
+      <a href="/compsci/">计算机科学</a>
+      <span aria-hidden="true"> · </span>踩坑
+      <span aria-hidden="true"> · </span><span class="status status--finished">已完成</span>
+    </p>
+    <h1 class="arthead__title" data-toolbar-title-text="为什么这面墙一直在动">为什么这面墙一直在动</h1>
+    <p class="arthead__desc">自动移动的内容在网页上几乎总是错的。当年那面图墙是个例外，但理由必须说清楚。</p>
+<ul class="taglist" aria-label="标签">
+      <li><a href="/tags/%E5%8A%A8%E6%95%88/">动效</a></li>
+      <li><a href="/tags/%E6%8E%92%E7%89%88/">排版</a></li>
+      <li><a href="/tags/%E6%97%A0%E9%9A%9C%E7%A2%8D/">无障碍</a></li>
+  </ul>
+  </header>
+
+  <div class="artbody">
+    <div class="artmain prose">
+<p>一个横着一直滚的图墙，看起来像是设计者舍不得让画面停下来。所以先要说清楚：那面墙为什么动 —— 以及它后来为什么被拆掉了。</p>
+<div class="marginnote">结论先行：动是为了让人不必动手，停是为了让人不被抢走注意力。</div>
+
+
+
+</section><section class="sec" aria-labelledby="sec-1"><h2 id="sec-1"><a class="anchor" href="#sec-1" aria-label="本节链接：动，是为了让人不必动手">#</a>动，是为了让人不必动手</h2>
+<p>如果这面墙是静止的网格，那么它就变成一个需要你来操作的东西：拖滚动条，或者滚轮往下滚。在手机上，横向的网格还得左右滑。也就是说，你还没开始看画，先要花力气把画面挪到眼前。</p>
+<p>流动替掉了这一步。画面自己走到你面前，你只需要看。代价是它也在替你做决定 —— 所以下一步是把控制权还回去。<aside class="note" id="fn1" role="doc-footnote" aria-label="脚注 1"><span class="note__n" aria-hidden="true">1</span><span class="note__body">这个取舍在任何自动播放的东西上都成立：轮播图、自动滚动的字幕、自动翻页的幻灯片。你会注意到它们几乎都没给暂停按钮，这就是它们烦人的原因。</span></aside><sup class="fnref"><a id="fnref1" href="#fn1" aria-describedby="fn1">[1]</a></sup></p>
+</section><section class="sec" aria-labelledby="sec-2"><h2 id="sec-2"><a class="anchor" href="#sec-2" aria-label="本节链接：慢，是唯一重要的参数">#</a>慢，是唯一重要的参数</h2>
+<p>一个每秒移动几百像素的图墙会让人头晕。人眼追踪一个横向移动的目标是费力的事，速度越快越费力。真正的做法是把速度压到「几乎察觉不到在动，但过一会儿发现画面换了」这个区间。</p>
+<p>这套墙用的是每秒 40 像素。作为参照，一个成年人在屏幕上用眼睛平滑跟随的上限大概在每秒 30 到 100 度视角之间；40 像素在常见观看距离下远低于这个阈值。</p>
+<aside class="note note--block" id="fn2" role="doc-footnote" aria-label="脚注 2"><span class="note__n" aria-hidden="true">2</span><div class="note__body">
+
+<p>当时记下的另一条：速度必须按行宽换算。如果用「一圈固定 60 秒」来设定动画，图片多的那一行会跑得更快，图片少的那一行会更慢，整面墙会显出各行其是的混乱。用按行宽算出的时长，才能保证每一行的线速度相同 —— 加图减图之后速度也不变，只有周期变长。</p>
+<p>这类问题没有捷径，只能把账算平。</p>
+</div></aside>
+
+<p><sup class="fnref"><a id="fnref2" href="#fn2" aria-describedby="fn2">[2]</a></sup></p>
+</section><section class="sec" aria-labelledby="sec-3"><h2 id="sec-3"><a class="anchor" href="#sec-3" aria-label="本节链接：无缝循环：一个八像素的坑">#</a>无缝循环：一个八像素的坑</h2>
+<p>双份内容加半个轨道的位移，是循环动画的常规做法。这里有一个细节值得写下来，因为踩过一次。</p>
+<blockquote><p>位移量写成 <code>-50%</code> 时，它<strong>不包含</strong> flex 的 <code>gap</code>。所以每一圈的接缝处都会悄悄多出一半间隙的偏移 —— 8 像素。单看很小，但它出现在每一次循环的同一位置，看久了就是一次规律性的、无法忽略的顿挫。</p>
+</blockquote>
+<p>修正是把位移改成绝对像素值。数学很短：轨道总宽是单份宽度的两倍加上全部间隙，需要位移的距离是单份宽度加上它内部和末尾的全部间隙，两者恰好相等。</p>
+<div class="marginnote">一个八像素的偏移，重复三百次就变成一次明显的顿挫。</div>
+
+
+
+</section><section class="sec" aria-labelledby="sec-4"><h2 id="sec-4"><a class="anchor" href="#sec-4" aria-label="本节链接：让它可以停下来">#</a>让它可以停下来</h2>
+<p>自动移动、且超过五秒的内容，必须能暂停。这不是建议，是可访问性规范 WCAG 2.2.2 的硬要求。一个会动的图墙正好落在这条规则的射程里。</p>
+<p>处理方式有三层：尊重系统设置、给一个开关、并且保证静止不等于空白。第三点最容易被做错 —— 如果把动画直接关掉，几行内容会齐齐挤在左边，右边留下大片空白，屏幕看起来像坏了。当时用的办法是把动画周期拉长到将近半小时，于是砖块仍然铺满整行，但视觉上它是不动的。</p>
+</section><section class="sec" aria-labelledby="sec-5"><h2 id="sec-5"><a class="anchor" href="#sec-5" aria-label="本节链接：后来它为什么被拆掉">#</a>后来它为什么被拆掉</h2>
+<p>写上面这些的时候，我以为问题已经解决了。但真正的问题不在动效，在于<strong>它占了一整块版面，却什么也没说</strong>。<a class="ref" href="/compsci/why-plain-text/" data-preview="why-plain-text">纯文本那篇</a>里写了后来的结论：一个用来放文字的站点，不该让一面墙去吸引本该给句子的注意力。</p>
+<p>动效本身没错。错的是它需要的位置。</p>
+</section>
+    </div>
+
+    <aside class="rail" aria-label="页面工具">
+<dl class="meta-block">
+    <div class="meta-block__row"><dt>领域</dt><dd>计算机科学 · 踩坑</dd></div>
+    <div class="meta-block__row"><dt>始作</dt><dd><time datetime="2026-02-18">2026 年 2 月 18 日</time></dd></div>
+    <div class="meta-block__row"><dt>改订</dt><dd><time datetime="2026-03-02">2026 年 3 月 2 日</time></dd></div>
+    <div class="meta-block__row"><dt>状态</dt><dd><span class="status status--finished">已完成</span></dd></div>
+    <div class="meta-block__row"><dt>重要度</dt><dd>3 / 10</dd></div>
+    <div class="meta-block__row"><dt>系列</dt><dd><a href="/series/个人站点的三次改版/">个人站点的三次改版</a></dd></div>
+    <div class="meta-block__row"><dt>篇幅</dt><dd>1231 字</dd></div>
+    <div class="meta-block__row"><dt>修订</dt><dd>—</dd></div>
+  </dl>
+<nav class="outline" aria-label="本篇目录">
+    <h2 class="rail__h">目录</h2>
+    <ol>
+      <li><a href="#sec-1">动，是为了让人不必动手</a></li>
+      <li><a href="#sec-2">慢，是唯一重要的参数</a></li>
+      <li><a href="#sec-3">无缝循环：一个八像素的坑</a></li>
+      <li><a href="#sec-4">让它可以停下来</a></li>
+      <li><a href="#sec-5">后来它为什么被拆掉</a></li>
+    </ol>
+  </nav>
+<section class="railsec" id="sources" aria-labelledby="sources-h">
+  <h2 class="rail__h" id="sources-h">本篇引用 <span class="meta">1</span></h2>
+  <ol class="srclist">
+    <li><a href="/compsci/why-plain-text/">为什么是纯文本</a></li>
+  </ol>
+</section>
+<section class="railsec" id="backlinks" aria-labelledby="backlinks-h">
+  <h2 class="rail__h" id="backlinks-h">反向链接 <span class="meta">1</span></h2>
+  <ul class="backlist">
+    <li>
+      <a href="/compsci/why-plain-text/">为什么是纯文本</a>
+      <span class="backlist__meta meta">技术文章</span>
+      <p class="backlist__ctx">第二，纯文本可以被 diff。 版本记录的价值在于能看出改了什么。一张图片改了，你只能看到二进制文件变了；一段文字改了，你能看到改了哪个词。那个八像素的偏移，如果只是一张截图，谁也不会记得它出现在哪一版。</p>
+    </li>
+  </ul>
+</section>
+<section class="railsec" id="cite" aria-labelledby="cite-h">
+  <h2 class="rail__h" id="cite-h">引用</h2>
+  <p class="cite__perm">永久链接 <a href="/compsci/why-the-wall-moved/" data-permalink>https://fengzishiyi.github.io/compsci/why-the-wall-moved/</a> <span class="meta">· 访问 2026-10-03</span></p>
+    <div class="cite__row">
+      <span class="cite__label">BibTeX</span>
+      <code class="cite__code">@misc{whythewallmoved2026,
+  author = {fengzishiyi},
+  title  = {{为什么这面墙一直在动}},
+  year   = {2026},
+  note   = {计算机科学 · 踩坑},
+  url    = {https://fengzishiyi.github.io/compsci/why-the-wall-moved/}
+}</code>
+      <button type="button" class="cite__copy" data-copy="@misc{whythewallmoved2026,
+  author = {fengzishiyi},
+  title  = {{为什么这面墙一直在动}},
+  year   = {2026},
+  note   = {计算机科学 · 踩坑},
+  url    = {https://fengzishiyi.github.io/compsci/why-the-wall-moved/}
+}">复制</button>
+    </div>
+    <div class="cite__row">
+      <span class="cite__label">GB/T 7714</span>
+      <code class="cite__code">fengzishiyi. 为什么这面墙一直在动[EB/OL]. 2026-02-18. https://fengzishiyi.github.io/compsci/why-the-wall-moved/.</code>
+      <button type="button" class="cite__copy" data-copy="fengzishiyi. 为什么这面墙一直在动[EB/OL]. 2026-02-18. https://fengzishiyi.github.io/compsci/why-the-wall-moved/.">复制</button>
+    </div>
+    <div class="cite__row">
+      <span class="cite__label">Chicago</span>
+      <code class="cite__code">fengzishiyi. 「为什么这面墙一直在动」. 2026 年 2 月 18 日. https://fengzishiyi.github.io/compsci/why-the-wall-moved/.</code>
+      <button type="button" class="cite__copy" data-copy="fengzishiyi. 「为什么这面墙一直在动」. 2026 年 2 月 18 日. https://fengzishiyi.github.io/compsci/why-the-wall-moved/.">复制</button>
+    </div>
+    <div class="cite__row">
+      <span class="cite__label">Markdown</span>
+      <code class="cite__code">[为什么这面墙一直在动](https://fengzishiyi.github.io/compsci/why-the-wall-moved/) — fengzishiyi，2026-02-18</code>
+      <button type="button" class="cite__copy" data-copy="[为什么这面墙一直在动](https://fengzishiyi.github.io/compsci/why-the-wall-moved/) — fengzishiyi，2026-02-18">复制</button>
+    </div>
+</section>
+<section class="railsec" id="revisions" aria-labelledby="rev-h">
+  <h2 class="rail__h" id="rev-h">修订记录</h2>
+  <p class="meta">没有可用的 Git 历史。</p>
+</section>
+      <p class="railsec lic"><span class="meta">许可</span> CC BY-NC-SA 4.0</p>
+    </aside>
+  </div>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <nav class="foot__nav" aria-label="页脚导航">
+      <a href="/">首页</a>
+      <a href="/literature/">文学</a>
+      <a href="/philosophy/">哲学</a>
+      <a href="/compsci/">计算机科学</a>
+      <a href="/tags/">标签</a>
+      <a href="/archive/">归档</a>
+      <a href="/search/">搜索</a>
+      <a href="/series/">系列</a>
+      <a href="/changelog/">更新</a>
+      <a href="/about/">自述</a>
+      <a href="/rss.xml">RSS</a>
+    </nav>
+    <p class="foot__note">
+      枫子十一 · 个人写作 ·
+      <a href="/about/#license">CC BY-NC-SA 4.0</a> ·
+      <span class="meta">© 2026 fengzishiyi</span>
+    </p>
+    <p class="foot__note meta">
+      纯文本站点：没有图片、没有公式、没有代码高亮、没有第三方脚本、没有追踪。
+      用 Markdown 写作，用 Git 存档。
+    </p>
+    <nav class="foot__chrono" aria-label="相邻文章">
+      <a rel="prev" href="/literature/夜航/">← 夜航</a>
+      <a rel="next" href="/compsci/static-site-failure-locality/">静态站点的一个好处被说反了 →</a>
+    </nav>
+  </div>
+</footer>
+<script src="/assets/site.js" defer></script>
+</body>
+</html>

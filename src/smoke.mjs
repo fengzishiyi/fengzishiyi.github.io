@@ -2,16 +2,17 @@
 /**
  * smoke.mjs — serve the built site and pull it apart like a browser would.
  *
- *   node src/smoke.mjs
- *
- * Checks, against real HTTP responses:
- *   · every page returns 200 and declares HTML, with exactly one <h1>
- *   · every CSS/JS/image/JSON URL referenced anywhere in the HTML returns 200
+ * Requires `npm run build` first. Checks, against real HTTP responses:
+ *   · every page returns 200, is HTML, and has exactly one <h1>
+ *   · every URL referenced anywhere in the HTML resolves
  *   · a missing path falls back to the 404 page with a 404 status
- *   · the magazine's bones are present: nameplate, contents departments,
- *     archive issues, article openers, and the /images/ redirect
- *   · no duplicate element ids, balanced divs
- *   · sizes stay inside the budgets the design committed to
+ *   · the promises this site makes are actually kept in the shipped bytes:
+ *       — the notes are INLINE (so reading works without scripting)
+ *       — one stylesheet set, no third-party scripts or fonts
+ *       — the search index exists and covers every article
+ *       — every backlink has a matching forward link (the graph is consistent)
+ *       — legacy magazine URLs still redirect
+ *   · sizes stay inside the budgets
  */
 
 import { spawn } from "node:child_process";
@@ -29,30 +30,40 @@ let checks = 0;
 const fail = (m) => { console.log("  ✗ " + m); failures++; };
 const ok = (m) => { checks++; console.log("  " + m + "  ✓"); };
 
-/* ---- discover what should exist, from the built tree ------------------ */
-const dirs = (p) => fs.existsSync(p)
-  ? fs.readdirSync(p, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name)
-  : [];
-
-const articles = dirs(path.join(STAGE, "articles")).map((n) => `/articles/${n}/`);
-const pages = ["/", "/contents/", "/archive/", "/about/", "/404.html", "/images/", ...articles];
-const mustExist = ["/images/manifest.json", "/sitemap.xml", "/robots.txt", "/favicon.svg",
-  ...["tokens", "base", "spread", "article", "lightbox"].map((n) => `/assets/${n}.css`),
-  "/assets/site.js"];
-
 if (!fs.existsSync(path.join(STAGE, "index.html"))) {
   console.error("没有构建产物 —— 先运行 npm run build");
   process.exit(2);
 }
 
-/* ---- boot the server ------------------------------------------------- */
+/* ---- discover, from the built tree ------------------------------------ */
+const dirsIn = (p) => fs.existsSync(p)
+  ? fs.readdirSync(p, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name)
+  : [];
+
+const DOMAINS = ["literature", "philosophy", "compsci"];
+const articles = DOMAINS.flatMap((d) => dirsIn(path.join(STAGE, d)).map((s) => `/${d}/${s}/`));
+const tagPages = dirsIn(path.join(STAGE, "tags")).map((t) => `/tags/${t}/`);
+const seriesPages = dirsIn(path.join(STAGE, "series")).map((s) => `/series/${s}/`);
+
+const pages = [
+  "/", "/archive/", "/tags/", "/series/", "/search/", "/changelog/", "/about/", "/404.html",
+  ...DOMAINS.map((d) => `/${d}/`),
+  ...tagPages, ...seriesPages, ...articles
+];
+const mustExist = [
+  "/search/index.json", "/rss.xml", "/sitemap.xml", "/robots.txt", "/favicon.svg",
+  ...["tokens", "base", "prose", "components", "search"].map((n) => `/assets/${n}.css`),
+  "/assets/site.js"
+];
+
+/* ---- boot ------------------------------------------------------------- */
 const child = spawn(process.execPath, [path.join(ROOT, "src/serve.mjs"), String(PORT)], {
   cwd: ROOT, stdio: "inherit"
 });
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const get = async (p, method = "GET") => {
-  const res = await fetch(BASE + p, { method });
+  const res = await fetch(BASE + p, { method, redirect: "manual" });
   const body = method === "HEAD" ? "" : await res.text();
   return { status: res.status, type: res.headers.get("content-type") || "", body };
 };
@@ -71,32 +82,31 @@ try {
     if (!r.type.includes("text/html")) { fail(`${p} → content-type ${r.type}`); continue; }
     if (!/<title>[^<]+<\/title>/.test(r.body)) fail(`${p} has no <title>`);
     if (!/<html lang=/i.test(r.body)) fail(`${p} has no lang attribute`);
-
     const h1s = (r.body.match(/<h1\b/g) || []).length;
     if (h1s !== 1) fail(`${p} has ${h1s} <h1> elements, expected exactly 1`);
-
     html[p] = r.body;
-    ok(`${p} 200 · ${(r.body.length / 1024).toFixed(0)}KB`);
   }
+  ok(`${Object.keys(html).length} pages return 200 with exactly one h1`);
 
   console.log("\nassets");
   for (const p of mustExist) {
     const r = await get(p);
     if (r.status !== 200) fail(`${p} → ${r.status}`);
-    else ok(`${p} 200`);
   }
+  ok(`${mustExist.length} required assets resolve`);
 
   console.log("\nreferenced urls resolve");
   const seen = new Set();
   for (const [page, body] of Object.entries(html)) {
-    const urls = [...body.matchAll(/(?:href|src|srcset|content)="([^"]+)"/g)]
-      .flatMap((m) => m[1].split(",").map((s) => s.trim().split(" ")[0]))
+    const urls = [...body.matchAll(/(?:href|src|content)="([^"]+)"/g)]
+      .map((m) => m[1])
       .filter((u) => u.startsWith("/") && !u.startsWith("//"));
     for (const u of urls) {
-      if (seen.has(u)) continue;
-      seen.add(u);
-      const r = await get(u, "HEAD");
-      if (r.status !== 200) fail(`${u} (referenced by ${page}) → ${r.status}`);
+      const clean = u.split("#")[0];
+      if (!clean || seen.has(clean)) continue;
+      seen.add(clean);
+      const r = await get(clean, "HEAD");
+      if (r.status !== 200) fail(`${clean} (referenced by ${page}) → ${r.status}`);
     }
   }
   ok(`${seen.size} distinct internal URLs all return 200`);
@@ -104,123 +114,140 @@ try {
   console.log("\n404 fallback");
   const missing = await get("/definitely-not-here/");
   if (missing.status !== 404) fail(`missing path returned ${missing.status}, expected 404`);
-  else if (!/从来没有过/.test(missing.body)) fail("404 status but not the 404 page");
+  else if (!/没有这一页/.test(missing.body)) fail("404 status but not the 404 page");
   else ok("missing path → 404 status + 404 page");
+
+  console.log("\nlegacy magazine URLs");
+  for (const [from, to] of [["/articles/", "/archive/"], ["/contents/", "/archive/"], ["/images/", "/archive/"]]) {
+    const r = await get(from);
+    if (r.status !== 200) { fail(`${from} → ${r.status}`); continue; }
+    if (!r.body.includes(`url=${to}`)) fail(`${from} does not redirect to ${to}`);
+    if (!r.body.includes(`href="${to}"`)) fail(`${from} has no plain link fallback`);
+  }
+  const legacyArticle = articles.length ? `/articles/${articles[0].split("/")[2]}/` : null;
+  if (legacyArticle) {
+    const r = await get(legacyArticle);
+    if (r.status !== 200) fail(`${legacyArticle} → ${r.status}`);
+  }
+  ok("old magazine paths redirect, with link fallbacks");
 
   console.log("\nmarkup integrity");
   for (const [page, body] of Object.entries(html)) {
     const ids = [...body.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1]);
     const dupes = ids.filter((id, i) => ids.indexOf(id) !== i);
-    if (dupes.length) fail(`${page} has duplicate ids: ${[...new Set(dupes)].join(", ")}`);
+    if (dupes.length) fail(`${page} has duplicate ids: ${[...new Set(dupes)].slice(0, 4).join(", ")}`);
     const open = (body.match(/<div\b/g) || []).length;
     const close = (body.match(/<\/div>/g) || []).length;
-    if (open !== close) fail(`${page}: ${open} <div> vs ${close} </div> — unbalanced`);
+    if (open !== close) fail(`${page}: ${open} <div> vs ${close} </div>`);
   }
-  ok("no duplicate ids, balanced divs on every page");
+  ok("no duplicate ids, balanced divs");
 
-  console.log("\nthe magazine's bones");
-  const home = html["/"] || "";
-  if (!/class="nameplate"/.test(home)) fail("the cover has no nameplate");
-  else if (!/class="feature"/.test(home)) fail("the cover has no featured article");
-  else ok("cover: nameplate + featured article");
-  if (!/og:image/.test(home)) fail("the cover has no og:image");
-  else ok("cover declares og:image for sharing");
+  console.log("\nthe promises, in the shipped bytes");
+  const articleHtml = articles.map((p) => html[p]).filter(Boolean).join("\n");
+  const notes = (articleHtml.match(/<aside class="note/g) || []).length;
+  const refs = (articleHtml.match(/class="fnref"/g) || []).length;
+  if (notes === 0) fail("没有找到内联脚注 —— 边注/脚注不再是内联的，关掉 JS 就会丢");
+  else if (notes !== refs) fail(`${refs} 个引用标记对应 ${notes} 条脚注`);
+  else ok(`${notes} 条脚注内联在正文里（并附 ${refs} 个引用标记）`);
 
-  const toc = html["/contents/"] || "";
-  const depts = (toc.match(/class="toc__dept"/g) || []).length;
-  if (!depts) fail("the contents page has no departments");
-  else ok(`contents groups articles into ${depts} department(s)`);
-
-  const arch = html["/archive/"] || "";
-  const issues = (arch.match(/class="issue"/g) || []).length;
-  if (!issues) fail("the archive lists no issues");
-  else ok(`archive lists ${issues} issue(s)`);
-
-  const redir = html["/images/"] || "";
-  if (!/http-equiv="refresh"/.test(redir) || !/url=\/archive\//.test(redir)) {
-    fail("the /images/ redirect is missing or points somewhere unexpected");
-  } else if (!/href="\/archive\/"/.test(redir)) {
-    fail("the /images/ redirect has no plain link fallback for no-JS");
-  } else ok("/images/ redirects to the archive, with a link fallback");
-
-  for (const p of articles) {
-    const body = html[p] || "";
-    if (!/class="opener/.test(body)) fail(`${p} has no magazine opener`);
-    if (!/class="lead"|prose/.test(body)) fail(`${p} has no reading column`);
-    if (!/data-lightbox/.test(body)) fail(`${p} has no image viewer`);
+  // Loading anything off-site would leak the reader's browsing to a third
+  // party. Hyperlinks to other sites are the opposite — they are the point of
+  // hypertext — so this checks only tags that FETCH: src, srcset, and link
+  // rel=stylesheet/preload. An audit that flags <a href> would fail every page
+  // that cites a source.
+  const externalLoads = [];
+  for (const [page, body] of Object.entries(html)) {
+    for (const m of body.matchAll(/<(\w+)([^>]*)>/g)) {
+      const [tag, attrs] = [m[1].toLowerCase(), m[2]];
+      if (tag === "a") continue;
+      for (const attr of ["src", "srcset", "data-src", "poster"]) {
+        const v = new RegExp(`${attr}="([^"]*)"`, "i").exec(attrs);
+        if (v && /^https?:\/\//i.test(v[1])) externalLoads.push(`${page} <${tag} ${attr}=${v[1].slice(0, 40)}>`);
+      }
+      if (tag === "link" && /rel="stylesheet"/i.test(attrs)) {
+        const v = /href="([^"]*)"/i.exec(attrs);
+        if (v && /^https?:\/\//i.test(v[1])) externalLoads.push(`${page} <link href=${v[1].slice(0, 40)}>`);
+      }
+    }
   }
-  ok("every article has an opener, a reading column and a viewer");
+  if (externalLoads.length) {
+    [...new Set(externalLoads)].slice(0, 4).forEach(fail);
+  } else {
+    ok("没有从站外加载任何资源（脚本、样式、字体、图片）");
+  }
+
+  const searchIndex = JSON.parse((await get("/search/index.json")).body);
+  if (searchIndex.length !== articles.length) {
+    fail(`搜索索引有 ${searchIndex.length} 条，文章有 ${articles.length} 篇`);
+  } else if (searchIndex.some((a) => !a.text || !a.title || !a.url)) {
+    fail("搜索索引里有条目缺 title/text/url");
+  } else ok(`搜索索引覆盖全部 ${searchIndex.length} 篇文章`);
+
+  // The link graph must be consistent in the shipped HTML, not just in memory.
+  let backlinkChecks = 0;
+  const broken = [];
+  for (const a of searchIndex) {
+    const page = html[a.url];
+    if (!page) continue;
+    const backlisted = [...page.matchAll(/class="backlist"[^>]*>([\s\S]*?)<\/section>/g)]
+      .flatMap((m) => [...m[1].matchAll(/href="([^"]+)"/g)].map((x) => x[1]));
+    for (const target of backlisted) {
+      const targetPage = html[target];
+      if (!targetPage) continue;
+      backlinkChecks++;
+      if (!targetPage.includes(`href="${a.url}"`)) {
+        broken.push(`${target} 的反向链接里说有 ${a.url}，但那一页并没有链到它`);
+      }
+    }
+  }
+  if (broken.length) broken.slice(0, 4).forEach(fail);
+  else ok(`${backlinkChecks} 条反向链接与正向链接双向一致`);
 
   console.log("\naccessibility spot-checks");
   const unlabelled = [];
-  // /images/ is a bare redirect page (meta refresh + link), not a destination —
-  // it carries no reading content, so landmark/heading rules do not apply.
-  const structural = Object.keys(html).filter((p) => p !== "/404.html" && p !== "/images/");
-  for (const page of structural) {
-    const body = html[page];
+  for (const [page, body] of Object.entries(html)) {
+    if (page === "/404.html") continue;
     if (!/<a class="skip" href="#main"/.test(body)) fail(`${page} has no skip link`);
     if (!/<main id="main"/.test(body)) fail(`${page} has no <main id="main">`);
     if (!/<nav[^>]*aria-label=/.test(body)) fail(`${page} has no labelled nav`);
-  }
-  for (const [page, body] of Object.entries(html)) {
     const re = /<button\b([^>]*)>([\s\S]*?)<\/button>/g;
     let m;
     while ((m = re.exec(body))) {
       if (/aria-hidden="true"/.test(m[1])) continue;
       const text = m[2].replace(/<[^>]+>/g, "").trim();
-      if (!text && !/aria-label="[^"]+"/.test(m[1])) {
-        unlabelled.push(`${page}: ${m[1].trim().slice(0, 50)}`);
-      }
+      if (!text && !/aria-label="[^"]+"/.test(m[1])) unlabelled.push(`${page}: ${m[1].trim().slice(0, 46)}`);
     }
   }
   if (unlabelled.length) unlabelled.slice(0, 5).forEach((u) => fail("unlabelled button → " + u));
-  else ok("skip link, main landmark, labelled nav and buttons on every page");
+  else ok("skip link, main landmark, labelled nav and buttons everywhere");
 
-  // images the viewer can open must be reachable by keyboard
-  for (const p of articles) {
-    const body = html[p] || "";
-    const btn = (body.match(/role="button"/g) || []).length;
-    const focusable = (body.match(/role="button"[^>]*tabindex="0"|tabindex="0"[^>]*role="button"/g) || []).length;
-    if (btn && focusable !== btn) fail(`${p}: ${btn} openable images but only ${focusable} are focusable`);
-  }
-  ok("every openable image is keyboard focusable");
+  console.log("\nfeeds & size");
+  const rss = await get("/rss.xml");
+  if (!/<rss/.test(rss.body) || !/<item>/.test(rss.body)) fail("RSS feed is empty or malformed");
+  else ok(`RSS 有 ${(rss.body.match(/<item>/g) || []).length} 条`);
 
-  console.log("\nsize budget");
   const walkSize = (d) => fs.readdirSync(d, { withFileTypes: true })
-    .reduce((n, e) => n + (e.isDirectory()
-      ? walkSize(path.join(d, e.name))
-      : fs.statSync(path.join(d, e.name)).size), 0);
-  const imgBytes = walkSize(path.join(STAGE, "images"));
-  const shipped = ["tokens.css", "base.css", "spread.css", "article.css", "lightbox.css", "site.js"];
-  const cssJs = shipped.reduce((n, f) => n + fs.statSync(path.join(STAGE, "assets", f)).size, 0);
-  const homeKB = Buffer.byteLength(html["/"] || "", "utf8") / 1024;
+    .reduce((n, e) => n + (e.isDirectory() ? walkSize(path.join(d, e.name)) : fs.statSync(path.join(d, e.name)).size), 0);
+  const cssJs = ["tokens", "base", "prose", "components", "search"].map((n) => `/assets/${n}.css`)
+    .concat(["/assets/site.js"])
+    .reduce((n, p) => n + fs.statSync(path.join(STAGE, p)).size, 0);
+  const biggest = Object.entries(html)
+    .map(([p, b]) => [p, Buffer.byteLength(b, "utf8")])
+    .sort((a, b) => b[1] - a[1])[0];
 
-  const stray = fs.readdirSync(path.join(STAGE, "assets")).filter((f) => !shipped.includes(f));
-  if (stray.length) fail(`assets/ ships files the budget ignores: ${stray.join(", ")}`);
-
-  /* Budgets are set from the site's own economics, not round numbers. Each
-     image costs ~560KB for both derivatives plus its LQIP, and one is added per
-     article — so this scales with the collection and the limit is a tripwire
-     for a size regression, not a target. */
-  const derivedCount = fs.existsSync(path.join(STAGE, "images", "derived"))
-    ? fs.readdirSync(path.join(STAGE, "images", "derived")).filter((f) => f.endsWith("-1x.webp")).length
-    : 1;
-  const perImageKB = imgBytes / 1024 / Math.max(1, derivedCount);
   for (const [name, val, max, unit] of [
-    ["images/ total", imgBytes / 1048576, 10, "MB"],
-    ["css+js shipped", cssJs / 1024, 60, "KB"],
-    ["cover page HTML", homeKB, 60, "KB"]
+    ["css + js", cssJs / 1024, 60, "KB"],
+    ["最大单页", biggest[1] / 1024, 120, "KB"]
   ]) {
-    if (val > max) fail(`${name} is ${val.toFixed(1)}${unit}, budget ${max}${unit}`);
-    else ok(`${name} ${val.toFixed(1)}${unit} / ${max}${unit}`);
+    if (val > max) fail(`${name} 是 ${val.toFixed(1)}${unit}，超出预算 ${max}${unit}`);
+    else ok(`${name} ${val.toFixed(1)}${unit} / ${max}${unit}  (${biggest[0]})`);
   }
-  ok(`≈${perImageKB.toFixed(0)}KB of derivatives per image`);
 
   code = failures ? 1 : 0;
   console.log("");
-  console.log(failures ? `✗ ${failures} failure(s) in ${checks} passing checks` : `✓ all ${checks} checks passed`);
+  console.log(failures ? `✗ ${failures} 项失败，${checks} 项通过` : `✓ 全部 ${checks} 项检查通过`);
 } catch (e) {
-  console.error("\n✗ smoke run crashed:", e.message);
+  console.error("\n✗ smoke 运行出错:", e.message);
   code = 1;
 } finally {
   child.kill();

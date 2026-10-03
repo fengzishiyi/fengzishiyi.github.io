@@ -130,21 +130,25 @@ export class Browser {
     throw new Error(`browser never opened a debugging port: ${last?.message || "timeout"}`);
   }
 
-  /** Open a page target with an exact CSS viewport and load a URL. */
-  async open({ url, width, height = 900, dpr = 1, settleMs = 1400, reducedMotion = "no-preference" }) {
+  /** Open a page target with an exact CSS viewport and load a URL.
+   *
+   *  `scripted: false` disables JavaScript before navigating. The site claims it
+   *  is readable without scripting, and the only way to hold it to that is to
+   *  load it the way such a reader would. */
+  async open({ url, width, height = 900, dpr = 1, settleMs = 1200, reducedMotion = "no-preference", scripted = true }) {
     const res = await fetch(`http://127.0.0.1:${this.port}/json/new?about:blank`, { method: "PUT" });
     if (!res.ok) throw new Error(`could not open a target: ${res.status}`);
     const target = await res.json();
 
     const s = await Session.open(target.webSocketDebuggerUrl, target.id, this.port);
     await s.send("Page.enable");
-    await s.send("Runtime.enable");
     await s.send("Emulation.setDeviceMetricsOverride", {
       width, height, deviceScaleFactor: dpr, mobile: width < 700
     });
     await s.send("Emulation.setEmulatedMedia", {
       features: [{ name: "prefers-reduced-motion", value: reducedMotion }]
     });
+    if (!scripted) await s.send("Emulation.setScriptExecutionDisabled", { value: true });
     await s.send("Page.navigate", { url });
     await sleep(settleMs);
     return s;
@@ -167,8 +171,8 @@ export class Browser {
   }
 
   /** Measure real layout at an exact viewport. */
-  async measure({ url, width, height = 900, reducedMotion = "no-preference" }) {
-    const s = await this.open({ url, width, height, reducedMotion });
+  async measure({ url, width, height = 900, reducedMotion = "no-preference", scripted = true }) {
+    const s = await this.open({ url, width, height, reducedMotion, scripted });
     const data = await s.evalJson(MEASURE_EXPR);
     await s.close();
     return data;
@@ -211,18 +215,17 @@ export const MEASURE_EXPR = `(() => {
 
   var cs = getComputedStyle(de);
   out.vars = {
-    padx: cs.getPropertyValue("--pad-x").trim(),
-    secY: cs.getPropertyValue("--sec-y").trim(),
-    fsBody: cs.getPropertyValue("--fs-body").trim()
+    measure: cs.getPropertyValue("--measure").trim(),
+    fsBody: cs.getPropertyValue("--fs-body").trim(),
+    theme: de.getAttribute("data-theme"),
+    notes: de.getAttribute("data-notes") || "on"
   };
 
   out.h1Count = document.querySelectorAll("h1").length;
 
-  [["title", ".page-title"], ["nameplate", ".nameplate"], ["openerTitle", ".opener__title"],
-   ["featureTitle", ".feature__title"], ["prose", ".prose p"], ["lead", ".lead"],
-   ["masthead", ".masthead__in"], ["nav", ".masthead__nav"],
-   ["sectionHead", ".section-head"], ["articleBody", ".article__body"],
-   ["main", ".article__main"], ["side", ".article__side"]].forEach(function (pair) {
+  [["title", ".arthead__title"], ["pageTitle", ".pagehead h1"],
+   ["prose", ".prose p"], ["artmain", ".artmain"], ["rail", ".rail"],
+   ["mast", ".mast__in"], ["toolbar", ".toolbar"]].forEach(function (pair) {
     var el = document.querySelector(pair[1]);
     if (!el) return;
     var r = el.getBoundingClientRect();
@@ -230,18 +233,83 @@ export const MEASURE_EXPR = `(() => {
                      fs: getComputedStyle(el).fontSize };
   });
 
-  // the headline must actually be big: this is the thing that makes it a
-  // magazine rather than a blog, so measure it rather than trusting the CSS
-  var head = document.querySelector(".nameplate, .opener__title, .feature__title, .page-title");
-  if (head) out.headPx = Math.round(parseFloat(getComputedStyle(head).fontSize));
+  // The measure, measured rather than assumed: one em is one 汉字 at body size,
+  // so width ÷ font-size is characters per line. This is the number the design
+  // promises (30–34) and the number a screenshot cannot tell you.
+  var para = document.querySelector(".prose p");
+  if (para) {
+    var pcs = getComputedStyle(para);
+    out.bodyPx = parseFloat(pcs.fontSize);
+    out.charsPerLine = +(para.getBoundingClientRect().width / parseFloat(pcs.fontSize)).toFixed(1);
+  }
+
+  // Progressive enhancement: are the notes and sections present in the MARKUP,
+  // independent of whether the script has run?
+  out.noteCount = document.querySelectorAll(".note").length;
+  out.fnrefCount = document.querySelectorAll(".fnref").length;
+  out.secCount = document.querySelectorAll("article section[id], main section[id]").length;
+  out.scriptRan = !!document.querySelector(".sec__toggle");
+
+  // Overlap test for the sidenote margin.
+  //
+  // Only meaningful where notes are POSITIONED into a margin with their own
+  // reserved track. Below that breakpoint a note is deliberately an inline
+  // inset block inside the text flow, so a bounding-box test would fire on
+  // every paragraph it sits between — a false alarm, not a layout fault.
+  //
+  // And where it does apply, the test is ink-against-ink: the note's inner text
+  // box versus the line boxes of the paragraphs beside it, not box-versus-box,
+  // so padding and the gutter do not count as collision.
+  out.noteOverlap = (function () {
+    var positioned = false;
+    var probe = document.querySelector(".note");
+    if (!probe) return 0;
+    var cs = getComputedStyle(probe);
+    if (cs.position !== "absolute") return 0;
+    positioned = true;
+    if (!positioned) return 0;
+
+    var notes = document.querySelectorAll(".note");
+    var body = document.querySelector(".artbody");
+    if (!body) return 0;
+
+    var hits = 0;
+    for (var i = 0; i < notes.length; i++) {
+      var note = notes[i];
+      var n = note.getBoundingClientRect();
+      if (n.width === 0 || n.height === 0) continue;
+
+      // every paragraph and heading in the article, measured line by line
+      var text = body.querySelectorAll(".artmain p, .artmain h2, .artmain h3, .artmain li");
+      var collided = false;
+      for (var k = 0; k < text.length && !collided; k++) {
+        var el = text[k];
+        // Skip anything that contains the note AND anything the note contains:
+        // a note's own body paragraphs live inside .artmain, so without the
+        // second test every note "collides with itself".
+        if (el.contains(note) || note.contains(el)) continue;
+        var range = document.createRange();
+        range.selectNodeContents(el);
+        var rects = range.getClientRects();
+        for (var j = 0; j < rects.length; j++) {
+          var r = rects[j];
+          if (r.width < 2 || r.height < 2) continue;
+          var overlapX = Math.min(r.right, n.right) - Math.max(r.left, n.left);
+          var overlapY = Math.min(r.bottom, n.bottom) - Math.max(r.top, n.top);
+          if (overlapX > 2 && overlapY > 2) { collided = true; break; }
+        }
+      }
+      if (collided) hits++;
+    }
+    return hits;
+  })();
 
   var imgs = document.querySelectorAll("img");
   out.imgCount = imgs.length;
   var broken = 0;
   for (var k = 0; k < imgs.length; k++) {
-    // An <img> with no src is a placeholder, not a failure: the viewer's image
-    // element is empty until a photograph is opened. Counting it as broken
-    // produced a false alarm on every article page.
+    // An <img> with no src is a placeholder, not a failure — this site ships no
+    // content images at all now, so anything here is chrome.
     if (!imgs[k].getAttribute("src")) continue;
     if (imgs[k].complete && imgs[k].naturalWidth === 0) broken++;
   }

@@ -1,0 +1,276 @@
+/* ==========================================================================
+   components.css — index pages, lists, tags, series, 404
+   ========================================================================== */
+
+/* ---- page head -------------------------------------------------------- */
+
+.pagehead { padding: 2rem 0 1.2rem; }
+.pagehead h1 { font-size: var(--fs-h1); margin: 0 0 0.4rem; }
+.pagehead__desc {
+  color: var(--ink-mute);
+  margin: 0 0 0.5rem;
+  max-width: calc(var(--measure) + var(--measure-shift));
+}
+.pagehead .meta { display: block; }
+
+/* ---- entry lists ------------------------------------------------------ */
+
+.entries { list-style: none; margin: 0; padding: 0; }
+
+.entry {
+  padding: 0.9rem 0;
+  border-top: 1px solid var(--rule);
+}
+.entry:last-child { border-bottom: 1px solid var(--rule); }
+
+.entry__title {
+  font-family: var(--serif);
+  font-size: 1.0625rem;
+  color: var(--ink);
+  text-decoration: none;
+}
+.entry__title:hover { text-decoration: underline; text-decoration-thickness: 1px; }
+
+.entry__meta { margin: 0.15rem 0 0.25rem; }
+.entry__meta a { color: var(--ink-mute); text-decoration: none; }
+.entry__meta a:hover { color: var(--ink); text-decoration: underline; }
+
+.entry__desc {
+  margin: 0;
+  font-size: var(--fs-small);
+  color: var(--ink-mute);
+  max-width: 62ch;
+}
+
+.more { margin-top: 1rem; font-size: var(--fs-small); }
+.linkbtn {
+  font: inherit;
+  color: var(--link);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+.linkbtn:hover { text-decoration-thickness: 2px; }
+
+/* ---- home ------------------------------------------------------------- */
+
+.home { padding-top: 2.2rem; }
+.home__title { font-size: var(--fs-h1); margin: 0 0 0.3rem; }
+.home__tagline {
+  color: var(--ink-mute);
+  margin: 0 0 2rem;
+  max-width: calc(var(--measure) + var(--measure-shift));
+}
+
+.domains {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.6rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--rule);
+}
+@media (min-width: 720px) { .domains { grid-template-columns: repeat(3, 1fr); gap: 2rem; } }
+
+.domain h2 {
+  font-size: var(--fs-h3);
+  margin: 0 0 0.3rem;
+}
+.domain h2 a { color: var(--ink); text-decoration: none; }
+.domain h2 a:hover { text-decoration: underline; }
+.domain__blurb {
+  font-size: var(--fs-small);
+  color: var(--ink-mute);
+  margin: 0 0 0.6rem;
+}
+.domain__kinds {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.8rem;
+  font-size: var(--fs-tiny);
+  color: var(--ink-mute);
+}
+
+.homecols {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  padding-top: 2rem;
+}
+@media (min-width: 900px) { .homecols { grid-template-columns: 1.35fr 1fr; gap: 3rem; } }
+.homecol > section { margin-bottom: 2.2rem; }
+
+.tagcloud, .serieslist, .tagindex, .seriesindex {
+  list-style: none;
+  margin: 0 0 0.6rem;
+  padding: 0;
+}
+.tagcloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.9rem;
+  font-size: var(--fs-small);
+}
+.tagcloud a { color: var(--ink-mute); text-decoration: none; }
+.tagcloud a:hover { color: var(--ink); text-decoration: underline; }
+.tagcloud a::before { content: "#"; opacity: 0.45; }
+
+.serieslist li { padding: 0.2rem 0; font-size: var(--fs-small); }
+.serieslist a { color: var(--ink-mute); text-decoration: none; }
+.serieslist a:hover { color: var(--ink); text-decoration: underline; }
+
+/* ---- archive ---------------------------------------------------------- */
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.3rem 1rem;
+  padding: 0.7rem 0;
+  border-top: 1px solid var(--rule);
+  font-size: var(--fs-small);
+}
+.filters__label { flex: 0 0 auto; }
+.filters a { color: var(--ink-mute); text-decoration: none; }
+.filters a:hover { color: var(--ink); text-decoration: underline; }
+
+.yearblock { padding-top: 2rem; }
+
+/* ---- tag & series indexes --------------------------------------------- */
+
+.tagindex li, .seriesindex li {
+  padding: 0.8rem 0;
+  border-top: 1px solid var(--rule);
+}
+.tagindex a, .seriesindex a {
+  font-family: var(--serif);
+  font-size: 1.0625rem;
+  color: var(--ink);
+  text-decoration: none;
+}
+.tagindex a:hover, .seriesindex a:hover { text-decoration: underline; }
+.tagindex__blurb {
+  margin: 0.2rem 0 0;
+  font-size: var(--fs-small);
+  color: var(--ink-mute);
+  max-width: 62ch;
+}
+
+/* ---- search ----------------------------------------------------------- */
+
+.searchbox {
+  display: flex;
+  gap: 0.5rem;
+  padding: 1rem 0;
+  border-top: 1px solid var(--rule);
+}
+.searchbox input {
+  flex: 1 1 auto;
+  min-width: 0;
+  font: inherit;
+  font-size: var(--fs-body);
+  color: var(--ink);
+  background: var(--paper-sunk);
+  border: 1px solid var(--rule);
+  padding: 0.5rem 0.7rem;
+}
+.searchbox input:focus { border-color: var(--rule-strong); }
+.searchbox button {
+  font: inherit;
+  font-size: var(--fs-small);
+  color: var(--ink);
+  background: var(--paper-sunk);
+  border: 1px solid var(--rule);
+  padding: 0.5rem 0.9rem;
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease);
+}
+.searchbox button:hover { border-color: var(--rule-strong); }
+
+.searchfilters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--rule);
+  font-size: var(--fs-small);
+  color: var(--ink-mute);
+}
+.searchfilters label { display: inline-flex; align-items: center; gap: 0.35rem; }
+.searchfilters select {
+  font: inherit;
+  font-size: var(--fs-small);
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  padding: 0.2rem 0.35rem;
+}
+
+.searchstatus {
+  padding: 0.8rem 0;
+  font-size: var(--fs-small);
+  color: var(--ink-mute);
+  margin: 0;
+}
+
+.searchresults .entry h3 {
+  font-size: 1.0625rem;
+  margin: 0 0 0.15rem;
+}
+.searchresults .entry h3 a { color: var(--ink); text-decoration: none; }
+.searchresults .entry h3 a:hover { text-decoration: underline; }
+.searchresults .entry__ctx {
+  margin: 0.3rem 0 0;
+  font-size: var(--fs-small);
+  color: var(--ink-mute);
+  line-height: 1.7;
+}
+.searchresults .entry[aria-current="true"] {
+  background: var(--paper-raised);
+  outline: 1px solid var(--rule-strong);
+  outline-offset: 0.3rem;
+}
+
+/* ---- link preview ----------------------------------------------------- */
+/* Populated from a <template> the build emits. Local content only: a preview
+   that fetched the linked page would leak the reader's browsing to a third
+   party, which this site does not do. */
+
+.preview {
+  position: absolute;
+  z-index: 60;
+  width: min(360px, calc(100vw - 2rem));
+  max-height: 45vh;
+  overflow: auto;
+  padding: 0.7rem 0.9rem;
+  background: var(--paper);
+  border: 1px solid var(--rule-strong);
+  font-size: var(--fs-small);
+  line-height: 1.7;
+  color: var(--ink-mute);
+}
+.preview[hidden] { display: none; }
+.preview .preview__title {
+  font-family: var(--serif);
+  font-size: 0.9375rem;
+  color: var(--ink);
+  margin: 0 0 0.2rem;
+}
+.preview .preview__meta { margin: 0 0 0.4rem; }
+.preview p { margin: 0 0 0.4rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  .preview { display: none !important; }
+}
+
+/* ---- 404 / prose-ish pages -------------------------------------------- */
+
+.prose.narrow { max-width: calc(var(--measure) + var(--measure-shift)); margin: 0 auto; }
+.prose.narrow section { margin-bottom: 2rem; }
+.prose.narrow h2 { margin-top: 1.8em; }

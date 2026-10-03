@@ -1,8 +1,8 @@
 {
   "name": "fengzishiyi.github.io",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "private": true,
-  "description": "一个个人杂志：封面、目录、往期，和一篇篇有封面图的文章",
+  "description": "个人写作站：文学、哲学与计算机科学的纯文本笔记",
   "type": "module",
   "license": "MIT",
   "engines": {
@@ -15,10 +15,10 @@
     "serve": "node src/serve.mjs",
     "check": "node src/build.mjs --check-only",
     "check:content": "node src/build.mjs --content-only",
-    "contrast": "node src/contrast.mjs",
+    "check:links": "node src/build.mjs --links-only",
     "smoke": "node src/smoke.mjs",
-    "shots": "node src/shots.mjs",
-    "verify": "node src/build.mjs && node src/contrast.mjs && node src/smoke.mjs",
+    "layout": "node src/layout.mjs",
+    "verify": "node src/build.mjs && node src/smoke.mjs && node src/layout.mjs --measure",
     "clean": "node src/build.mjs --clean && node -e \"require('fs').rmSync('.shots',{recursive:true,force:true})\""
   },
   "devDependencies": {

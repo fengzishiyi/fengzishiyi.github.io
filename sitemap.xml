@@ -1,9 +1,42 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://fengzishiyi.github.io/</loc></url>
-  <url><loc>https://fengzishiyi.github.io/contents/</loc></url>
   <url><loc>https://fengzishiyi.github.io/archive/</loc></url>
+  <url><loc>https://fengzishiyi.github.io/tags/</loc></url>
+  <url><loc>https://fengzishiyi.github.io/series/</loc></url>
+  <url><loc>https://fengzishiyi.github.io/search/</loc></url>
+  <url><loc>https://fengzishiyi.github.io/changelog/</loc></url>
   <url><loc>https://fengzishiyi.github.io/about/</loc></url>
-  <url><loc>https://fengzishiyi.github.io/articles/why-the-wall-moves/</loc></url>
-  <url><loc>https://fengzishiyi.github.io/articles/monochrome-shell/</loc></url>
+  <url><loc>https://fengzishiyi.github.io/literature/</loc></url>
+  <url><loc>https://fengzishiyi.github.io/philosophy/</loc></url>
+  <url><loc>https://fengzishiyi.github.io/compsci/</loc></url>
+  <url><loc>https://fengzishiyi.github.io/tags/数字人文/</loc></url>
+  <url><loc>https://fengzishiyi.github.io/tags/纯文本/</loc></url>
+  <url><loc>https://fengzishiyi.github.io/tags/长期主义/</loc></url>
+  <url><loc>https://fengzishiyi.github.io/tags/动效/</loc></url>
+  <url><loc>https://fengzishiyi.github.io/tags/叙述/</loc></url>
+  <url><loc>https://fengzishiyi.github.io/tags/城市/</loc></url>
+  <url><loc>https://fengzishiyi.github.io/tags/工具链/</loc></url>
+  <url><loc>https://fengzishiyi.github.io/tags/意象-夜/</loc></url>
+  <url><loc>https://fengzishiyi.github.io/tags/意象-窗/</loc></url>
+  <url><loc>https://fengzishiyi.github.io/tags/感知/</loc></url>
+  <url><loc>https://fengzishiyi.github.io/tags/排版/</loc></url>
+  <url><loc>https://fengzishiyi.github.io/tags/无障碍/</loc></url>
+  <url><loc>https://fengzishiyi.github.io/tags/时间/</loc></url>
+  <url><loc>https://fengzishiyi.github.io/tags/注意力/</loc></url>
+  <url><loc>https://fengzishiyi.github.io/tags/认知科学/</loc></url>
+  <url><loc>https://fengzishiyi.github.io/tags/记忆/</loc></url>
+  <url><loc>https://fengzishiyi.github.io/tags/论证/</loc></url>
+  <url><loc>https://fengzishiyi.github.io/tags/设计/</loc></url>
+  <url><loc>https://fengzishiyi.github.io/tags/阅读/</loc></url>
+  <url><loc>https://fengzishiyi.github.io/tags/静态站点/</loc></url>
+  <url><loc>https://fengzishiyi.github.io/series/个人站点的三次改版/</loc></url>
+  <url><loc>https://fengzishiyi.github.io/philosophy/plain-text-rebuttal/</loc></url>
+  <url><loc>https://fengzishiyi.github.io/compsci/why-plain-text/</loc></url>
+  <url><loc>https://fengzishiyi.github.io/compsci/static-site-failure-locality/</loc></url>
+  <url><loc>https://fengzishiyi.github.io/compsci/why-the-wall-moved/</loc></url>
+  <url><loc>https://fengzishiyi.github.io/literature/夜航/</loc></url>
+  <url><loc>https://fengzishiyi.github.io/philosophy/记不住的到底是哪一部分/</loc></url>
+  <url><loc>https://fengzishiyi.github.io/literature/关于把书读两遍/</loc></url>
+  <url><loc>https://fengzishiyi.github.io/philosophy/monochrome-screen/</loc></url>
 </urlset>

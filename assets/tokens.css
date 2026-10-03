@@ -1,116 +1,117 @@
 /* ==========================================================================
-   tokens.css — the whole palette is five values. Nothing else exists.
+   tokens.css — the only place a colour is defined.
 
-   Editorial (编辑杂志风) hard rules: monochrome only, no shadows, no
-   gradients, no rounded corners, serif headings over sans body.
+   Deliberately a two-value system: ink and paper. Everything else is a tint or
+   shade of ink. That constraint is gwern's experiment (a grayscale palette as a
+   test of whether it permits a readable, pleasant site) and it is also the best
+   defence against a personal site slowly growing a second, accidental palette.
 
-   Two rulings carried over from editorial-token-mapping.md and DESIGN-NOTES.md:
-     · the kit ships a red accent while forbidding coloured accents in the same
-       breath; 禁止项 outranks everything → the red is dropped.
-     · the /40 tier fails WCAG AA on the cream ground → it never carries
-       information, only decoration.
-
-   This is now a MAGAZINE: a cover, a contents page, and article spreads.
-   IMPACT comes from scale, contrast and composition — never from colour,
-   effects or density. See the type scale below, which is deliberately steep.
+   Every pair below is asserted at build time against WCAG AA in BOTH themes —
+   see checkDesign() in src/build.mjs. Dark mode is not an afterthought here;
+   it is measured exactly like light mode.
    ========================================================================== */
 
 :root {
-  /* ---- surface -------------------------------------------------------- */
-  --paper: #F9F8F6;              /* warm cream — NOT #fafafa */
-  --ink: #1C1C1C;                /* soft black — NOT #0a0a0a */
+  /* ---- light ---------------------------------------------------------- */
+  --paper: #FBFAF9;
+  --paper-sunk: #F4F3F1;          /* inset fields, verbatim blocks */
+  --paper-raised: #FFFFFF;        /* only ever the active search result */
+  --ink: #1C1C1C;
+  --ink-mute: #5C5B59;
+  --ink-faint: #8A8987;
+  --rule: #E0DFDC;
+  --rule-strong: #C4C3C0;
+  --link: #2E4A6B;
+  --link-visited: #5B4A6B;
+  --mark: #EDE7D2;                /* search highlight */
 
-  /* ---- four grays, by measured contrast against --paper ---------------
-     PRE-COMPOSITED, not live alpha. The name records the tier; the value is
-     what actually renders, so the build-time contrast check measures exactly
-     what a reader sees rather than a foreground value that lies.
+  --measure: 33em;                /* 30–34 汉字 per line — asserted */
+  --fs-body: 1.0625rem;           /* 17px */
+  --fs-small: 0.8125rem;
+  --fs-tiny: 0.75rem;
+  --lh-body: 1.85;
+  --fs-h1: clamp(1.65rem, 3vw + 1rem, 2.4rem);
+  --fs-h2: clamp(1.25rem, 1.4vw + 1rem, 1.55rem);
+  --fs-h3: 1.125rem;
 
-       --ink-80   16.8% ink over paper → 8.49:1   body copy
-       --ink-60   28.4% ink over paper → 5.10:1   labels, secondary text
-       --ink-40   the 40% ink tier     → 2.05:1   decorative numerals only */
-  --ink-80: #494948;
-  --ink-60: #6A6A69;
-  --ink-40: #B0B0AE;
-  --rule: rgba(28, 28, 28, 0.1);          /* hairlines */
-  --rule-strong: rgba(28, 28, 28, 0.45);  /* hairline, hovered */
+  --gap: 1.4rem;
+  --wrap: 72rem;
+  --measure-shift: 0em;           /* reader-adjustable line width */
+  --size-shift: 0em;              /* reader-adjustable font size */
 
-  /* ---- type ----------------------------------------------------------- */
-  /* System-first: a CJK serif webfont is 5–8 MB per weight, so we take the
-     platform faces and accept slight per-OS differences in 汉字. */
-  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua",
-    Georgia, "Songti SC", "Noto Serif SC", "Source Han Serif SC", "SimSun", serif;
   --sans: "Helvetica Neue", Helvetica, Arial, "PingFang SC", "Hiragino Sans GB",
     "Microsoft YaHei", "Segoe UI", sans-serif;
-  --mono: ui-monospace, "SFMono-Regular", "Cascadia Mono", Consolas,
-    "Liberation Mono", monospace;
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia,
+    "Songti SC", "Noto Serif SC", "Source Han Serif SC", "SimSun", serif;
+  --mono: ui-monospace, "SFMono-Regular", "Cascadia Mono", Consolas, "Liberation Mono", monospace;
 
-  /* Tracking splits by script. The editorial convention of −0.02 to −0.05em at
-     display sizes is a LATIN rule: 汉字 glyphs are already set tight, and
-     negative tracking there costs legibility. So Latin gets the tight value and
-     CJK stays at zero — hierarchy is carried by scale alone. */
-  --tracking-label: 0.2em;
-  --tracking-tight: -0.03em;     /* Latin display only */
-  --tracking-cjk: 0;             /* never negative */
+  --dur: 240ms;
+  --ease: cubic-bezier(0.2, 0.6, 0.2, 1);
 
-  /* ---- impact scale ---------------------------------------------------
-     A steep ladder is the whole point: the reference editorial guidelines put
-     display at 56–96px against 16–18px body, and require the display/deck
-     ratio to read as a scale EVENT (≥1.5×) rather than a step. A gradual scale
-     reads as a SaaS landing page, not a magazine. */
-  --fs-nameplate: clamp(5.25rem, 17vw, 13rem);   /* cover nameplate, fills the measure */
-  --fs-display: clamp(2.5rem, 8.5vw, 7rem);      /* cover lead + article opener */
-  --fs-sectionnum: clamp(2.75rem, 7vw, 6rem);    /* contents section numeral */
-  --fs-h2: clamp(1.75rem, 3.2vw, 2.75rem);      /* in-article heading */
-  --fs-h3: clamp(1.25rem, 1.6vw + 0.9rem, 1.625rem);
-  --fs-lead: clamp(1.1875rem, 1.1vw + 0.95rem, 1.5rem);  /* 导言段 */
-  --fs-deck: clamp(1.0625rem, 0.7vw + 0.9rem, 1.375rem); /* 导语 standfirst */
-  --fs-body: 1.125rem;                           /* 18px, the reading register */
-  --fs-pull: clamp(1.625rem, 4.2vw, 2.75rem);    /* pull quote — an interrupt */
-  --fs-label: 0.6875rem;
-  --fs-caption: 0.8125rem;
-
-  --lh-display: 1.0;
-  --lh-body: 1.9;                /* CJK wants more than the 1.6–1.7 Latin norm */
-  --lh-lead: 1.85;
-  --lh-caption: 1.75;
-
-  /* ---- measure --------------------------------------------------------
-     60–70 Latin characters is the editorial target. CJK glyphs are full-width,
-     so one Latin character ≈ two 汉字 and the equivalent is 30–34 字 per line.
-     --measure is that column; --measure-wide is the lead paragraph's. */
-  --measure: 33em;
-  --measure-narrow: 26em;
-
-  /* ---- box ------------------------------------------------------------ */
-  --gutter: 16px;
-  --gutter-half: 8px;
-  --nav-h: 56px;
-  --pad-x: 24px;
-
-  /* ---- vertical rhythm -------------------------------------------------
-     Asymmetric on purpose. Uniform section spacing reads as a template; a
-     magazine alternates compression and expansion. These are the two gears. */
-  --sec-y: 88px;                 /* expansion */
-  --gap-tight: 40px;             /* compression */
-
-  color-scheme: light;
+  color-scheme: light dark;
 }
 
-@media (max-width: 639px) {
-  :root {
-    --gutter: 12px;
-    --gutter-half: 6px;
-    --fs-body: 1.0625rem;      /* 17px on phones */
-    --lh-body: 1.85;
-    --sec-y: 64px;
-    --gap-tight: 28px;
+/* ---- dark ------------------------------------------------------------- */
+/* Warm-neutral, not pure black: the same reasoning that keeps light mode off
+   pure white. #141413 on #DEDCD9 measures 13.0:1. */
+:root[data-theme="dark"] {
+  --paper: #141413;
+  --paper-sunk: #1E1E1C;
+  --paper-raised: #2A2A28;
+  --ink: #DEDCD9;
+  --ink-mute: #A5A3A0;
+  --ink-faint: #7A7875;
+  --rule: #33322F;
+  --rule-strong: #4A4946;
+  --link: #93B4D4;
+  --link-visited: #B49FCC;
+  --mark: #4A4530;
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="auto"] {
+    --paper: #141413;
+    --paper-sunk: #1E1E1C;
+    --paper-raised: #2A2A28;
+    --ink: #DEDCD9;
+    --ink-mute: #A5A3A0;
+    --ink-faint: #7A7875;
+    --rule: #33322F;
+    --rule-strong: #4A4946;
+    --link: #93B4D4;
+    --link-visited: #B49FCC;
+    --mark: #4A4530;
+    color-scheme: dark;
   }
 }
 
-@media (min-width: 640px) {
-  :root { --pad-x: 32px; --gutter: 16px; --sec-y: 112px; }
+/* ---- print ------------------------------------------------------------
+   The one place pure black on white is correct: there is no backlight on
+   paper, and it saves ink. Screen palettes stay off pure black and pure white
+   because the glare is real; paper has no glare. */
+@media print {
+  :root, :root[data-theme="dark"] {
+    --paper: #FFFFFF;
+    --paper-sunk: #FFFFFF;
+    --paper-raised: #FFFFFF;
+    --ink: #000000;
+    --ink-mute: #333333;
+    --ink-faint: #666666;
+    --rule: #CCCCCC;
+    --rule-strong: #999999;
+    --link: #000000;
+    --link-visited: #000000;
+    --mark: transparent;
+    color-scheme: light;
+  }
 }
 
-@media (min-width: 900px) {
-  :root { --pad-x: 48px; --sec-y: 144px; }
+/* ---- reader-adjusted sizes ------------------------------------------- */
+/* Applied as a multiplier on the root so every rem-based size follows the
+   reader's choice without any component needing to know about it. */
+:root { font-size: calc(100% + var(--size-shift)); }
+
+@media (max-width: 560px) {
+  :root { --fs-body: 1.0625rem; --gap: 1.1rem; }
 }

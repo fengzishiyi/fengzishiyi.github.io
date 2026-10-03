@@ -1,12 +1,15 @@
 /* ==========================================================================
-   base.css — reset, typography, masthead, colophon, shared primitives
+   base.css — reset, page furniture, the reading grid
 
-   The site is a magazine: a cover, a contents page, and article spreads.
+   The article layout is one grid with named columns. Sidenotes are emitted
+   INSIDE the prose (see content.mjs) and floated into the notes column from
+   there, so the note text is always in the document and readable with no
+   JavaScript and no margin: below the breakpoint the same element renders as an
+   inline block under the paragraph it annotates. Nothing is moved by script;
+   only the destination changes.
    ========================================================================== */
 
-*,
-*::before,
-*::after { box-sizing: border-box; }
+*, *::before, *::after { box-sizing: border-box; }
 
 html {
   -webkit-text-size-adjust: 100%;
@@ -21,133 +24,63 @@ body {
   font-family: var(--sans);
   font-size: var(--fs-body);
   line-height: var(--lh-body);
-  letter-spacing: var(--tracking-cjk);
   background: var(--paper);
-  color: var(--ink-80);
+  color: var(--ink);
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-body[data-lightbox="open"] { overflow: hidden; }
-
-img { max-width: 100%; height: auto; display: block; border-style: none; }
+img, svg { max-width: 100%; height: auto; display: block; }
 figure { margin: 0; }
 
-/* --- headings: serif, weight 400, never bold --------------------------- */
-h1, h2, h3, h4, h5, h6 {
+h1, h2, h3, h4 {
   font-family: var(--serif);
   font-weight: 400;
-  color: var(--ink);
-  line-height: 1.24;
+  line-height: 1.25;
   margin: 0 0 0.6em;
+  color: var(--ink);
   text-wrap: balance;
 }
 
-/* Display sizes get tight tracking in LATIN only — never on 汉字. */
-.display {
-  font-family: var(--serif);
-  font-weight: 400;
-  line-height: var(--lh-display);
-  letter-spacing: var(--tracking-cjk);
-}
-.display:lang(en) { letter-spacing: var(--tracking-tight); }
-
-p { margin: 0 0 1.6em; }
+p { margin: 0 0 1.2em; }
 p:last-child { margin-bottom: 0; }
 
-a { color: inherit; text-decoration: none; }
+a { color: var(--link); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+a:visited { color: var(--link-visited); }
+a:hover { text-decoration-thickness: 2px; }
 
-hr { border: 0; border-top: 1px solid var(--rule); margin: 3rem 0; }
+code, pre { font-family: var(--mono); }
+code { font-size: 0.9em; }
 
-:focus-visible { outline: 1px solid var(--ink); outline-offset: 3px; }
+hr { border: 0; border-top: 1px solid var(--rule); margin: 2rem 0; }
+
+:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
 :focus:not(:focus-visible) { outline: none; }
 
-/* --- primitives ------------------------------------------------------- */
+/* ---- primitives ------------------------------------------------------- */
 
-.label {
-  font-family: var(--sans);
-  font-size: var(--fs-label);
-  line-height: 1.5;
-  letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
-  color: var(--ink-60);
+.wrap {
+  max-width: var(--wrap);
+  margin: 0 auto;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
 }
-.label--plain { text-transform: none; letter-spacing: 0.12em; }
-.label--ink { color: var(--ink); }
-
-/* decorative numeral — /40 is allowed here and nowhere that carries meaning */
-.numeral {
-  font-family: var(--serif);
-  font-size: 1.5rem;
-  line-height: 1;
-  color: var(--ink-40);
-  font-variant-numeric: lining-nums;
+@media (min-width: 900px) {
+  .wrap { padding-left: 2.5rem; padding-right: 2.5rem; }
 }
 
 .meta {
   font-family: var(--mono);
-  font-size: 0.75rem;
-  letter-spacing: 0.12em;
-  color: var(--ink-60);
+  font-size: var(--fs-tiny);
+  color: var(--ink-mute);
   font-variant-numeric: tabular-nums;
 }
 
-/* link: hairline underline that grows left→right, ink deepens */
-.ulink {
-  position: relative;
-  display: inline-block;
-  color: var(--ink-80);
-  transition: color 0.5s ease;
-}
-.ulink::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -2px;
-  height: 1px;
-  background: currentColor;
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 0.5s cubic-bezier(0.2, 0.6, 0.2, 1);
-}
-.ulink:hover,
-.ulink:focus-visible { color: var(--ink); }
-.ulink:hover::after,
-.ulink:focus-visible::after { transform: scaleX(1); }
-
-.shell {
-  max-width: 1440px;
-  margin: 0 auto;
-  padding-left: var(--pad-x);
-  padding-right: var(--pad-x);
-}
-
-.shell--tight { max-width: 1100px; }
-
-.section { padding-top: var(--sec-y); padding-bottom: var(--sec-y); }
-
-.skip {
-  position: absolute;
-  left: -9999px;
-  top: 0;
-  padding: 0.75rem 1rem;
-  background: var(--ink);
-  color: var(--paper);
-  font-size: var(--fs-label);
-  letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
-  z-index: 100;
-}
-.skip:focus { left: var(--pad-x); top: 8px; }
-
 .visually-hidden {
   position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0;
   overflow: hidden;
   clip: rect(0 0 0 0);
   clip-path: inset(50%);
@@ -155,180 +88,219 @@ hr { border: 0; border-top: 1px solid var(--rule); margin: 3rem 0; }
   border: 0;
 }
 
-/* ==========================================================================
-   full-bleed
-   Reaches the viewport edge from inside a centred container without the
-   100vw scrollbar trap. `width: 100vw` would overflow whenever a scrollbar is
-   present, so the element is made 100vw wide and then shifted left by exactly
-   the space between the viewport and its own container: (100vw − 100%)/2.
-   Clipped by `overflow-x: hidden` on the root.
-   ========================================================================== */
-.bleed {
-  width: 100vw;
-  margin-left: calc((100vw - 100%) / -2);
-  margin-right: calc((100vw - 100%) / -2);
+.skip {
+  position: absolute;
+  left: -9999px; top: 0;
+  padding: 0.6rem 0.9rem;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: var(--fs-small);
+  z-index: 100;
+}
+.skip:focus { left: 1rem; top: 0.5rem; }
+
+.empty {
+  color: var(--ink-mute);
+  font-style: italic;
+  padding: 1.5rem 0;
 }
 
-/* --- masthead: a magazine masthead, not a navbar ---------------------- */
-.masthead {
-  position: fixed;
-  inset: 0 0 auto 0;
-  z-index: 50;
-  height: var(--nav-h);
-  background: rgba(249, 248, 246, 0.92);
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
-  border-bottom: 1px solid var(--rule);
-}
+/* ---- masthead: small, and it scrolls away ---------------------------- */
 
-.masthead__in {
+.mast { border-bottom: 1px solid var(--rule); }
+.mast__in {
   display: flex;
-  align-items: center;
+  flex-wrap: wrap;
+  align-items: baseline;
   justify-content: space-between;
-  gap: 12px;
-  height: var(--nav-h);
+  gap: 0.4rem 1.4rem;
+  padding-top: 0.9rem;
+  padding-bottom: 0.9rem;
 }
-
-.wordmark {
+.mast__home {
   font-family: var(--serif);
-  font-size: 0.9375rem;
-  letter-spacing: 0.28em;
-  text-transform: uppercase;
+  font-size: 1.0625rem;
+  letter-spacing: 0.02em;
   color: var(--ink);
-  white-space: nowrap;
+  text-decoration: none;
 }
-@media (max-width: 420px) {
-  .wordmark { font-size: 0.8125rem; letter-spacing: 0.16em; }
-}
-
-.masthead__nav {
+.mast__nav {
   display: flex;
-  align-items: center;
-  gap: 16px;
+  flex-wrap: wrap;
+  gap: 0.15rem 1rem;
 }
-@media (min-width: 640px) { .masthead__nav { gap: 28px; } }
-
-/* the running issue line sits centred in the masthead on wide screens */
-.masthead__issue {
-  display: none;
-  white-space: nowrap;
-}
-@media (min-width: 900px) {
-  .masthead__issue { display: block; position: absolute; left: 50%; transform: translateX(-50%); }
-}
-
-.navlink {
-  font-family: var(--sans);
-  font-size: var(--fs-label);
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--ink-60);
+.mast__nav a {
+  font-size: var(--fs-small);
+  color: var(--ink-mute);
+  text-decoration: none;
+  padding: 0.15rem 0;
   position: relative;
-  padding-bottom: 2px;
-  transition: color 0.5s ease;
-  white-space: nowrap;
+  transition: color var(--dur) var(--ease);
 }
-.navlink::after {
+.mast__nav a::after {
   content: "";
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  left: 0; right: 0; bottom: 0;
   height: 1px;
   background: currentColor;
   transform: scaleX(0);
   transform-origin: left;
-  transition: transform 0.5s cubic-bezier(0.2, 0.6, 0.2, 1);
+  transition: transform var(--dur) var(--ease);
 }
-.navlink:hover,
-.navlink:focus-visible { color: var(--ink); }
-.navlink:hover::after,
-.navlink:focus-visible::after { transform: scaleX(1); }
-.navlink[aria-current="page"] { color: var(--ink); }
-.navlink[aria-current="page"]::after { transform: scaleX(1); }
+.mast__nav a:hover, .mast__nav a:focus-visible { color: var(--ink); }
+.mast__nav a:hover::after, .mast__nav a:focus-visible::after { transform: scaleX(1); }
+.mast__nav a[aria-current="page"] { color: var(--ink); }
+.mast__nav a[aria-current="page"]::after { transform: scaleX(1); }
+.mast__n {
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  color: var(--ink-faint);
+  margin-left: 0.3em;
+}
 
-/* --- colophon / 版权页 ------------------------------------------------- */
-.colophon {
+/* ---- footer ----------------------------------------------------------- */
+
+.foot {
+  margin-top: 4rem;
   border-top: 1px solid var(--rule);
-  padding: 64px 0 48px;
-  margin-top: var(--sec-y);
+  padding: 1.6rem 0 3rem;
 }
-.colophon__grid {
+.foot__nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 1.1rem;
+  margin-bottom: 1rem;
+}
+.foot__nav a { font-size: var(--fs-small); color: var(--ink-mute); text-decoration: none; }
+.foot__nav a:hover { color: var(--ink); text-decoration: underline; }
+.foot__note {
+  font-size: var(--fs-small);
+  color: var(--ink-mute);
+  margin: 0 0 0.4rem;
+  max-width: 60ch;
+}
+.foot__chrono {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
-  gap: 24px 48px;
-  align-items: baseline;
-}
-.colophon__note {
-  font-family: var(--sans);
-  font-size: var(--fs-label);
-  letter-spacing: 0.1em;
-  color: var(--ink-60);
-  margin: 0;
-  max-width: 44ch;
-  line-height: 1.9;
-}
-
-/* --- rules & running heads -------------------------------------------- */
-
-/* a full-width hairline used as a section divider */
-.rule { border: 0; border-top: 1px solid var(--rule); margin: 0; }
-.rule--strong { border-top-color: var(--rule-strong); }
-
-.section-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 24px;
-  padding-bottom: 18px;
-  border-bottom: 1px solid var(--rule);
-}
-
-.page-intro { padding-top: calc(var(--nav-h) + 72px); }
-.page-title {
-  font-family: var(--serif);
-  font-weight: 400;
-  font-size: var(--fs-display);
-  line-height: var(--lh-display);
-  margin: 0;
-}
-.page-intro__sub {
-  font-family: var(--serif);
-  font-style: italic;
-  color: var(--ink-60);
-  max-width: 46ch;
-  margin: 16px 0 0;
-  line-height: 1.8;
-}
-
-.empty {
-  padding: 64px 0;
+  gap: 0.6rem 2rem;
+  margin-top: 1.4rem;
+  padding-top: 1rem;
   border-top: 1px solid var(--rule);
   font-family: var(--serif);
-  font-style: italic;
-  color: var(--ink-60);
+}
+.foot__chrono a { text-decoration: none; }
+.foot__chrono a:hover { text-decoration: underline; }
+
+/* ---- reading toolbar: hidden until you scroll ------------------------- */
+/* The controls exist for reading, so they are only on article pages, and the
+   markup ships them with `hidden` — with scripting off they never appear and
+   nothing is missing, because each control is an enhancement of a default that
+   already works. */
+
+.toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: color-mix(in srgb, var(--paper) 92%, transparent);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid var(--rule);
+}
+.toolbar[hidden] { display: none; }
+.toolbar__in {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 0.35rem;
+  padding-bottom: 0.35rem;
+}
+.toolbar__title {
+  font-size: var(--fs-small);
+  color: var(--ink-mute);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.toolbar__group {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+  flex: 0 0 auto;
+}
+.toolbar__group button,
+.toolbar__top {
+  font-family: var(--sans);
+  font-size: var(--fs-tiny);
+  color: var(--ink-mute);
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 0.2rem 0.45rem;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.toolbar__group button:hover,
+.toolbar__group button:focus-visible,
+.toolbar__top:hover { color: var(--ink); border-color: var(--rule-strong); }
+.toolbar__group button[aria-pressed="true"] { color: var(--ink); }
+
+.progress {
+  height: 2px;
+  background: var(--ink);
+  transform-origin: left;
+  transform: scaleX(var(--progress, 0));
+  transition: transform 120ms linear;
+}
+@media (max-width: 640px) {
+  /* the title is the first thing to go when there is no room */
+  .toolbar__title { display: none; }
 }
 
-.crosslinks { display: flex; flex-wrap: wrap; gap: 12px 32px; margin-top: 24px; }
+/* ---- reveal (cosmos-derived motion, navigation only) ------------------ */
+/* Applied to index lists, never to article prose: an animation that fires
+   while someone is reading a sentence is an interruption, not a flourish. */
 
-/* --- reduced motion --------------------------------------------------- */
+.reveal > * {
+  opacity: 0;
+  transform: translateY(6px);
+}
+.reveal.is-shown > * {
+  opacity: 1;
+  transform: none;
+  transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+/* stagger, capped so a long list does not take a second to arrive */
+.reveal.is-shown > *:nth-child(1) { transition-delay: 0ms; }
+.reveal.is-shown > *:nth-child(2) { transition-delay: 40ms; }
+.reveal.is-shown > *:nth-child(3) { transition-delay: 80ms; }
+.reveal.is-shown > *:nth-child(4) { transition-delay: 120ms; }
+.reveal.is-shown > *:nth-child(5) { transition-delay: 160ms; }
+.reveal.is-shown > *:nth-child(n+6) { transition-delay: 180ms; }
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  *,
-  *::before,
-  *::after {
+  .reveal > * { opacity: 1; transform: none; }
+  *, *::before, *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
-    scroll-behavior: auto !important;
   }
 }
 
-/* --- print: the one place pure black on white is correct --------------
-   Excluded from the style assertions rather than special-cased inside them. */
+/* ---- print: everything open, nothing interactive --------------------- */
+
 @media print {
-  .masthead, .colophon, .lb { display: none !important; }
-  html, body { background: #FFFFFF; color: #000000; }
-  .prose { max-width: none; }
+  .mast, .toolbar, .foot__nav, .searchbox, .searchfilters,
+  .rail[aria-label="页面工具"] { display: none !important; }
+  .sec[hidden], .sec__rest[hidden] { display: block !important; }
+  .sec--folded > .sec__rest { display: block !important; }
+  /* notes go back to being ordinary footnotes on paper */
+  .note { position: static !important; width: auto !important; max-width: none !important; }
+  .note::before { display: none !important; }
+  .foot__chrono { border-top: 1px solid var(--rule); }
+  a[href^="http"]::after { content: " (" attr(href) ")"; font-size: 0.7em; color: var(--ink-mute); }
+  .prose, .arthead, .rail { max-width: none !important; }
 }

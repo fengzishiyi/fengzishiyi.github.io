@@ -1,0 +1,423 @@
+/* ==========================================================================
+   prose.css — the reading column
+
+   Two conventions worth knowing:
+
+   1. The reading measure is set in `em` and the body size in `rem`, which means
+      one `em` ≈ one 汉字 (they are full-width). So `--measure: 33em` really does
+      mean 33 characters per line, and the build asserts it stays in 30–34.
+      `ch` would be meaningless here — it is derived from the "0" glyph.
+
+   2. Sidenotes are <aside> elements that sit inside the prose flow and are
+      absolutely positioned into the notes column. They stay in the document
+      either way, so the note is readable with scripting off and at every width;
+      only its destination changes.
+   ========================================================================== */
+
+.article { padding-top: 2rem; }
+
+.prose { max-width: calc(var(--measure) + var(--measure-shift)); }
+
+/* ---- article head ---------------------------------------------------- */
+
+.arthead {
+  max-width: calc(var(--measure) + var(--measure-shift));
+  margin: 0 auto 1.5rem;
+}
+.arthead__kicker {
+  font-family: var(--mono);
+  font-size: var(--fs-tiny);
+  color: var(--ink-mute);
+  margin: 0 0 0.7rem;
+}
+.arthead__title {
+  font-size: var(--fs-h1);
+  line-height: 1.15;
+  margin: 0 0 0.5rem;
+}
+.arthead__desc {
+  font-size: var(--fs-body);
+  color: var(--ink-mute);
+  margin: 0 0 0.9rem;
+}
+
+.status {
+  font-family: var(--mono);
+  font-size: var(--fs-tiny);
+}
+.status--draft { color: var(--ink-faint); }
+.status--notes { color: var(--ink-mute); }
+.status--in-progress { color: var(--ink-mute); }
+.status--finished { color: var(--ink-mute); }
+.status--abandoned { color: var(--ink-faint); text-decoration: line-through; }
+
+.taglist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.6rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.taglist a {
+  font-size: var(--fs-small);
+  color: var(--ink-mute);
+  text-decoration: none;
+  border-bottom: 1px solid var(--rule-strong);
+  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.taglist a:hover { color: var(--ink); border-color: var(--ink); }
+.taglist a::before { content: "#"; opacity: 0.5; }
+
+/* ---- the grid --------------------------------------------------------
+   Two side columns, not one. The notes and the rail both want the margin, and
+   placing them in the same column means the rail is pushed down by whatever the
+   longest note happens to be. So the margin is split: notes take the LEFT, the
+   page tools take the RIGHT, and the reading measure sits between them —
+   the layout Tufte's books and gwern.net both use, and for this reason.
+
+   Columns: 300px rail · measure · 260px note column. Only engaged when the
+   viewport can actually hold all three; below that everything stacks and the
+   notes become inline blocks. */
+
+.artbody { position: relative; }
+.artmain {
+  max-width: calc(var(--measure) + var(--measure-shift));
+  margin: 0 auto;
+}
+
+@media (min-width: 1160px) {
+  /* `.artbody` must be ALLOWED to be wider than the measure, or the grid
+     overflows its own container: the extra tracks are then centred and clipped,
+     and column 1 — the note margin — lands back on top of the text.
+
+     Two tracks: the note margin, then everything else. The rail shares track 2
+     with the text but takes the row below it, which is how gwern.net places it
+     (below the body rather than sticky in a margin), so a long article's notes
+     can never collide with it. */
+  .artbody {
+    display: grid;
+    grid-template-columns:
+      260px
+      minmax(0, calc(var(--measure) + var(--measure-shift)));
+    justify-content: center;
+    column-gap: 2.5rem;
+    align-items: start;
+    max-width: none;
+  }
+  .artmain { grid-column: 2; grid-row: 1; margin: 0; max-width: none; }
+  .rail { grid-column: 2; grid-row: 2; margin: 3rem 0 0; max-width: none; }
+}
+
+/* ---- headings & foldable sections ------------------------------------ */
+
+.prose > section { margin: 0; }
+
+.sec__toggle {
+  display: none;                  /* only exists once script adds it */
+}
+.sec.is-foldable > .sec__toggle,
+.sec.is-foldable > h2 .sec__toggle { display: inline-block; }
+
+h2 {
+  font-size: var(--fs-h2);
+  margin: 2.2em 0 0.6em;
+  scroll-margin-top: 3.5rem;
+}
+h3 {
+  font-size: var(--fs-h3);
+  margin: 1.8em 0 0.5em;
+  scroll-margin-top: 3.5rem;
+}
+
+.anchor {
+  font-family: var(--sans);
+  font-size: 0.7em;
+  color: var(--ink-faint);
+  text-decoration: none;
+  margin-left: 0.35em;
+  opacity: 0;
+  transition: opacity var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+h2:hover .anchor, h3:hover .anchor, .anchor:focus-visible { opacity: 1; }
+.anchor:hover { color: var(--ink); }
+
+/* a folded section collapses to its heading */
+.sec--folded > .sec__rest { display: none; }
+
+/* ---- margin note (段旁概括) ------------------------------------------
+   gwern sets these beside the paragraph so a page can be skimmed. In CJK the
+   margin would squeeze the 30–34 character measure, so the summary sits above
+   the paragraph instead: same skimming benefit, no damage to the measure. */
+
+.marginnote {
+  font-size: var(--fs-small);
+  color: var(--ink-faint);
+  border-left: 2px solid var(--rule);
+  padding-left: 0.7rem;
+  /* Sits ABOVE the paragraph it summarises, as a skimmable line. It keeps a
+     normal bottom margin — a negative one pulled the paragraph up until the two
+     overlapped, which is the opposite of a skimming aid. */
+  margin: 1.6em 0 0.5rem;
+  max-width: 34ch;
+}
+.marginnote + p { margin-top: 0; }
+
+/* ---- sidenotes ------------------------------------------------------- */
+
+.note {
+  font-size: var(--fs-small);
+  line-height: 1.7;
+  color: var(--ink-mute);
+}
+
+/* narrow: an inset block, plainly visible right where it is referenced */
+@media (max-width: 1159px) {
+  .note {
+    display: block;
+    border-left: 2px solid var(--rule);
+    padding: 0.1rem 0 0.1rem 0.8rem;
+    margin: 1rem 0 1.4rem;
+    max-width: 46ch;
+  }
+  .note--block { margin: 1.2rem 0 1.6rem; }
+  .note__body p { margin: 0 0 0.6em; }
+  .note__n {
+    font-family: var(--mono);
+    font-size: var(--fs-tiny);
+    color: var(--ink-faint);
+    margin-right: 0.4em;
+  }
+  /* the note and its reference are adjacent already, so a jump link is noise */
+  .fnref { display: none; }
+}
+
+/* the page's own footnotes list duplicates the inline notes; show it only when
+   the reader has switched notes off */
+.notelist { display: none; }
+
+@media (min-width: 1160px) {
+  /* Notes live in the LEFT margin. They are positioned from `.artbody` — the
+     same box the grid uses — so the note column and the rail column are two
+     separate grid tracks and cannot collide by construction.
+
+     Two earlier attempts are worth recording, because both looked correct:
+     `left: calc(100% + gap)` resolves a percentage against the containing
+     block's PADDING box, not its content edge, which put the notes outside the
+     container; and leaving `position: relative` on the text column made that
+     column the offsetParent, so `100%` meant "one text-column width" and every
+     note landed exactly on the rail. */
+  .artbody { position: relative; }
+  .artmain { position: static; }
+
+  .note {
+    position: absolute;
+    left: 0;                             /* column 1 is the note margin */
+    /* Sized to FIT the track, not to a comfortable reading width. The note
+       column is 260px wide including its 1rem right padding, and the text
+       column starts immediately after the 2.5rem gap — a wider note spills over
+       the gutter and prints on top of the paragraph. */
+    width: 260px;
+    box-sizing: border-box;
+    margin: 0;
+    top: 0;
+    transform: translateY(var(--note-offset, 0px));
+    /* a hairline on the right ties the note across the gutter to the text */
+    border-right: 1px solid var(--rule-strong);
+    padding-right: 1rem;
+  }
+  .note--block { max-width: 260px; }
+}
+
+/* when the reader turns notes off, they become plain end-of-article footnotes */
+:root[data-notes="off"] .note {
+  position: static;
+  width: auto;
+  display: block;
+  border-left: 2px solid var(--rule);
+  border-right: 0;
+  padding-right: 0;
+  padding-left: 0.8rem;
+  margin: 1rem 0;
+  max-width: 46ch;
+  transform: none;
+}
+:root[data-notes="off"] .notelist { display: block; }
+
+.fnref a {
+  text-decoration: none;
+  font-family: var(--mono);
+  font-size: 0.7em;
+  padding: 0 0.1em;
+}
+.fnref a::before { content: "["; }
+.fnref a::after { content: "]"; }
+.fnref a { font-size: 0.7em; }
+
+/* ---- blocks ---------------------------------------------------------- */
+
+blockquote {
+  margin: 1.6em 0;
+  padding-left: 1.1rem;
+  border-left: 2px solid var(--rule-strong);
+  font-family: var(--serif);
+  font-size: 1.02em;
+  color: var(--ink-mute);
+}
+blockquote p:last-child { margin-bottom: 0; }
+
+pre.verbatim {
+  font-size: var(--fs-small);
+  line-height: 1.6;
+  background: var(--paper-sunk);
+  border: 1px solid var(--rule);
+  padding: 0.8rem 1rem;
+  overflow-x: auto;
+  margin: 1.4em 0;
+  /* verse and indentation must survive verbatim — this is the only place
+     whitespace is load-bearing in a plain-text site */
+  white-space: pre;
+  tab-size: 2;
+}
+
+hr.divider {
+  border: 0;
+  margin: 2.4em 0;
+  text-align: center;
+}
+hr.divider::before {
+  content: "· · ·";
+  font-family: var(--serif);
+  color: var(--ink-faint);
+  letter-spacing: 0.5em;
+}
+
+ul, ol { padding-left: 1.4em; margin: 0 0 1.2em; }
+li { margin-bottom: 0.3em; }
+
+mark { background: var(--mark); color: var(--ink); }
+
+.ref-broken {
+  border-bottom: 1px dotted var(--ink-faint);
+  cursor: help;
+}
+
+/* ---- the rail -------------------------------------------------------- */
+
+.rail {
+  max-width: calc(var(--measure) + var(--measure-shift));
+  margin: 2.5rem auto 0;
+  font-size: var(--fs-small);
+}
+@media (min-width: 1440px) {
+  .rail { margin: 0; max-width: none; }
+}
+
+.railsec {
+  padding-top: 1.1rem;
+  margin-bottom: 1.6rem;
+  border-top: 1px solid var(--rule);
+}
+.rail__h {
+  font-family: var(--sans);
+  font-size: var(--fs-tiny);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--ink-mute);
+  margin: 0 0 0.5rem;
+  text-transform: none;
+}
+
+.meta-block { margin: 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); }
+.meta-block__row {
+  display: flex;
+  gap: 0.8rem;
+  justify-content: space-between;
+  padding: 0.15rem 0;
+}
+.meta-block dt {
+  color: var(--ink-faint);
+  font-size: var(--fs-tiny);
+  white-space: nowrap;
+}
+.meta-block dd {
+  margin: 0;
+  color: var(--ink-mute);
+  font-size: var(--fs-tiny);
+  text-align: right;
+}
+
+.outline ol, .srclist, .revlist, .notelist {
+  margin: 0;
+  padding-left: 1.1em;
+  color: var(--ink-mute);
+  font-size: var(--fs-small);
+}
+.outline a { text-decoration: none; }
+.outline a:hover { text-decoration: underline; }
+
+.backlist { list-style: none; margin: 0; padding: 0; }
+.backlist li {
+  padding: 0.45rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+.backlist li:last-child { border-bottom: 0; }
+.backlist a { text-decoration: none; }
+.backlist a:hover { text-decoration: underline; }
+.backlist__meta { margin-left: 0.5em; }
+.backlist__ctx {
+  margin: 0.2rem 0 0;
+  font-size: var(--fs-tiny);
+  color: var(--ink-faint);
+  line-height: 1.6;
+}
+
+.srclist li, .revlist li, .notelist li { margin-bottom: 0.35em; }
+
+.revlist { list-style: none; padding-left: 0; }
+.revlist li {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  gap: 0.5rem;
+  align-items: baseline;
+  font-size: var(--fs-tiny);
+}
+.revlist__hash { color: var(--ink-faint); }
+.revlist__msg { color: var(--ink-mute); }
+.revlist__now { grid-column: 1 / -1; color: var(--ink-faint); }
+
+.cite__perm { margin: 0 0 0.6rem; font-size: var(--fs-tiny); word-break: break-all; }
+.cite__row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.4rem;
+  align-items: start;
+  padding: 0.3rem 0;
+  border-top: 1px solid var(--rule);
+}
+.cite__label {
+  font-family: var(--mono);
+  font-size: var(--fs-tiny);
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+.cite__code {
+  font-size: 0.6875rem;
+  color: var(--ink-mute);
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+}
+.cite__copy {
+  font-family: var(--sans);
+  font-size: var(--fs-tiny);
+  color: var(--ink-mute);
+  background: transparent;
+  border: 1px solid var(--rule);
+  padding: 0.1rem 0.35rem;
+  cursor: pointer;
+  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.cite__copy:hover { color: var(--ink); border-color: var(--rule-strong); }
+.cite__copy[data-done] { color: var(--ink); border-color: var(--rule-strong); }
+
+.lic { font-size: var(--fs-tiny); color: var(--ink-mute); border-top: 1px solid var(--rule); padding-top: 0.8rem; }

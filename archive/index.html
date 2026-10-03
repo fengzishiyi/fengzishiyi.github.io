@@ -1,100 +1,176 @@
 <!doctype html>
-<html lang="zh-Hans">
+<html lang="zh-Hans" data-theme="auto">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>往期 — 枫子十一</title>
-<meta name="description" content="所有期号，从最新往前。">
+<title>归档 — 枫子十一</title>
+<meta name="description" content="全部文章，按时间、领域、类型与年份。">
 <link rel="canonical" href="https://fengzishiyi.github.io/archive/">
-<meta name="theme-color" content="#F9F8F6">
-<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#FBFAF9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141413" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<meta name="author" content="fengzishiyi">
 <meta property="og:site_name" content="枫子十一">
 <meta property="og:type" content="website">
-<meta property="og:title" content="往期 — 枫子十一">
-<meta property="og:description" content="所有期号，从最新往前。">
+<meta property="og:title" content="归档 — 枫子十一">
+<meta property="og:description" content="全部文章，按时间、领域、类型与年份。">
 <meta property="og:url" content="https://fengzishiyi.github.io/archive/">
-
 <meta name="twitter:card" content="summary">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="alternate" type="application/rss+xml" title="枫子十一" href="/rss.xml">
 <link rel="stylesheet" href="/assets/tokens.css">
 <link rel="stylesheet" href="/assets/base.css">
-<link rel="stylesheet" href="/assets/spread.css">
-<link rel="stylesheet" href="/assets/article.css">
-<link rel="stylesheet" href="/assets/lightbox.css">
+<link rel="stylesheet" href="/assets/prose.css">
+<link rel="stylesheet" href="/assets/components.css">
+<link rel="stylesheet" href="/assets/search.css">
 
+<!-- No analytics, no fonts, no CDN, no third-party script. See /about/ . -->
 </head>
 <body>
 <a class="skip" href="#main">跳到正文</a>
 
-<header class="masthead">
-  <div class="shell masthead__in">
-    <a class="wordmark" href="/">枫子十一</a>
-    <span class="masthead__issue label" aria-hidden="true">VOL.1 / NO.02</span>
-    <nav class="masthead__nav" aria-label="主导航">
-      <a class="navlink" href="/contents/">目录</a>
-      <a class="navlink" href="/archive/" aria-current="page">往期</a>
-      <a class="navlink" href="/about/">本刊</a>
+<header class="mast">
+  <div class="wrap mast__in">
+    <a class="mast__home" href="/">枫子十一</a>
+    <nav class="mast__nav" aria-label="主导航">
+      <a href="/literature/">文学<span class="mast__n">2</span></a>
+      <a href="/philosophy/">哲学<span class="mast__n">3</span></a>
+      <a href="/compsci/">计算机科学<span class="mast__n">3</span></a>
+      <a href="/tags/">标签<span class="mast__n">20</span></a>
+      <a href="/archive/" aria-current="page">归档<span class="mast__n">8</span></a>
+      <a href="/search/">搜索<span class="mast__n">8</span></a>
     </nav>
   </div>
 </header>
-<main id="main" class="shell archive">
-  <div class="section-head">
-    <h1 class="page-title">往期</h1>
-    <span class="label">2 期</span>
-  </div>
+<a id="top"></a>
+<main id="main" class="wrap">
+  <header class="pagehead">
+    <h1>归档</h1>
+    <p class="pagehead__desc">全部 8 篇。也可以按<a href="/tags/">标签</a>或<a href="/search/">检索</a>找。</p>
+  </header>
 
-  <section class="issue" aria-labelledby="iss-2026-02">
-    <div class="issue__grid">
-      <div>
-        <h2 class="issue__label" id="iss-2026-02">第 1 卷 · 第 02 期</h2>
-        <p class="issue__dates">2026 年 2 月 · 1 篇 · 2026-02-18 — 2026-02-18</p>
-        
-        <a class="issue__cover" href="/articles/why-the-wall-moves/" aria-label="为什么这面墙一直在动"><picture>
-    <source type="image/webp" sizes="(min-width: 860px) 30vw, 100vw" srcset="/images/derived/99424534-p0-1x.webp 1x, /images/derived/99424534-p0-2x.webp 2x">
-    <img class="" src="/images/derived/99424534-p0-1x.jpg" srcset="/images/derived/99424534-p0-1x.jpg 1x, /images/derived/99424534-p0-2x.jpg 2x"
-         alt="" width="538" height="1100"
-         loading="lazy" decoding="async">
-  </picture></a>
-      </div>
-      <ol class="issue__list">
-        <li>
-          <span class="issue__list-num" aria-hidden="true">01</span>
-          <a class="issue__list-title" href="/articles/why-the-wall-moves/">为什么这面墙一直在动<span class="label"> 专题</span></a>
-        </li>
-      </ol>
-    </div>
-  </section>
+  <nav class="filters" aria-label="按领域浏览">
+    <span class="filters__label meta">领域</span>
+    <a href="/literature/">文学 <span class="meta">2</span></a>
+    <a href="/philosophy/">哲学 <span class="meta">3</span></a>
+    <a href="/compsci/">计算机科学 <span class="meta">3</span></a>
+  </nav>
 
-  <section class="issue" aria-labelledby="iss-2026-01">
-    <div class="issue__grid">
-      <div>
-        <h2 class="issue__label" id="iss-2026-01">第 1 卷 · 第 01 期</h2>
-        <p class="issue__dates">2026 年 1 月 · 1 篇 · 2026-01-07 — 2026-01-07</p>
+  <nav class="filters" aria-label="按类型浏览">
+    <span class="filters__label meta">类型</span>
+    <a href="/search/?kind=%E8%AF%97">诗 <span class="meta">1</span></a>
+    <a href="/search/?kind=%E6%95%A3%E6%96%87">散文 <span class="meta">1</span></a>
+    <a href="/search/?kind=%E6%9C%AD%E8%AE%B0">札记 <span class="meta">2</span></a>
+    <a href="/search/?kind=%E8%AF%84%E8%AE%BA">评论 <span class="meta">1</span></a>
+    <a href="/search/?kind=%E6%8A%80%E6%9C%AF%E6%96%87%E7%AB%A0">技术文章 <span class="meta">1</span></a>
+    <a href="/search/?kind=%E5%B7%A5%E5%85%B7">工具 <span class="meta">1</span></a>
+    <a href="/search/?kind=%E8%B8%A9%E5%9D%91">踩坑 <span class="meta">1</span></a>
+  </nav>
+
+  <section class="yearblock">
+    <h2 class="rail__h">2026 <span class="meta">8</span></h2>
+<ol class="entries reveal">
+    <li class="entry">
+      <a class="entry__title" href="/philosophy/plain-text-rebuttal/">反驳：纯文本也是一种格式</a>
+      <p class="entry__meta meta">
+        <a href="/philosophy/">哲学</a> · 评论 ·
+        <time datetime="2026-03-12">2026.03.12</time>
+        · <span class="status status--notes">笔记</span>
+      </p>
+      <p class="entry__desc">对上文的一个反驳 —— 「纯文本寿命更长」这个论证把格式与媒介混为一谈了。</p>
+    </li>
+    <li class="entry">
+      <a class="entry__title" href="/compsci/why-plain-text/">为什么是纯文本</a>
+      <p class="entry__meta meta">
+        <a href="/compsci/">计算机科学</a> · 技术文章 ·
+        <time datetime="2026-03-10">2026.03.10</time>
+        · <span class="status status--in-progress">进行中</span>
+      </p>
+      <p class="entry__desc">一个只放文字的站点，在图片、公式与代码高亮触手可及的时候，这个选择需要理由。</p>
+    </li>
+    <li class="entry">
+      <a class="entry__title" href="/compsci/static-site-failure-locality/">静态站点的一个好处被说反了</a>
+      <p class="entry__meta meta">
+        <a href="/compsci/">计算机科学</a> · 工具 ·
+        <time datetime="2026-02-25">2026.02.25</time>
         
-        <a class="issue__cover" href="/articles/monochrome-shell/" aria-label="单色的界面，彩色的画面"><picture>
-    <source type="image/webp" sizes="(min-width: 860px) 30vw, 100vw" srcset="/images/derived/135294721-p0-1x.webp 1x, /images/derived/135294721-p0-2x.webp 2x">
-    <img class="" src="/images/derived/135294721-p0-1x.jpg" srcset="/images/derived/135294721-p0-1x.jpg 1x, /images/derived/135294721-p0-2x.jpg 2x"
-         alt="" width="1100" height="492"
-         loading="lazy" decoding="async">
-  </picture></a>
-      </div>
-      <ol class="issue__list">
-        <li>
-          <span class="issue__list-num" aria-hidden="true">01</span>
-          <a class="issue__list-title" href="/articles/monochrome-shell/">单色的界面，彩色的画面<span class="label"> 随笔</span></a>
-        </li>
-      </ol>
-    </div>
+      </p>
+      <p class="entry__desc">「没有数据库所以更快」是次要的。真正的好处是：损坏是局部的，而且下一次构建就能修好。</p>
+    </li>
+    <li class="entry">
+      <a class="entry__title" href="/compsci/why-the-wall-moved/">为什么这面墙一直在动</a>
+      <p class="entry__meta meta">
+        <a href="/compsci/">计算机科学</a> · 踩坑 ·
+        <time datetime="2026-02-18">2026.02.18</time>
+        
+      </p>
+      <p class="entry__desc">自动移动的内容在网页上几乎总是错的。当年那面图墙是个例外，但理由必须说清楚。</p>
+    </li>
+    <li class="entry">
+      <a class="entry__title" href="/literature/夜航/">夜航</a>
+      <p class="entry__meta meta">
+        <a href="/literature/">文学</a> · 诗 ·
+        <time datetime="2026-02-02">2026.02.02</time>
+        
+      </p>
+      <p class="entry__desc">一首关于夜班车与窗外的短诗。</p>
+    </li>
+    <li class="entry">
+      <a class="entry__title" href="/philosophy/记不住的到底是哪一部分/">记不住的到底是哪一部分</a>
+      <p class="entry__meta meta">
+        <a href="/philosophy/">哲学</a> · 札记 ·
+        <time datetime="2026-01-20">2026.01.20</time>
+        · <span class="status status--notes">笔记</span>
+      </p>
+      <p class="entry__desc">关于记忆的一个札记：我们记住的常常不是事件，而是讲述它的那句话。</p>
+    </li>
+    <li class="entry">
+      <a class="entry__title" href="/literature/关于把书读两遍/">关于把书读两遍</a>
+      <p class="entry__meta meta">
+        <a href="/literature/">文学</a> · 散文 ·
+        <time datetime="2026-01-11">2026.01.11</time>
+        
+      </p>
+      <p class="entry__desc">一段散文，关于重读与第一次读之间的差别。</p>
+    </li>
+    <li class="entry">
+      <a class="entry__title" href="/philosophy/monochrome-screen/">单色的界面，彩色的画面</a>
+      <p class="entry__meta meta">
+        <a href="/philosophy/">哲学</a> · 札记 ·
+        <time datetime="2026-01-07">2026.01.07</time>
+        
+      </p>
+      <p class="entry__desc">一个只用黑白与纸色的界面，为什么反而让内容更亮。视觉重量是守恒的。</p>
+    </li>
+</ol>
   </section>
 </main>
 
-<footer class="colophon">
-  <div class="shell">
-    <div class="colophon__grid">
-      <span class="wordmark">枫子十一</span>
-      <p class="colophon__note">文章、图画与一些想不清楚的事。界面是单色的，颜色全部来自图片。 界面为纯单色，颜色全部来自图片。</p>
-      <p class="colophon__note">第 1 卷 · 第 02 期 · <a class="ulink" href="https://github.com/fengzishiyi/fengzishiyi.github.io">GitHub</a> · <a class="ulink" href="/sitemap.xml">Sitemap</a> · <span class="meta">© 2026 fengzishiyi</span></p>
-    </div>
+<footer class="foot">
+  <div class="wrap">
+    <nav class="foot__nav" aria-label="页脚导航">
+      <a href="/">首页</a>
+      <a href="/literature/">文学</a>
+      <a href="/philosophy/">哲学</a>
+      <a href="/compsci/">计算机科学</a>
+      <a href="/tags/">标签</a>
+      <a href="/archive/">归档</a>
+      <a href="/search/">搜索</a>
+      <a href="/series/">系列</a>
+      <a href="/changelog/">更新</a>
+      <a href="/about/">自述</a>
+      <a href="/rss.xml">RSS</a>
+    </nav>
+    <p class="foot__note">
+      枫子十一 · 个人写作 ·
+      <a href="/about/#license">CC BY-NC-SA 4.0</a> ·
+      <span class="meta">© 2026 fengzishiyi</span>
+    </p>
+    <p class="foot__note meta">
+      纯文本站点：没有图片、没有公式、没有代码高亮、没有第三方脚本、没有追踪。
+      用 Markdown 写作，用 Git 存档。
+    </p>
+    
   </div>
 </footer>
 <script src="/assets/site.js" defer></script>

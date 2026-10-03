@@ -1,7 +1,9 @@
 {
   "title": "枫子十一",
-  "subtitle": "一个人的杂志",
-  "tagline": "文章、图画与一些想不清楚的事。界面是单色的，颜色全部来自图片。",
+  "subtitle": "个人写作",
+  "tagline": "文学、哲学与计算机科学的笔记。个人站点，非商业，无广告、无追踪、无社交功能。",
   "author": "fengzishiyi",
-  "volumeStartYear": 2026
+  "license": "CC BY-NC-SA 4.0",
+  "lang": "zh-Hans",
+  "origin": "https://fengzishiyi.github.io"
 }

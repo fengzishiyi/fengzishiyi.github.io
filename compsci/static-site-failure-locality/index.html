@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="zh-Hans" data-theme="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>静态站点的一个好处被说反了 — 枫子十一</title>
+<meta name="description" content="「没有数据库所以更快」是次要的。真正的好处是：损坏是局部的，而且下一次构建就能修好。">
+<link rel="canonical" href="https://fengzishiyi.github.io/compsci/static-site-failure-locality/">
+<meta name="theme-color" content="#FBFAF9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141413" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<meta name="author" content="fengzishiyi">
+<meta property="og:site_name" content="枫子十一">
+<meta property="og:type" content="article">
+<meta property="og:title" content="静态站点的一个好处被说反了 — 枫子十一">
+<meta property="og:description" content="「没有数据库所以更快」是次要的。真正的好处是：损坏是局部的，而且下一次构建就能修好。">
+<meta property="og:url" content="https://fengzishiyi.github.io/compsci/static-site-failure-locality/">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="alternate" type="application/rss+xml" title="枫子十一" href="/rss.xml">
+<link rel="stylesheet" href="/assets/tokens.css">
+<link rel="stylesheet" href="/assets/base.css">
+<link rel="stylesheet" href="/assets/prose.css">
+<link rel="stylesheet" href="/assets/components.css">
+<link rel="stylesheet" href="/assets/search.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"ScholarlyArticle","headline":"静态站点的一个好处被说反了","abstract":"「没有数据库所以更快」是次要的。真正的好处是：损坏是局部的，而且下一次构建就能修好。","datePublished":"2026-02-25","inLanguage":"zh-Hans","author":{"@type":"Person","name":"fengzishiyi"},"url":"https://fengzishiyi.github.io/compsci/static-site-failure-locality/","keywords":"静态站点, 工具链, 长期主义","license":"CC BY-NC-SA 4.0"}</script>
+<!-- No analytics, no fonts, no CDN, no third-party script. See /about/ . -->
+</head>
+<body>
+<a class="skip" href="#main">跳到正文</a>
+
+<header class="mast">
+  <div class="wrap mast__in">
+    <a class="mast__home" href="/">枫子十一</a>
+    <nav class="mast__nav" aria-label="主导航">
+      <a href="/literature/">文学</a>
+      <a href="/philosophy/">哲学</a>
+      <a href="/compsci/" aria-current="page">计算机科学</a>
+      <a href="/tags/">标签</a>
+      <a href="/archive/">归档</a>
+      <a href="/search/">搜索</a>
+    </nav>
+  </div>
+</header>
+
+<div class="toolbar" data-toolbar hidden>
+  <div class="wrap toolbar__in">
+    <span class="toolbar__title" data-toolbar-title></span>
+    <span class="toolbar__group" role="group" aria-label="阅读设置">
+      <button type="button" data-size="-1" aria-label="正文缩小">A−</button>
+      <button type="button" data-size="1" aria-label="正文放大">A+</button>
+      <button type="button" data-measure="-1" aria-label="行宽变窄">窄</button>
+      <button type="button" data-measure="1" aria-label="行宽变宽">宽</button>
+      <button type="button" data-theme-toggle aria-label="切换明暗主题" aria-pressed="false">主题</button>
+      <button type="button" data-notes-toggle aria-label="切换边注显示方式" aria-pressed="true">边注</button>
+      <a class="toolbar__top" href="#top" aria-label="回到顶部">↑</a>
+    </span>
+  </div>
+  <div class="progress" data-progress aria-hidden="true"></div>
+</div>
+<a id="top"></a>
+<main id="main" class="wrap article">
+  <header class="arthead">
+    <p class="arthead__kicker">
+      <a href="/compsci/">计算机科学</a>
+      <span aria-hidden="true"> · </span>工具
+      <span aria-hidden="true"> · </span><span class="status status--finished">已完成</span>
+    </p>
+    <h1 class="arthead__title" data-toolbar-title-text="静态站点的一个好处被说反了">静态站点的一个好处被说反了</h1>
+    <p class="arthead__desc">「没有数据库所以更快」是次要的。真正的好处是：损坏是局部的，而且下一次构建就能修好。</p>
+<ul class="taglist" aria-label="标签">
+      <li><a href="/tags/%E9%9D%99%E6%80%81%E7%AB%99%E7%82%B9/">静态站点</a></li>
+      <li><a href="/tags/%E5%B7%A5%E5%85%B7%E9%93%BE/">工具链</a></li>
+      <li><a href="/tags/%E9%95%BF%E6%9C%9F%E4%B8%BB%E4%B9%89/">长期主义</a></li>
+  </ul>
+  </header>
+
+  <div class="artbody">
+    <div class="artmain prose">
+<p>静态站点生成器最常被宣传的优点是没有数据库、访问快、省服务器。这些都对，但都不是最重要的。</p>
+</section><section class="sec" aria-labelledby="sec-1"><h2 id="sec-1"><a class="anchor" href="#sec-1" aria-label="本节链接：真正的好处">#</a>真正的好处</h2>
+<p>真正的好处是<strong>失败的局部性</strong>。</p>
+<p>动态站点出问题时，你面对的是一个状态：数据库里的某几行、缓存里的某个键、某个时区的某次调度。你无法只看代码就知道现场是什么样，因为现场不在代码里。</p>
+<p>静态站点出问题时，你面对的是一个<strong>构建</strong>。输入是文件，输出是文件，中间没有任何东西会随时间改变。同样的输入必然得到同样的输出。</p>
+<div class="marginnote">一个可以重放的系统，错误一定可以被定位。</div>
+
+
+
+<p>这意味着修好一个问题之后，你不会担心它明天从别的地方再冒出来。</p>
+</section><section class="sec" aria-labelledby="sec-2"><h2 id="sec-2"><a class="anchor" href="#sec-2" aria-label="本节链接：一个具体的例子">#</a>一个具体的例子</h2>
+<p>这个站点有一类曾反复出现的错误：front matter 里的字段拼错，导致某篇文章悄悄地少了标题。</p>
+<p>在一个动态系统里，这类错误会在发布之后被读者发现，因为写入的时候没人检查。而在这里，检查发生在构建期 —— 而且一旦写进断言，它<strong>不可能再发生一次</strong>，即使我改了很多别的东西。</p>
+<aside class="note note--block" id="fn1" role="doc-footnote" aria-label="脚注 1"><span class="note__n" aria-hidden="true">1</span><div class="note__body">
+
+<p>这里有一个值得注意的非对称：断言的成本是写的时候付一次，收益是每一次构建都收。所以只要一个错误发生过一次，就值得为它写一条断言。</p>
+<p>这条原则的边界是：只为一类错误写断言，不为一个个具体实例写。前者是规则，后者是噪声。</p>
+</div></aside>
+
+<p><sup class="fnref"><a id="fnref1" href="#fn1" aria-describedby="fn1">[1]</a></sup></p>
+</section><section class="sec" aria-labelledby="sec-3"><h2 id="sec-3"><a class="anchor" href="#sec-3" aria-label="本节链接：反过来说">#</a>反过来说</h2>
+<p>这套做法也有明确的不适用场景。</p>
+<p>内容需要即时更新、需要多人在线协作、需要按用户做权限区分 —— 这三件事里任何一件成立，静态生成就不合适。</p>
+<p>所以「静态」不是一个更高的技术立场，是一个<strong>匹配问题</strong>：这个站的更新频率是每周几次，读者是所有人，权限没有区分。在这个形状下，静态的收益最大、代价最小。</p>
+</section>
+    </div>
+
+    <aside class="rail" aria-label="页面工具">
+<dl class="meta-block">
+    <div class="meta-block__row"><dt>领域</dt><dd>计算机科学 · 工具</dd></div>
+    <div class="meta-block__row"><dt>始作</dt><dd><time datetime="2026-02-25">2026 年 2 月 25 日</time></dd></div>
+    <div class="meta-block__row"><dt>状态</dt><dd><span class="status status--finished">已完成</span></dd></div>
+    <div class="meta-block__row"><dt>篇幅</dt><dd>665 字</dd></div>
+    <div class="meta-block__row"><dt>修订</dt><dd>—</dd></div>
+  </dl>
+<nav class="outline" aria-label="本篇目录">
+    <h2 class="rail__h">目录</h2>
+    <ol>
+      <li><a href="#sec-1">真正的好处</a></li>
+      <li><a href="#sec-2">一个具体的例子</a></li>
+      <li><a href="#sec-3">反过来说</a></li>
+    </ol>
+  </nav>
+
+
+<section class="railsec" id="cite" aria-labelledby="cite-h">
+  <h2 class="rail__h" id="cite-h">引用</h2>
+  <p class="cite__perm">永久链接 <a href="/compsci/static-site-failure-locality/" data-permalink>https://fengzishiyi.github.io/compsci/static-site-failure-locality/</a> <span class="meta">· 访问 2026-10-03</span></p>
+    <div class="cite__row">
+      <span class="cite__label">BibTeX</span>
+      <code class="cite__code">@misc{staticsitefailurelocality2026,
+  author = {fengzishiyi},
+  title  = {{静态站点的一个好处被说反了}},
+  year   = {2026},
+  note   = {计算机科学 · 工具},
+  url    = {https://fengzishiyi.github.io/compsci/static-site-failure-locality/}
+}</code>
+      <button type="button" class="cite__copy" data-copy="@misc{staticsitefailurelocality2026,
+  author = {fengzishiyi},
+  title  = {{静态站点的一个好处被说反了}},
+  year   = {2026},
+  note   = {计算机科学 · 工具},
+  url    = {https://fengzishiyi.github.io/compsci/static-site-failure-locality/}
+}">复制</button>
+    </div>
+    <div class="cite__row">
+      <span class="cite__label">GB/T 7714</span>
+      <code class="cite__code">fengzishiyi. 静态站点的一个好处被说反了[EB/OL]. 2026-02-25. https://fengzishiyi.github.io/compsci/static-site-failure-locality/.</code>
+      <button type="button" class="cite__copy" data-copy="fengzishiyi. 静态站点的一个好处被说反了[EB/OL]. 2026-02-25. https://fengzishiyi.github.io/compsci/static-site-failure-locality/.">复制</button>
+    </div>
+    <div class="cite__row">
+      <span class="cite__label">Chicago</span>
+      <code class="cite__code">fengzishiyi. 「静态站点的一个好处被说反了」. 2026 年 2 月 25 日. https://fengzishiyi.github.io/compsci/static-site-failure-locality/.</code>
+      <button type="button" class="cite__copy" data-copy="fengzishiyi. 「静态站点的一个好处被说反了」. 2026 年 2 月 25 日. https://fengzishiyi.github.io/compsci/static-site-failure-locality/.">复制</button>
+    </div>
+    <div class="cite__row">
+      <span class="cite__label">Markdown</span>
+      <code class="cite__code">[静态站点的一个好处被说反了](https://fengzishiyi.github.io/compsci/static-site-failure-locality/) — fengzishiyi，2026-02-25</code>
+      <button type="button" class="cite__copy" data-copy="[静态站点的一个好处被说反了](https://fengzishiyi.github.io/compsci/static-site-failure-locality/) — fengzishiyi，2026-02-25">复制</button>
+    </div>
+</section>
+<section class="railsec" id="revisions" aria-labelledby="rev-h">
+  <h2 class="rail__h" id="rev-h">修订记录</h2>
+  <p class="meta">没有可用的 Git 历史。</p>
+</section>
+      <p class="railsec lic"><span class="meta">许可</span> CC BY-NC-SA 4.0</p>
+    </aside>
+  </div>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <nav class="foot__nav" aria-label="页脚导航">
+      <a href="/">首页</a>
+      <a href="/literature/">文学</a>
+      <a href="/philosophy/">哲学</a>
+      <a href="/compsci/">计算机科学</a>
+      <a href="/tags/">标签</a>
+      <a href="/archive/">归档</a>
+      <a href="/search/">搜索</a>
+      <a href="/series/">系列</a>
+      <a href="/changelog/">更新</a>
+      <a href="/about/">自述</a>
+      <a href="/rss.xml">RSS</a>
+    </nav>
+    <p class="foot__note">
+      枫子十一 · 个人写作 ·
+      <a href="/about/#license">CC BY-NC-SA 4.0</a> ·
+      <span class="meta">© 2026 fengzishiyi</span>
+    </p>
+    <p class="foot__note meta">
+      纯文本站点：没有图片、没有公式、没有代码高亮、没有第三方脚本、没有追踪。
+      用 Markdown 写作，用 Git 存档。
+    </p>
+    <nav class="foot__chrono" aria-label="相邻文章">
+      <a rel="prev" href="/compsci/why-the-wall-moved/">← 为什么这面墙一直在动</a>
+      <a rel="next" href="/compsci/why-plain-text/">为什么是纯文本 →</a>
+    </nav>
+  </div>
+</footer>
+<script src="/assets/site.js" defer></script>
+</body>
+</html>
