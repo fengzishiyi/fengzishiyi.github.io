@@ -1,0 +1,282 @@
+/* ==========================================================================
+   base.css — reset, typography, nav, footer, shared primitives
+   ========================================================================== */
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  background: var(--paper);
+  color: var(--ink);
+  scroll-behavior: smooth;
+  /* the wall track is anchored with a negative margin; never scroll sideways */
+  overflow-x: hidden;
+}
+
+body {
+  margin: 0;
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.8;
+  letter-spacing: var(--tracking-cjk);
+  background: var(--paper);
+  color: var(--ink-80);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body[data-lightbox="open"] { overflow: hidden; }
+
+img { max-width: 100%; height: auto; display: block; border-style: none; }
+
+/* --- headings: serif, weight 400, never bold --------------------------- */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--serif);
+  font-weight: 400;
+  color: var(--ink);
+  line-height: 1.22;
+  margin: 0 0 0.6em;
+  text-wrap: balance;
+}
+
+p { margin: 0 0 1.6em; }
+p:last-child { margin-bottom: 0; }
+
+a { color: inherit; text-decoration: none; }
+
+hr { border: 0; border-top: 1px solid var(--rule); margin: 3rem 0; }
+
+/* --- focus: a hairline, never a glow ---------------------------------- */
+:focus-visible {
+  outline: 1px solid var(--ink);
+  outline-offset: 3px;
+}
+:focus:not(:focus-visible) { outline: none; }
+
+/* --- primitives ------------------------------------------------------- */
+
+/* label: small, uppercase, wide-tracked. The kit's one durable "chrome" motif. */
+.label {
+  font-family: var(--sans);
+  font-size: 0.6875rem;
+  line-height: 1.5;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--ink-60);
+}
+.label--plain { text-transform: none; letter-spacing: 0.12em; }
+
+/* numeral: decorative, so /40. aria-hidden in markup — never the only carrier. */
+.numeral {
+  font-family: var(--serif);
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--ink-40);
+  font-variant-numeric: lining-nums;
+}
+
+.meta {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  color: var(--ink-60);
+  font-variant-numeric: tabular-nums;
+}
+
+/* link: hairline underline that grows left→right, ink deepens */
+.ulink {
+  position: relative;
+  display: inline-block;
+  color: var(--ink-80);
+  transition: color 0.5s ease;
+}
+.ulink::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.5s cubic-bezier(0.2, 0.6, 0.2, 1);
+}
+.ulink:hover,
+.ulink:focus-visible { color: var(--ink); }
+.ulink:hover::after,
+.ulink:focus-visible::after { transform: scaleX(1); }
+
+.shell {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding-left: var(--pad-x);
+  padding-right: var(--pad-x);
+}
+
+.section { padding-top: var(--sec-y); padding-bottom: var(--sec-y); }
+
+.skip {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  padding: 0.75rem 1rem;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 0.75rem;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  z-index: 100;
+}
+.skip:focus { left: var(--pad-x); top: 8px; }
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* --- masthead --------------------------------------------------------- */
+.masthead {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 50;
+  height: var(--nav-h);
+  background: rgba(249, 248, 246, 0.9);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid var(--rule);
+}
+
+.masthead__in {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  height: var(--nav-h);
+}
+
+.wordmark {
+  font-family: var(--serif);
+  font-size: 0.9375rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--ink);
+  white-space: nowrap;
+}
+@media (max-width: 420px) {
+  .wordmark { font-size: 0.8125rem; letter-spacing: 0.18em; }
+}
+
+.masthead__nav {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+@media (min-width: 640px) { .masthead__nav { gap: 28px; } }
+
+.navlink {
+  font-family: var(--sans);
+  font-size: 0.6875rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-60);
+  position: relative;
+  padding-bottom: 2px;
+  transition: color 0.5s ease;
+  white-space: nowrap;
+}
+.navlink::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.5s cubic-bezier(0.2, 0.6, 0.2, 1);
+}
+.navlink:hover,
+.navlink:focus-visible { color: var(--ink); }
+.navlink:hover::after,
+.navlink:focus-visible::after { transform: scaleX(1); }
+.navlink[aria-current="page"] { color: var(--ink); }
+.navlink[aria-current="page"]::after { transform: scaleX(1); }
+
+/* motion toggle: hairline chip, label flips between 流动 / 静止 */
+.motion {
+  font-family: var(--sans);
+  font-size: 0.625rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-60);
+  background: transparent;
+  border: 1px solid var(--rule);
+  padding: 5px 9px;
+  cursor: pointer;
+  transition: border-color 0.5s ease, color 0.5s ease;
+  white-space: nowrap;
+}
+.motion:hover { border-color: var(--rule-strong); color: var(--ink); }
+.motion[aria-pressed="true"] { border-color: var(--rule-strong); color: var(--ink); }
+@media (min-width: 640px) {
+  .motion { font-size: 0.6875rem; letter-spacing: 0.18em; padding: 6px 12px; }
+}
+
+/* --- footer ----------------------------------------------------------- */
+.colophon {
+  border-top: 1px solid var(--rule);
+  padding: 56px 0 40px;
+  margin-top: var(--sec-y);
+}
+.colophon__grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 20px 40px;
+  align-items: baseline;
+}
+.colophon__note {
+  font-family: var(--sans);
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  color: var(--ink-60);
+  margin: 0;
+  max-width: 42ch;
+  line-height: 1.9;
+}
+
+/* --- reduced motion --------------------------------------------------- */
+/* Placed after all animation declarations so it wins on source order too. */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* --- print ------------------------------------------------------------ */
+/* The one place pure black on white is correct: on paper there is no screen
+   to glare, and it saves ink. Excluded from the style assertions. */
+@media print {
+  .masthead, .motion, .colophon, .lb, .wall { display: none !important; }
+  html, body { background: #FFFFFF; color: #000000; }
+  .prose { max-width: none; }
+}

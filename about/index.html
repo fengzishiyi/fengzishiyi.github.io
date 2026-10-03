@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="zh-Hans" data-motion="on">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>关于 — 枫子十一</title>
+<meta name="description" content="关于这个站点，以及它为什么长成现在这样。">
+<link rel="canonical" href="https://fengzishiyi.github.io/about/">
+<meta name="theme-color" content="#F9F8F6">
+<meta name="color-scheme" content="light">
+<meta property="og:site_name" content="枫子十一">
+<meta property="og:type" content="website">
+<meta property="og:title" content="关于 — 枫子十一">
+<meta property="og:description" content="关于这个站点，以及它为什么长成现在这样。">
+<meta property="og:url" content="https://fengzishiyi.github.io/about/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/assets/tokens.css">
+<link rel="stylesheet" href="/assets/base.css">
+<link rel="stylesheet" href="/assets/wall.css">
+<link rel="stylesheet" href="/assets/article.css">
+<link rel="stylesheet" href="/assets/lightbox.css">
+
+</head>
+<body>
+<a class="skip" href="#main">跳到正文</a>
+
+<header class="masthead">
+  <div class="shell masthead__in">
+    <a class="wordmark" href="/">枫子十一</a>
+    <nav class="masthead__nav" aria-label="主导航">
+      <a class="navlink" href="/images/">图片</a>
+      <a class="navlink" href="/articles/">文章</a>
+      <a class="navlink" href="/about/" aria-current="page">关于</a>
+      <button class="motion" type="button" data-motion-toggle aria-pressed="true">
+        <span data-motion-text>流动</span>
+      </button>
+    </nav>
+  </div>
+</header>
+<main id="main" class="shell article">
+  <div class="article__grid">
+    <aside class="article__aside">
+      <h1 class="article__title">关于</h1>
+      <p class="article__standfirst">一个放文章和图片的地方。</p>
+      <div class="speclist">
+        <div class="speclist__row"><span class="speclist__k">图片</span><span class="speclist__v">14 张</span></div>
+        <div class="speclist__row"><span class="speclist__k">文章</span><span class="speclist__v">2 篇</span></div>
+      </div>
+    </aside>
+    <div class="prose">
+      <p>这里是两件事叠在一起：一面一直在流动的图墙，和一份按时间倒序的文章存档。图片不写标题，因为它们在你点开之前不需要解释；文章一页一篇，因为它们值得被慢慢读完。</p>
+      <p>界面是纯单色的 —— 只有暖米色的底和柔和的黑。颜色全部来自画面本身，这是刻意的：当界面不去争抢注意力，图片和文字才站得住。</p>
+      <h2 id="colophon">Colophon</h2>
+      <p>没有框架，没有构建服务，没有网络字体。一套 Node 脚本把 <code>_images/</code> 里的原图压成 WebP，把 <code>_articles/</code> 里的 markdown 排成 HTML，然后把结果推到这个仓库的根目录。</p>
+      <ul>
+        <li>字体：系统衬线体（中文回退到宋体）配系统无衬线体，零网络请求。</li>
+        <li>图墙：CSS 关键帧做无缝循环，<em>没有任何滚动劫持</em>。</li>
+        <li>降级：脚本不加载时，图片照样看得到，只是不能放大。</li>
+      </ul>
+      <p><a class="ulink" href="/articles/">读文章</a> · <a class="ulink" href="/images/">看图片</a></p>
+    </div>
+  </div>
+</main>
+
+<footer class="colophon">
+  <div class="shell">
+    <div class="colophon__grid">
+      <span class="wordmark">枫子十一</span>
+      <p class="colophon__note">文章与图片档案。界面为纯单色，画面是页面上唯一带颜色的东西。</p>
+      <p class="colophon__note"><a class="ulink" href="https://github.com/fengzishiyi/fengzishiyi.github.io">GitHub</a> · <a class="ulink" href="/sitemap.xml">Sitemap</a> · <span class="meta">© 2026 fengzishiyi</span></p>
+    </div>
+  </div>
+</footer>
+<script src="/assets/site.js" defer></script>
+</body>
+</html>

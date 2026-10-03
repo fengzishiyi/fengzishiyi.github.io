@@ -1,0 +1,357 @@
+/* ==========================================================================
+   article.css — magazine typography, one article per page
+   ========================================================================== */
+
+/* ---- index: a numbered editorial list --------------------------------- */
+
+.artlist { list-style: none; margin: 0; padding: 0; }
+
+.artlist__item { border-top: 1px solid var(--rule); }
+.artlist__item:last-child { border-bottom: 1px solid var(--rule); }
+
+.artlist__link {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    "date   num"
+    "title  num"
+    "sum    sum";
+  align-items: start;
+  gap: 6px 20px;
+  padding: 28px 0;
+  transition: background-color 0.5s ease;
+}
+@media (min-width: 720px) {
+  .artlist__link {
+    grid-template-columns: 5rem minmax(0, 1fr) 5.5rem;
+    grid-template-areas: "num title date" "num sum sum";
+    gap: 8px 28px;
+    padding: 36px 0;
+  }
+}
+.artlist__link:hover { background-color: rgba(28, 28, 28, 0.02); }
+
+.artlist__num {
+  grid-area: num;
+  font-family: var(--serif);
+  font-size: 1.375rem;
+  line-height: 1.1;
+  color: var(--ink-40);
+  font-variant-numeric: lining-nums;
+  justify-self: end;
+  transition: color 0.5s ease;
+}
+@media (min-width: 720px) { .artlist__num { justify-self: start; font-size: 1.75rem; } }
+.artlist__link:hover .artlist__num { color: var(--ink-60); }
+
+.artlist__date {
+  grid-area: date;
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.14em;
+  color: var(--ink-60);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+@media (min-width: 720px) { .artlist__date { justify-self: end; text-align: right; } }
+
+.artlist__title {
+  grid-area: title;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(1.25rem, 1.6vw + 0.9rem, 1.875rem);
+  line-height: 1.25;
+  color: var(--ink);
+  margin: 0;
+  transition: font-style 0.5s ease;
+}
+.artlist__link:hover .artlist__title { font-style: italic; }
+
+.artlist__sum {
+  grid-area: sum;
+  font-family: var(--sans);
+  font-size: 0.875rem;
+  line-height: 1.85;
+  color: var(--ink-60);
+  margin: 4px 0 0;
+  max-width: 58ch;
+}
+
+/* ---- article page ---------------------------------------------------- */
+
+.article { padding-top: calc(var(--nav-h) + 72px); }
+
+.article__grid { display: block; }
+@media (min-width: 900px) {
+  .article__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: 64px;
+    align-items: start;
+  }
+}
+
+/* left rail: all metadata reads the same way, sitting still while you scroll */
+.article__aside { margin-bottom: 40px; }
+@media (min-width: 900px) {
+  .article__aside { position: sticky; top: calc(var(--nav-h) + 56px); margin-bottom: 0; }
+}
+
+.article__title {
+  font-family: var(--serif);
+  font-weight: 400;
+  letter-spacing: var(--tracking-tight);
+  font-size: clamp(2rem, 3.6vw + 1rem, 3.75rem);
+  line-height: 1.04;
+  margin: 0 0 20px;
+}
+.article__standfirst {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 1rem;
+  line-height: 1.8;
+  color: var(--ink-60);
+  margin: 0 0 32px;
+  max-width: 40ch;
+}
+
+.speclist {
+  margin: 0 0 32px;
+  padding: 0;
+  border-top: 1px solid var(--rule);
+}
+.speclist__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--rule);
+}
+.speclist__k {
+  font-family: var(--sans);
+  font-size: 0.625rem;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--ink-60);
+}
+.speclist__v {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  color: var(--ink-80);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.speclist__v a { color: var(--ink-80); }
+
+/* the contents list reuses .speclist rows, but a heading is a label, not a
+   right-aligned value — without this reset the entries drift to the right */
+.speclist__row--toc { justify-content: flex-start; }
+.speclist__row--toc .speclist__v {
+  text-align: left;
+  font-size: 0.8125rem;
+  letter-spacing: 0.02em;
+  color: var(--ink-80);
+}
+
+.tags { display: flex; flex-wrap: wrap; gap: 8px 14px; margin: 0; padding: 0; list-style: none; }
+.tags li {
+  font-family: var(--sans);
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  color: var(--ink-60);
+}
+.tags li::before { content: "·"; margin-right: 6px; color: var(--ink-40); }
+
+/* ---- the reading column --------------------------------------------- */
+
+.prose { max-width: var(--measure); }
+
+@media (min-width: 900px) {
+  /* optical alignment: the body's first line sits level with the rail's cap line */
+  .prose > p:first-child { margin-top: -0.25em; }
+}
+
+.prose p {
+  font-family: var(--sans);
+  font-size: 1.0625rem;
+  line-height: 1.95;
+  color: var(--ink-80);
+  margin: 0 0 1.7em;
+}
+@media (min-width: 900px) {
+  .prose p { font-size: 1.125rem; }
+}
+
+.prose h2 {
+  font-size: clamp(1.375rem, 1.4vw + 1rem, 1.75rem);
+  margin: 3.6em 0 0.9em;
+  padding-top: 1.1em;
+  border-top: 1px solid var(--rule);
+}
+.prose h3 {
+  font-size: clamp(1.125rem, 0.8vw + 0.95rem, 1.375rem);
+  margin: 2.6em 0 0.7em;
+}
+
+.prose a.ulink { color: var(--ink); }
+/* markdown-produced links land here unless the renderer tagged them */
+.prose a:not(.ulink) {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  transition: opacity 0.5s ease;
+}
+.prose a:not(.ulink):hover { opacity: 0.7; }
+
+.prose strong { font-weight: 500; color: var(--ink); }
+.prose em { font-style: italic; }
+
+.prose ul,
+.prose ol {
+  font-family: var(--sans);
+  font-size: 1.0625rem;
+  line-height: 1.9;
+  color: var(--ink-80);
+  margin: 0 0 1.7em;
+  padding-left: 1.4em;
+}
+.prose li { margin-bottom: 0.5em; }
+.prose li::marker { color: var(--ink-60); }
+
+/* no colour, no left stripe, no fill — indentation and rule do the work */
+.prose blockquote {
+  margin: 2.6em 0;
+  padding: 0 0 0 1.6em;
+  border-left: 1px solid var(--rule);
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 1.125rem;
+  line-height: 1.9;
+  color: var(--ink-80);
+}
+.prose blockquote p { font-family: inherit; font-size: inherit; line-height: inherit; }
+.prose blockquote p + p { margin-top: 1em; }
+
+.prose code {
+  font-family: var(--mono);
+  font-size: 0.875em;
+  color: var(--ink);
+  background: rgba(28, 28, 28, 0.04);
+  padding: 1px 4px;
+}
+
+.prose pre {
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+  line-height: 1.85;
+  color: var(--ink-80);
+  border: 1px solid var(--rule);
+  padding: 20px;
+  overflow-x: auto;
+  margin: 0 0 1.7em;
+}
+.prose pre code { background: none; padding: 0; font-size: inherit; }
+
+/* section break: three centred dots, the classic printed mark */
+.prose hr {
+  border: 0;
+  margin: 3.4em 0;
+  text-align: center;
+  height: auto;
+}
+.prose hr::before {
+  content: "· · ·";
+  font-family: var(--serif);
+  font-size: 1rem;
+  letter-spacing: 0.5em;
+  color: var(--ink-40);
+}
+
+/* figures: allowed to run wider than the measure */
+.prose figure {
+  margin: 3em 0;
+  /* reach into the gutter on phones, break out of the measure on desktop */
+  width: calc(100% + 2 * var(--pad-x));
+  margin-left: calc(-1 * var(--pad-x));
+}
+@media (min-width: 900px) {
+  .prose figure { width: 116%; margin-left: -6%; }
+}
+.prose figure img {
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--rule);
+}
+.prose figcaption {
+  font-family: var(--sans);
+  font-style: italic;
+  font-size: 0.8125rem;
+  line-height: 1.8;
+  color: var(--ink-60);
+  margin-top: 12px;
+  max-width: 52ch;
+}
+
+/* ---- back-link / pager ---------------------------------------------- */
+
+.pager {
+  margin-top: 72px;
+  padding-top: 28px;
+  border-top: 1px solid var(--rule);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 16px 32px;
+}
+.pager__link {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10px;
+  font-family: var(--serif);
+  font-size: 1.0625rem;
+  color: var(--ink);
+}
+.pager__arrow { transition: transform 0.5s ease; display: inline-block; color: var(--ink-60); }
+.pager__link:hover .pager__arrow { transform: translateX(8px); }
+.pager__link--prev:hover .pager__arrow { transform: translateX(-8px); }
+
+/* ---- section headings on index pages -------------------------------- */
+
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 0;
+}
+.section-head__title {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(1.5rem, 2vw + 1rem, 2.5rem);
+  line-height: 1.15;
+  margin: 0;
+}
+.page-intro { padding-top: calc(var(--nav-h) + 72px); }
+.page-intro__sub {
+  font-family: var(--serif);
+  font-style: italic;
+  color: var(--ink-60);
+  max-width: 46ch;
+  margin: 16px 0 0;
+}
+
+/* empty state */
+.empty {
+  padding: 64px 0;
+  border-top: 1px solid var(--rule);
+  font-family: var(--serif);
+  font-style: italic;
+  color: var(--ink-60);
+}
+
+/* ---- pager arrows already handled; text page cross-links ------------- */
+.crosslinks { display: flex; flex-wrap: wrap; gap: 12px 32px; margin-top: 24px; }

@@ -1,0 +1,20 @@
+# ---- source images (never published, never committed) ----
+# Drop originals into _images/ ; the build reads them and emits derivatives to images/.
+# Copy the masters to the cloud first — this folder is easy to lose.
+_images/*
+!_images/metadata.json
+!_images/rows.json
+!_images/.gitkeep
+
+# ---- build internals ----
+.build/
+node_modules/
+npm-debug.log*
+
+# ---- OS / editor noise ----
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp

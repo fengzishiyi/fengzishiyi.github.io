@@ -1,0 +1,186 @@
+/* ==========================================================================
+   lightbox.css — full-bleed viewer, monochrome shell
+   Solid scrim only; no gradient, no shadow, no rounded corners.
+   ========================================================================== */
+
+.lb {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: rgba(249, 248, 246, 0.985);
+  display: none;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+.lb[data-open="true"] { display: grid; }
+
+/* --- top bar: counter left, close right ------------------------------- */
+.lb__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px var(--pad-x);
+  border-bottom: 1px solid var(--rule);
+}
+.lb__count {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.16em;
+  color: var(--ink-60);
+  font-variant-numeric: tabular-nums;
+}
+
+.lb__btn {
+  font-family: var(--sans);
+  font-size: 0.6875rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-60);
+  background: transparent;
+  border: 0;
+  padding: 6px 2px;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.5s ease;
+}
+.lb__btn::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 2px;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.5s cubic-bezier(0.2, 0.6, 0.2, 1);
+}
+.lb__btn:hover,
+.lb__btn:focus-visible { color: var(--ink); }
+.lb__btn:hover::after,
+.lb__btn:focus-visible::after { transform: scaleX(1); }
+.lb__btn[aria-pressed="true"] { color: var(--ink); }
+
+/* --- stage: the photograph is the only colour on the page ------------- */
+.lb__stage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px var(--pad-x);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.lb__figure {
+  margin: 0;
+  max-width: 100%;
+  max-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.lb__img {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  cursor: zoom-in;
+  transition: max-width 0.5s ease, max-height 0.5s ease;
+}
+.lb[data-zoom="full"] .lb__img {
+  max-width: none;
+  max-height: none;
+  width: 200%;
+  cursor: zoom-out;
+}
+@media (max-width: 899px) {
+  /* pinch-zoom is the right gesture on phones; the toggle hides there */
+  .lb__zoom { display: none; }
+  .lb[data-zoom="full"] .lb__img { width: auto; max-width: 100%; max-height: 100%; }
+}
+
+.lb__spinner {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--rule);
+  border-top-color: var(--ink-60);
+  border-radius: 50%;
+  animation: lb-spin 1s linear infinite;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+.lb[data-loading="true"] .lb__spinner { opacity: 1; }
+@keyframes lb-spin { to { transform: rotate(360deg); } }
+
+/* --- prev/next: hairline, text-only ----------------------------------- */
+.lb__step {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 22%;
+  max-width: 180px;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  color: var(--ink-60);
+  font-family: var(--serif);
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.5s ease;
+  z-index: 2;
+}
+.lb__step:hover,
+.lb__step:focus-visible { color: var(--ink); }
+.lb__step--prev { left: 0; }
+.lb__step--next { right: 0; }
+@media (max-width: 639px) {
+  .lb__step { width: 18%; font-size: 1.25rem; }
+}
+
+/* --- meta plate: only place where a title is ever shown -------------- */
+.lb__bar {
+  border-top: 1px solid var(--rule);
+  padding: 18px var(--pad-x) 22px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px 32px;
+}
+.lb__title {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(1rem, 0.8vw + 0.85rem, 1.25rem);
+  line-height: 1.4;
+  margin: 0;
+  color: var(--ink);
+}
+.lb__facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.lb__facts li {
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  color: var(--ink-60);
+  font-variant-numeric: tabular-nums;
+}
+.lb__facts li + li::before {
+  content: "·";
+  margin-right: 18px;
+  color: var(--ink-40);
+}
+.lb__facts a { color: var(--ink-60); }
+.lb__facts a:hover { color: var(--ink); }

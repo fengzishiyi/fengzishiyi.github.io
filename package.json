@@ -1,0 +1,25 @@
+{
+  "name": "fengzishiyi.github.io",
+  "version": "1.0.0",
+  "private": true,
+  "description": "personal blog — editorial style: an infinite image wall and a magazine-style article section",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "node src/build.mjs",
+    "check": "node src/build.mjs --check-only",
+    "wall": "node src/wall-math.mjs",
+    "smoke": "node src/smoke.mjs",
+    "shots": "node src/shots.mjs",
+    "verify": "node src/build.mjs && node src/wall-math.mjs && node src/smoke.mjs",
+    "clean": "node src/build.mjs --clean",
+    "serve": "node src/serve.mjs"
+  },
+  "devDependencies": {
+    "marked": "^15.0.7",
+    "sharp": "0.35.5"
+  }
+}

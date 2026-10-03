@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://fengzishiyi.github.io/sitemap.xml

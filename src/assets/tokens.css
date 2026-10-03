@@ -1,0 +1,88 @@
+/* ==========================================================================
+   tokens.css — the whole palette is five values. Nothing else exists.
+   Editorial (编辑杂志风) / hard rules: monochrome only, no shadows, no
+   gradients, no rounded corners, serif headings over sans body.
+   Ruling carried over from editorial-token-mapping.md:
+     · the kit ships a red accent (#e63946) while forbidding coloured accents
+       in the same breath; 禁止项 outranks everything → the red is dropped.
+     · /40 fails WCAG AA on the cream ground → /40 never carries information.
+       Labels therefore sit at /60.
+   ========================================================================== */
+
+:root {
+  /* ---- surface -------------------------------------------------------- */
+  --paper: #F9F8F6;              /* warm cream — NOT #fafafa */
+  --ink: #1C1C1C;                /* soft black — NOT #0a0a0a */
+
+  /* ---- four grays, by measured contrast against --paper ---------------
+     These are PRE-COMPOSITED, not live alpha. The name records the tier; the
+     value is what actually renders, so the build-time contrast check measures
+     exactly what a reader sees rather than a foreground value that lies.
+
+       --ink-80   16.8% ink over paper → 8.49:1   body copy
+       --ink-60   28.4% ink over paper → 5.10:1   labels, secondary text
+       --ink-40   the 40% ink tier     → 2.05:1   decorative numerals only
+
+     Live alpha was rejected deliberately: ink at 60% alpha composites to only
+     4.40:1 and fails AA (the /60 tier is what the kit's own checklist asks
+     for). 28.4% lands on 5.10:1 and keeps the tier's role intact. */
+  --ink-80: #494948;
+  --ink-60: #6A6A69;
+  --ink-40: #B0B0AE;
+  --rule: rgba(28, 28, 28, 0.1);          /* hairlines */
+  --rule-strong: rgba(28, 28, 28, 0.45);  /* hairline, hovered */
+
+  /* ---- type ----------------------------------------------------------- */
+  /* System-first: a CJK serif webfont is 5–8 MB per weight, so we take the
+     platform faces instead and accept slight per-OS differences in 汉字. */
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua",
+    Georgia, "Songti SC", "Noto Serif SC", "Source Han Serif SC", "SimSun", serif;
+  --sans: "Helvetica Neue", Helvetica, Arial, "PingFang SC", "Hiragino Sans GB",
+    "Microsoft YaHei", "Segoe UI", sans-serif;
+  --mono: ui-monospace, "SFMono-Regular", "Cascadia Mono", Consolas,
+    "Liberation Mono", monospace;
+
+  --tracking-label: 0.2em;
+  --tracking-tight: -0.02em;     /* Latin headings only — negative tracking hurts 中文 */
+  --tracking-cjk: 0.01em;
+
+  /* ---- box ------------------------------------------------------------ */
+  --gutter: 16px;
+  --gutter-half: 8px;
+  --nav-h: 56px;
+
+  /* container */
+  --pad-x: 24px;
+  --measure: 34em;               /* ~30–34 汉字 per line ≈ 65–75 Latin chars */
+
+  /* ---- vertical rhythm ------------------------------------------------- */
+  --sec-y: 96px;
+
+  /* ---- wall geometry --------------------------------------------------- */
+  /* Height is fixed per class and width follows from the ratio, so a tall 0.49
+     panel and a 2.23 pano occupy the same band without the wall reading as a
+     broken grid. These four numbers are duplicated in src/build.mjs (CLASS_H /
+     CLASS_W) and checked against each other at build time. */
+  --tile-xxl-h: 400px;  --tile-xxl-w: 196px;
+  --tile-xl-h:  330px;  --tile-xl-w:  260px;
+  --tile-lg-h:  280px;  --tile-lg-w:  280px;
+  --tile-md-h:  240px;  --tile-md-w:  390px;
+  --tile-sm-h:  180px;  --tile-sm-w:  400px;
+  --tile-row-h: 400px;          /* == --tile-xxl-h, the tallest band */
+  --wall-pad-y: 40px;
+
+  color-scheme: light;
+}
+
+/* narrow phones: tighter seams, tighter seams read denser */
+@media (max-width: 639px) {
+  :root { --gutter: 12px; --gutter-half: 6px; --wall-pad-y: 28px; }
+}
+
+@media (min-width: 640px) {
+  :root { --pad-x: 32px; --gutter: 16px; --sec-y: 128px; }
+}
+
+@media (min-width: 900px) {
+  :root { --pad-x: 48px; --sec-y: 160px; }
+}
