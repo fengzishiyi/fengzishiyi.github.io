@@ -107,25 +107,24 @@
 }
 .card__cat:hover { color: var(--ink-strong); text-decoration: underline; text-underline-offset: 4px; }
 
-/* The circular arrow button. chester's is an external-link arrow; here every
-   card opens a page inside the site, so the glyph is a chevron. It is a
-   decoration on the card, not a second link. */
+/* The arrow in the card's top-right corner, exactly as chester draws it: a thin
+   stroked arrow-up-right, no background, no circle, muted grey that darkens with
+   the card. It is a decoration on the card, not a second link — the stretched
+   title link owns the click. */
 .card__arrow {
   flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  border-radius: var(--radius-pill);
+  width: 1.25rem;
+  height: 1.25rem;
   color: var(--ink-muted);
-  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+  transition: color var(--dur) var(--ease), transform var(--dur) var(--ease);
 }
 .card:hover .card__arrow,
 .card:focus-within .card__arrow {
-  background: var(--page);
   color: var(--ink-strong);
-  box-shadow: var(--shadow-card);
+  transform: translate(1px, -1px);
 }
 .card__arrow svg { width: 1rem; height: 1rem; }
 

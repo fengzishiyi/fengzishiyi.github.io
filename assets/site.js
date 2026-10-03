@@ -3,12 +3,13 @@
 
    Everything here is an enhancement of a default that already works:
 
-     · nav indicator — the current link is marked by colour and aria-current
-                       regardless; the sliding pill is decoration
      · folding       — sections and folds render OPEN; this adds the control
      · reader mode   — strips the chrome for reading; off by default
      · previews      — links resolve and read fine as plain links
      · search        — the archive and tags pages cover the same ground
+
+   The nav is NOT here: the current page is marked by aria-current and CSS, so
+   it looks the same whether or not this file ever runs.
 
    Removed in this revision, deliberately: the dark/light theme switch, the
    font-size and line-width steppers, and the reading-progress bar. The design
@@ -31,31 +32,13 @@
   };
 
   /* ---------------------------------------------------------------- */
-  /* nav: the sliding indicator                                        */
+  /* nav                                                               */
   /* ---------------------------------------------------------------- */
 
-  function setupNav() {
-    var pill = document.querySelector("[data-nav-pill]");
-    var indicator = document.querySelector("[data-nav-indicator]");
-    if (!pill || !indicator) return;
-
-    var current = pill.querySelector('.nav__link[aria-current="page"]');
-    if (!current) return;
-
-    // Measured rather than hard-coded: the labels are Chinese and their widths
-    // depend on the fallback font, so any fixed offset would be wrong on some
-    // systems. offsetLeft is relative to the pill, which is what transform wants.
-    var place = function () {
-      indicator.style.width = current.offsetWidth + "px";
-      indicator.style.transform = "translateX(" + current.offsetLeft + "px)";
-      indicator.setAttribute("data-on", "true");
-    };
-
-    place();
-    // fonts change metrics after first paint
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(place).catch(function () {});
-    window.addEventListener("resize", place, { passive: true });
-  }
+  // The nav has no script: the current page is marked in the markup with
+  // aria-current, and CSS does the rest. An earlier revision measured the
+  // current link and slid an indicator behind it; the reference design marks it
+  // with colour and a ring instead, so the whole routine went away.
 
   /* ---------------------------------------------------------------- */
   /* folding: sections and standalone folds                            */
@@ -484,7 +467,6 @@
   /* go                                                               */
   /* ---------------------------------------------------------------- */
 
-  setupNav();
   setupSections();
   setupFolds();
   setupReader();

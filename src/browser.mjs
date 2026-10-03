@@ -268,9 +268,11 @@ export const MEASURE_EXPR = `(() => {
     document.querySelectorAll(".epigraph").length +
     document.querySelectorAll(".columns").length +
     document.querySelectorAll(".citeref").length;
-  // script-only decoration: its absence with JS off is correct, not a failure
-  var ind = document.querySelector("[data-nav-indicator]");
-  out.navIndicator = !!(ind && ind.getAttribute("data-on") === "true");
+  // the nav is markup-only: the current link is ringed by CSS, so this must be
+  // true with scripting on AND off — that is the point of it not being scripted
+  var current = document.querySelector('.nav__link[aria-current="page"]');
+  out.navCurrent = !!current;
+  out.navRing = current ? getComputedStyle(current).boxShadow !== "none" : false;
 
   // ---- the masonry ------------------------------------------------------
   out.cards = document.querySelectorAll(".card").length;

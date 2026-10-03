@@ -182,8 +182,17 @@ try {
   if (nested.length) fail(`${nested.length} 张卡片里有嵌套 <a>`);
   else ok(`${cardBlocks.length} 张卡片均无嵌套锚点`);
 
-  if (!/nav__indicator/.test(home)) fail("导航缺少滑块指示器");
-  else ok("导航带滑块指示器");
+  // The current page is marked in the markup, with no script involved: chester
+  // colours the link and rings it. An earlier revision slid a pill along behind
+  // it, which looked good and was not what the reference does.
+  const navCss = (await get("/assets/base.css")).body;
+  if (!/\.nav__link\[aria-current="page"\]/.test(navCss)) {
+    fail("导航没有给当前页写样式");
+  } else if (!/<a class="nav__link" href="\/" aria-current="page">/.test(home)) {
+    fail("首页没有把当前页标成 aria-current");
+  } else {
+    ok("导航当前页由 aria-current 标记，无需脚本");
+  }
 
   console.log("\narticles keep their promises");
   const articleHtml = articles.map((p) => html[p]).filter(Boolean).join("\n");

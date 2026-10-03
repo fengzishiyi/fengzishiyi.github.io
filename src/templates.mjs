@@ -81,18 +81,16 @@ ${headExtra}
 }
 
 /**
- * Sticky frosted nav with the sliding indicator.
+ * Sticky frosted nav.
  *
- * The indicator is one absolutely-positioned pill that JS moves behind the
- * current link; with scripting off it never appears and the current link is
- * still marked by colour plus aria-current, so nothing is lost.
+ * The current page is marked by colour plus a blue ring, exactly as chester
+ * does it — no moving parts, and nothing that only exists once scripting runs.
  */
 export function nav(active) {
   return `
 <div class="wrap">
   <nav class="nav" aria-label="主导航">
     <div class="nav__pill" data-nav-pill>
-      <span class="nav__indicator" data-nav-indicator aria-hidden="true"></span>
 ${NAV.map((n) => `      <a class="nav__link" href="${n.href}"${
         active === n.key ? ' aria-current="page"' : ""
       }>${esc(n.text)}</a>`).join("\n")}
@@ -135,7 +133,10 @@ ${NAV.map((n) => `      <a href="${n.href}">${esc(n.text)}</a>`).join("\n")}
 /* cards                                                                 */
 /* ══════════════════════════════════════════════════════════════════════ */
 
-const arrowSvg = `<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M7.22 4.22a.75.75 0 011.06 0l5.25 5.25a.75.75 0 010 1.06l-5.25 5.25a.75.75 0 11-1.06-1.06L11.94 10 7.22 5.28a.75.75 0 010-1.06z" clip-rule="evenodd"></path></svg>`;
+/* A thin arrow-up-right, stroked rather than filled — the glyph chester puts in
+   the corner of every card. Every card here opens a page inside the site, so it
+   is a decoration, not a second link; the stretched title link owns the click. */
+const arrowSvg = `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 13.5 13.5 6.5"></path><path d="M7.5 6.5h6v6"></path></svg>`;
 
 /** One tag chip. Colour is a decoration, never the only carrier of meaning —
  *  the status name is always printed next to it. */
@@ -182,9 +183,14 @@ export function card(item, size) {
     </div>`;
   }
 
-  const chips = item.tags && item.tags.length
-    ? `<div class="card__chips">${item.tags.slice(0, 3).map((t) => chip(t, item.chip)).join("")}</div>`
-    : (item.collection && item.statusName ? `<div class="card__chips">${chip(item.statusName, item.chip)}</div>` : "");
+  // Chips only where chester has them. Its Writing cards carry no chips at all —
+  // header, title, date, text — while its Reading and Hobbies cards lead with the
+  // coloured status chip (READING / READ / FILTER). An article's tags used to be
+  // printed here in neutral grey, which read as grey-on-grey and was not in the
+  // reference; the tags still live on the article itself and on /tags/.
+  const chips = item.collection && item.statusName
+    ? `<div class="card__chips">${chip(item.statusName, item.chip)}</div>`
+    : "";
 
   const sub = item.author
     ? `<span class="card__sub">${esc(item.author)}${item.created ? ` · ${esc(item.created.slice(0, 4))}` : ""}</span>`

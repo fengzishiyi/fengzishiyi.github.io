@@ -121,7 +121,7 @@ for (const [vname, w, h, cols] of (quick ? [] : VIEWPORTS)) {
   if (home.gridCols !== cols) fail(`首页 @${w}: 网格 ${home.gridCols} 栏，期望 ${cols} 栏`);
   if (home.clipped) fail(`首页 @${w}: ${home.clipped} 处卡片文字被裁切`);
   if (home.h1Count !== 1) fail(`首页 @${w}: ${home.h1Count} 个 h1`);
-  console.log(`   网格 ${home.gridCols} 栏 · ${home.cards} 张卡 · 裁切 ${home.clipped} · 指示器 ${home.navIndicator ? "在" : "无"}`);
+  console.log(`   网格 ${home.gridCols} 栏 · ${home.cards} 张卡 · 裁切 ${home.clipped} · 当前页标记 ${home.navRing ? "在" : "无"}`);
 
   for (const page of PAGES) {
     let m;
@@ -158,8 +158,10 @@ for (const w of quick ? [] : [390, 1440]) {
 
     if (m.scriptRan) fail(`no-JS ${page}: 脚本仍然运行了`);
     if (m.fnrefCount !== m.noteCount) fail(`no-JS ${page} @${w}: ${m.fnrefCount} 个引用对应 ${m.noteCount} 条脚注`);
-    // the nav indicator is script-only, so it must be absent
-    if (m.navIndicator) fail(`no-JS ${page} @${w}: 导航指示器不该在无脚本时出现`);
+    // The current page is marked by CSS alone, so it must look identical with
+    // scripting off — that is the whole reason it is not scripted.
+    if (!m.navCurrent) fail(`no-JS ${page} @${w}: 导航没有标出当前页`);
+    if (!m.navRing) fail(`no-JS ${page} @${w}: 当前页的样式没有生效（无脚本时也应一样）`);
     // and the block forms the SOURCE contains must all have rendered
     if (page === ARTICLE && m.blockForms < richest.forms) {
       fail(`no-JS ${page} @${w}: 源文件有 ${richest.forms} 个块级写法，只渲染出 ${m.blockForms} 个`);
