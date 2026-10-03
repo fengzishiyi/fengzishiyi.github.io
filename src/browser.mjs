@@ -239,6 +239,10 @@ export const MEASURE_EXPR = `(() => {
   out.imgCount = imgs.length;
   var broken = 0;
   for (var k = 0; k < imgs.length; k++) {
+    // An <img> with no src is a placeholder, not a failure: the viewer's image
+    // element is empty until a photograph is opened. Counting it as broken
+    // produced a false alarm on every article page.
+    if (!imgs[k].getAttribute("src")) continue;
     if (imgs[k].complete && imgs[k].naturalWidth === 0) broken++;
   }
   out.brokenImgs = broken;
