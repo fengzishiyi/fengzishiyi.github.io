@@ -1,16 +1,24 @@
 #!/usr/bin/env node
 /**
- * smoke.mjs — serve the built site and pull it apart like a browser would.
+ * smoke.mjs — serve the PUBLISHED tree and pull it apart like a browser would.
  *
- * Requires `npm run build` first. Checks, against real HTTP responses:
+ * Requires `npm run build` first.
+ *
+ * It serves the REPO ROOT, not `.build/`. That is deliberate and was learned the
+ * hard way: the build writes to a staging directory and then mirrors a fixed
+ * list of paths into the root, and a page written to the stage but missing from
+ * that list is absent in production while a stage-based check stays green. The
+ * legacy redirect pages were exactly that — green locally, 404 live.
+ *
+ * Checks, against real HTTP responses:
  *   · every page returns 200, is HTML, and has exactly one <h1>
  *   · every URL referenced anywhere in the HTML resolves
  *   · a missing path falls back to the 404 page with a 404 status
  *   · the promises this site makes are actually kept in the shipped bytes:
  *       — the notes are INLINE (so reading works without scripting)
- *       — one stylesheet set, no third-party scripts or fonts
- *       — the search index exists and covers every article
- *       — every backlink has a matching forward link (the graph is consistent)
+ *       — no third-party scripts, styles or fonts
+ *       — the search index covers every article
+ *       — every backlink has a matching forward link
  *       — legacy magazine URLs still redirect
  *   · sizes stay inside the budgets
  */
@@ -21,7 +29,6 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const STAGE = path.join(ROOT, ".build");
 const PORT = 4399;
 const BASE = `http://127.0.0.1:${PORT}`;
 
@@ -30,34 +37,32 @@ let checks = 0;
 const fail = (m) => { console.log("  ✗ " + m); failures++; };
 const ok = (m) => { checks++; console.log("  " + m + "  ✓"); };
 
-if (!fs.existsSync(path.join(STAGE, "index.html"))) {
-  console.error("没有构建产物 —— 先运行 npm run build");
+if (!fs.existsSync(path.join(ROOT, "index.html"))) {
+  console.error("仓库根目录没有构建产物 —— 先运行 npm run build");
   process.exit(2);
 }
 
-/* ---- discover, from the built tree ------------------------------------ */
+/* ---- discover, from the PUBLISHED tree -------------------------------- */
 const dirsIn = (p) => fs.existsSync(p)
   ? fs.readdirSync(p, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name)
   : [];
 
 const DOMAINS = ["literature", "philosophy", "compsci"];
-const articles = DOMAINS.flatMap((d) => dirsIn(path.join(STAGE, d)).map((s) => `/${d}/${s}/`));
-const tagPages = dirsIn(path.join(STAGE, "tags")).map((t) => `/tags/${t}/`);
-const seriesPages = dirsIn(path.join(STAGE, "series")).map((s) => `/series/${s}/`);
+const articles = DOMAINS.flatMap((d) => dirsIn(path.join(ROOT, d)).map((s) => `/${d}/${s}/`));
+const tagPages = dirsIn(path.join(ROOT, "tags")).map((t) => `/tags/${t}/`);
+const seriesPages = dirsIn(path.join(ROOT, "series")).map((s) => `/series/${s}/`);
+// legacy redirect stubs: they exist in the root, so they must be reachable
+const legacyArticles = dirsIn(path.join(ROOT, "articles")).map((s) => `/articles/${s}/`);
 
 const pages = [
   "/", "/archive/", "/tags/", "/series/", "/search/", "/changelog/", "/about/", "/404.html",
+  "/articles/", "/contents/", "/images/",
   ...DOMAINS.map((d) => `/${d}/`),
-  ...tagPages, ...seriesPages, ...articles
-];
-const mustExist = [
-  "/search/index.json", "/rss.xml", "/sitemap.xml", "/robots.txt", "/favicon.svg",
-  ...["tokens", "base", "prose", "components", "search"].map((n) => `/assets/${n}.css`),
-  "/assets/site.js"
+  ...tagPages, ...seriesPages, ...articles, ...legacyArticles
 ];
 
-/* ---- boot ------------------------------------------------------------- */
-const child = spawn(process.execPath, [path.join(ROOT, "src/serve.mjs"), String(PORT)], {
+/* ---- boot the server on the published tree ---------------------------- */
+const child = spawn(process.execPath, [path.join(ROOT, "src/serve.mjs"), "--published", String(PORT)], {
   cwd: ROOT, stdio: "inherit"
 });
 
@@ -89,6 +94,14 @@ try {
   ok(`${Object.keys(html).length} pages return 200 with exactly one h1`);
 
   console.log("\nassets");
+  // Listed here rather than derived: these are the files the pages import, and
+  // discovering them would just re-read the HTML that the next check already
+  // walks. A missing one is a hard failure.
+  const mustExist = [
+    "/search/index.json", "/rss.xml", "/sitemap.xml", "/robots.txt", "/favicon.svg",
+    ...["tokens", "base", "prose", "components", "search"].map((n) => `/assets/${n}.css`),
+    "/assets/site.js"
+  ];
   for (const p of mustExist) {
     const r = await get(p);
     if (r.status !== 200) fail(`${p} → ${r.status}`);
@@ -205,8 +218,11 @@ try {
 
   console.log("\naccessibility spot-checks");
   const unlabelled = [];
+  // Redirect stubs carry no reading content — they are a meta refresh plus a
+  // link — so landmark and heading rules do not apply to them.
+  const STRUCTURAL = /^(?:\/(?:articles|contents|images)\/[^/]*\/?|\/404\.html)$/;
   for (const [page, body] of Object.entries(html)) {
-    if (page === "/404.html") continue;
+    if (STRUCTURAL.test(page)) continue;
     if (!/<a class="skip" href="#main"/.test(body)) fail(`${page} has no skip link`);
     if (!/<main id="main"/.test(body)) fail(`${page} has no <main id="main">`);
     if (!/<nav[^>]*aria-label=/.test(body)) fail(`${page} has no labelled nav`);
@@ -230,7 +246,7 @@ try {
     .reduce((n, e) => n + (e.isDirectory() ? walkSize(path.join(d, e.name)) : fs.statSync(path.join(d, e.name)).size), 0);
   const cssJs = ["tokens", "base", "prose", "components", "search"].map((n) => `/assets/${n}.css`)
     .concat(["/assets/site.js"])
-    .reduce((n, p) => n + fs.statSync(path.join(STAGE, p)).size, 0);
+    .reduce((n, p) => n + fs.statSync(path.join(ROOT, p)).size, 0);
   const biggest = Object.entries(html)
     .map(([p, b]) => [p, Buffer.byteLength(b, "utf8")])
     .sort((a, b) => b[1] - a[1])[0];

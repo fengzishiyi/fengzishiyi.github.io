@@ -1,47 +1,65 @@
 <!doctype html>
-<html lang="zh-Hans">
+<html lang="zh-Hans" data-theme="auto">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>图片来源已改版 — 枫子十一</title>
+<title>页面已迁移 — 枫子十一</title>
 <meta http-equiv="refresh" content="0; url=/archive/">
 <link rel="canonical" href="https://fengzishiyi.github.io/archive/">
 <meta name="robots" content="noindex,follow">
+<meta name="color-scheme" content="light dark">
 <link rel="stylesheet" href="/assets/tokens.css">
 <link rel="stylesheet" href="/assets/base.css">
-<link rel="stylesheet" href="/assets/spread.css">
-<link rel="stylesheet" href="/assets/article.css">
-<link rel="stylesheet" href="/assets/lightbox.css">
+<link rel="stylesheet" href="/assets/prose.css">
+<link rel="stylesheet" href="/assets/components.css">
+<link rel="stylesheet" href="/assets/search.css">
 </head>
 <body>
 
-<header class="masthead">
-  <div class="shell masthead__in">
-    <a class="wordmark" href="/">枫子十一</a>
-    <span class="masthead__issue label" aria-hidden="true">VOL.1 / NO.02</span>
-    <nav class="masthead__nav" aria-label="主导航">
-      <a class="navlink" href="/contents/">目录</a>
-      <a class="navlink" href="/archive/">往期</a>
-      <a class="navlink" href="/about/">本刊</a>
+<header class="mast">
+  <div class="wrap mast__in">
+    <a class="mast__home" href="/">枫子十一</a>
+    <nav class="mast__nav" aria-label="主导航">
+      <a href="/literature/">文学<span class="mast__n">2</span></a>
+      <a href="/philosophy/">哲学<span class="mast__n">3</span></a>
+      <a href="/compsci/">计算机科学<span class="mast__n">3</span></a>
+      <a href="/tags/">标签<span class="mast__n">20</span></a>
+      <a href="/archive/">归档<span class="mast__n">8</span></a>
+      <a href="/search/">搜索<span class="mast__n">8</span></a>
     </nav>
   </div>
 </header>
-<main id="main" class="shell" style="padding-top:calc(var(--nav-h) + 120px)">
-  <h1 class="page-title">图片来源已改版</h1>
-  <p class="page-intro__sub">现在没有单独的图片板块了 —— 每张图都归属于它所在的那篇文章。</p>
-  <div class="crosslinks" style="margin-top:32px">
-    <a class="ulink label label--plain" href="/archive/">去往期 →</a>
-    <a class="ulink label label--plain" href="/contents/">目录</a>
-  </div>
+<main id="main" class="wrap prose narrow">
+  <header class="pagehead"><h1>页面已迁移</h1></header>
+  <p><code>/images/</code> 现在在 <a href="/archive/">/archive/</a>。</p>
+  <p class="meta">本站已改为纯文本，不再有图片板块。</p>
 </main>
 
-<footer class="colophon">
-  <div class="shell">
-    <div class="colophon__grid">
-      <span class="wordmark">枫子十一</span>
-      <p class="colophon__note">文章、图画与一些想不清楚的事。界面是单色的，颜色全部来自图片。 界面为纯单色，颜色全部来自图片。</p>
-      <p class="colophon__note">第 1 卷 · 第 02 期 · <a class="ulink" href="https://github.com/fengzishiyi/fengzishiyi.github.io">GitHub</a> · <a class="ulink" href="/sitemap.xml">Sitemap</a> · <span class="meta">© 2026 fengzishiyi</span></p>
-    </div>
+<footer class="foot">
+  <div class="wrap">
+    <nav class="foot__nav" aria-label="页脚导航">
+      <a href="/">首页</a>
+      <a href="/literature/">文学</a>
+      <a href="/philosophy/">哲学</a>
+      <a href="/compsci/">计算机科学</a>
+      <a href="/tags/">标签</a>
+      <a href="/archive/">归档</a>
+      <a href="/search/">搜索</a>
+      <a href="/series/">系列</a>
+      <a href="/changelog/">更新</a>
+      <a href="/about/">自述</a>
+      <a href="/rss.xml">RSS</a>
+    </nav>
+    <p class="foot__note">
+      枫子十一 · 个人写作 ·
+      <a href="/about/#license">CC BY-NC-SA 4.0</a> ·
+      <span class="meta">© 2026 fengzishiyi</span>
+    </p>
+    <p class="foot__note meta">
+      纯文本站点：没有图片、没有公式、没有代码高亮、没有第三方脚本、没有追踪。
+      用 Markdown 写作，用 Git 存档。
+    </p>
+    
   </div>
 </footer>
 <script src="/assets/site.js" defer></script>

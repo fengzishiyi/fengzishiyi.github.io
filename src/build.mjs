@@ -49,10 +49,17 @@ const DEFAULTS = {
 
 /** Directories the build owns. Anything here is wiped and re-emitted, and
  *  publish() verifies every one of them landed — a page written to the stage
- *  and forgotten in this list is a page that silently never appears. */
+ *  and forgotten in this list is a page that silently never appears.
+ *
+ *  The three legacy stub directories belong here for exactly that reason. They
+ *  were missing once: `/articles/` 404'd in production, and `/contents/` kept
+ *  serving the previous site generation's page — complete with links to deleted
+ *  stylesheets — because nothing ever overwrote it. Every local check was green,
+ *  because every local check was reading the freshly-written stage. */
 const MANAGED = [
   "literature", "philosophy", "compsci",
   "tags", "series", "archive", "search", "changelog", "about",
+  "articles", "contents", "images",
   "assets", "index.html", "404.html", "rss.xml", "sitemap.xml", "robots.txt",
   "favicon.svg", ".nojekyll"
 ];
@@ -313,18 +320,42 @@ function mirrorDir(from, to) {
   }
 }
 
-/** Delete anything in the published root the build no longer emits. Without
- *  this a removed page survives for ever — publish() only writes and mirrors,
- *  so a stale asset once kept being served long after its feature was gone. */
+/** Delete anything in the published tree the build no longer emits.
+ *
+ *  Recursive on purpose. The first version only looked at root-level FILES, so a
+ *  directory dropped from the build survived for ever with its old pages intact
+ *  — a stale `/contents/` from the previous site generation kept being served,
+ *  still linking to stylesheets that no longer existed. Nothing local noticed,
+ *  because every local check was reading the freshly-written stage.
+ *
+ *  Sources and config live in the same root, so PRIVATE protects them. */
 function prunePublished(log) {
   let removed = 0;
-  for (const e of fs.readdirSync(ROOT, { withFileTypes: true })) {
-    if (isPrivate(e.name) || !e.isFile()) continue;
-    if (exists(path.join(STAGE, e.name))) continue;
-    fs.rmSync(path.join(ROOT, e.name), { force: true });
-    log(`  pruned      ${e.name}`);
-    removed++;
-  }
+
+  const sweep = (dir, stagedDir) => {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      const name = e.name;
+      if (isPrivate(name)) continue;
+      const full = path.join(dir, name);
+      const staged = stagedDir ? path.join(stagedDir, name) : null;
+
+      if (e.isDirectory()) {
+        if (!staged || !exists(staged)) {
+          rm(full);
+          log(`  pruned      ${relative(ROOT, full)}/（构建已不再产出）`);
+          removed++;
+        } else {
+          sweep(full, staged);
+        }
+      } else if (!staged || !exists(staged)) {
+        fs.rmSync(full, { force: true });
+        log(`  pruned      ${relative(ROOT, full)}`);
+        removed++;
+      }
+    }
+  };
+
+  sweep(ROOT, STAGE);
   return removed;
 }
 
