@@ -1,14 +1,13 @@
 <!doctype html>
-<html lang="zh-Hans" data-theme="auto">
+<html lang="zh-Hans">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>枫子十一</title>
 <meta name="description" content="文学、哲学与计算机科学的笔记。个人站点，非商业，无广告、无追踪、无社交功能。">
 <link rel="canonical" href="https://fengzishiyi.github.io/">
-<meta name="theme-color" content="#FBFAF9" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#141413" media="(prefers-color-scheme: dark)">
-<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#FFFFFF">
+<meta name="color-scheme" content="light">
 <meta name="author" content="fengzishiyi">
 <meta property="og:site_name" content="枫子十一">
 <meta property="og:type" content="website">
@@ -20,208 +19,227 @@
 <link rel="alternate" type="application/rss+xml" title="枫子十一" href="/rss.xml">
 <link rel="stylesheet" href="/assets/tokens.css">
 <link rel="stylesheet" href="/assets/base.css">
+<link rel="stylesheet" href="/assets/grid.css">
 <link rel="stylesheet" href="/assets/prose.css">
 <link rel="stylesheet" href="/assets/components.css">
 <link rel="stylesheet" href="/assets/search.css">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"枫子十一","url":"https://fengzishiyi.github.io","inLanguage":"zh-Hans","description":"文学、哲学与计算机科学的笔记。个人站点，非商业，无广告、无追踪、无社交功能。"}</script>
+
 <!-- No analytics, no fonts, no CDN, no third-party script. See /about/ . -->
 </head>
 <body>
 <a class="skip" href="#main">跳到正文</a>
 
-<header class="mast">
-  <div class="wrap mast__in">
-    <a class="mast__home" href="/">枫子十一</a>
-    <nav class="mast__nav" aria-label="主导航">
-      <a href="/literature/">文学<span class="mast__n">2</span></a>
-      <a href="/philosophy/">哲学<span class="mast__n">3</span></a>
-      <a href="/compsci/">计算机科学<span class="mast__n">3</span></a>
-      <a href="/tags/">标签<span class="mast__n">20</span></a>
-      <a href="/archive/">归档<span class="mast__n">8</span></a>
-      <a href="/search/">搜索<span class="mast__n">8</span></a>
-    </nav>
-  </div>
-</header>
+<div class="wrap">
+  <nav class="nav" aria-label="主导航">
+    <div class="nav__pill" data-nav-pill>
+      <span class="nav__indicator" data-nav-indicator aria-hidden="true"></span>
+      <a class="nav__link" href="/" aria-current="page">首页</a>
+      <a class="nav__link" href="/writing/">写作</a>
+      <a class="nav__link" href="/reading/">阅读</a>
+      <a class="nav__link" href="/hobbies/">爱好</a>
+      <a class="nav__link" href="/tags/">标签</a>
+      <a class="nav__link" href="/about/">关于</a>
+    </div>
+  </nav>
+</div>
 <a id="top"></a>
-<main id="main" class="wrap home">
-  <h1 class="home__title">枫子十一</h1>
-  <p class="home__tagline">文学、哲学与计算机科学的笔记。个人站点，非商业，无广告、无追踪、无社交功能。</p>
-
-  <section class="domains" aria-label="三个领域">
-    <article class="domain">
-      <h2><a href="/literature/">文学</a> <span class="meta">2</span></h2>
-      <p class="domain__blurb">诗、小说、散文与翻译。文字本身是目的，不是手段。</p>
-      <ul class="domain__kinds">
-        <li><span class="meta">诗</span> 1</li>
-        <li><span class="meta">散文</span> 1</li>
-      </ul>
-    </article>
-    <article class="domain">
-      <h2><a href="/philosophy/">哲学</a> <span class="meta">3</span></h2>
-      <p class="domain__blurb">论证、札记与评论。把想法逼到能站住或倒下为止。</p>
-      <ul class="domain__kinds">
-        <li><span class="meta">札记</span> 2</li>
-        <li><span class="meta">评论</span> 1</li>
-      </ul>
-    </article>
-    <article class="domain">
-      <h2><a href="/compsci/">计算机科学</a> <span class="meta">3</span></h2>
-      <p class="domain__blurb">技术文章、算法笔记与踩坑记录。写下当时是怎么想错的。</p>
-      <ul class="domain__kinds">
-        <li><span class="meta">技术文章</span> 1</li>
-        <li><span class="meta">工具</span> 1</li>
-        <li><span class="meta">踩坑</span> 1</li>
-      </ul>
-    </article>
-  </section>
-
-  <div class="homecols">
-    <section class="homecol" aria-labelledby="latest-h">
-      <h2 class="rail__h" id="latest-h">最新更新</h2>
-<ol class="entries reveal">
-    <li class="entry">
-      <a class="entry__title" href="/philosophy/plain-text-rebuttal/">反驳：纯文本也是一种格式</a>
-      <p class="entry__meta meta">
-        <a href="/philosophy/">哲学</a> · 评论 ·
-        <time datetime="2026-03-12">2026.03.12</time>
-        · <span class="status status--notes">笔记</span>
-      </p>
-      <p class="entry__desc">对上文的一个反驳 —— 「纯文本寿命更长」这个论证把格式与媒介混为一谈了。</p>
-    </li>
-    <li class="entry">
-      <a class="entry__title" href="/compsci/why-plain-text/">为什么是纯文本</a>
-      <p class="entry__meta meta">
-        <a href="/compsci/">计算机科学</a> · 技术文章 ·
-        <time datetime="2026-03-10">2026.03.10</time>
-        · <span class="status status--in-progress">进行中</span>
-      </p>
-      <p class="entry__desc">一个只放文字的站点，在图片、公式与代码高亮触手可及的时候，这个选择需要理由。</p>
-    </li>
-    <li class="entry">
-      <a class="entry__title" href="/compsci/static-site-failure-locality/">静态站点的一个好处被说反了</a>
-      <p class="entry__meta meta">
-        <a href="/compsci/">计算机科学</a> · 工具 ·
-        <time datetime="2026-02-25">2026.02.25</time>
-        
-      </p>
-      <p class="entry__desc">「没有数据库所以更快」是次要的。真正的好处是：损坏是局部的，而且下一次构建就能修好。</p>
-    </li>
-    <li class="entry">
-      <a class="entry__title" href="/compsci/why-the-wall-moved/">为什么这面墙一直在动</a>
-      <p class="entry__meta meta">
-        <a href="/compsci/">计算机科学</a> · 踩坑 ·
-        <time datetime="2026-02-18">2026.02.18</time>
-        
-      </p>
-      <p class="entry__desc">自动移动的内容在网页上几乎总是错的。当年那面图墙是个例外，但理由必须说清楚。</p>
-    </li>
-    <li class="entry">
-      <a class="entry__title" href="/literature/夜航/">夜航</a>
-      <p class="entry__meta meta">
-        <a href="/literature/">文学</a> · 诗 ·
-        <time datetime="2026-02-02">2026.02.02</time>
-        
-      </p>
-      <p class="entry__desc">一首关于夜班车与窗外的短诗。</p>
-    </li>
-    <li class="entry">
-      <a class="entry__title" href="/philosophy/记不住的到底是哪一部分/">记不住的到底是哪一部分</a>
-      <p class="entry__meta meta">
-        <a href="/philosophy/">哲学</a> · 札记 ·
-        <time datetime="2026-01-20">2026.01.20</time>
-        · <span class="status status--notes">笔记</span>
-      </p>
-      <p class="entry__desc">关于记忆的一个札记：我们记住的常常不是事件，而是讲述它的那句话。</p>
-    </li>
-    <li class="entry">
-      <a class="entry__title" href="/literature/关于把书读两遍/">关于把书读两遍</a>
-      <p class="entry__meta meta">
-        <a href="/literature/">文学</a> · 散文 ·
-        <time datetime="2026-01-11">2026.01.11</time>
-        
-      </p>
-      <p class="entry__desc">一段散文，关于重读与第一次读之间的差别。</p>
-    </li>
-    <li class="entry">
-      <a class="entry__title" href="/philosophy/monochrome-screen/">单色的界面，彩色的画面</a>
-      <p class="entry__meta meta">
-        <a href="/philosophy/">哲学</a> · 札记 ·
-        <time datetime="2026-01-07">2026.01.07</time>
-        
-      </p>
-      <p class="entry__desc">一个只用黑白与纸色的界面，为什么反而让内容更亮。视觉重量是守恒的。</p>
-    </li>
-</ol>
-      <p class="more"><a href="/archive/">全部 8 篇 →</a></p>
-    </section>
-
-    <div class="homecol">
-      <section aria-labelledby="random-h">
-        <h2 class="rail__h" id="random-h">随便读一篇</h2>
-<ol class="entries reveal">
-    <li class="entry">
-      <a class="entry__title" href="/literature/夜航/">夜航</a>
-      <p class="entry__meta meta">
-        <a href="/literature/">文学</a> · 诗 ·
-        <time datetime="2026-02-02">2026.02.02</time>
-        
-      </p>
-      <p class="entry__desc">一首关于夜班车与窗外的短诗。</p>
-    </li>
-</ol>
-        <p class="more"><button type="button" class="linkbtn" data-random>换一篇</button></p>
-      </section>
-
-      <section aria-labelledby="tags-h">
-        <h2 class="rail__h" id="tags-h">标签</h2>
-        <ul class="tagcloud">
-          <li><a href="/tags/%E6%95%B0%E5%AD%97%E4%BA%BA%E6%96%87/">数字人文</a> <span class="meta">2</span></li>
-          <li><a href="/tags/%E7%BA%AF%E6%96%87%E6%9C%AC/">纯文本</a> <span class="meta">2</span></li>
-          <li><a href="/tags/%E9%95%BF%E6%9C%9F%E4%B8%BB%E4%B9%89/">长期主义</a> <span class="meta">2</span></li>
-          <li><a href="/tags/%E5%8A%A8%E6%95%88/">动效</a> <span class="meta">1</span></li>
-          <li><a href="/tags/%E5%8F%99%E8%BF%B0/">叙述</a> <span class="meta">1</span></li>
-          <li><a href="/tags/%E5%9F%8E%E5%B8%82/">城市</a> <span class="meta">1</span></li>
-          <li><a href="/tags/%E5%B7%A5%E5%85%B7%E9%93%BE/">工具链</a> <span class="meta">1</span></li>
-          <li><a href="/tags/%E6%84%8F%E8%B1%A1-%E5%A4%9C/">意象-夜</a> <span class="meta">1</span></li>
-          <li><a href="/tags/%E6%84%8F%E8%B1%A1-%E7%AA%97/">意象-窗</a> <span class="meta">1</span></li>
-          <li><a href="/tags/%E6%84%9F%E7%9F%A5/">感知</a> <span class="meta">1</span></li>
-          <li><a href="/tags/%E6%8E%92%E7%89%88/">排版</a> <span class="meta">1</span></li>
-          <li><a href="/tags/%E6%97%A0%E9%9A%9C%E7%A2%8D/">无障碍</a> <span class="meta">1</span></li>
-          <li><a href="/tags/%E6%97%B6%E9%97%B4/">时间</a> <span class="meta">1</span></li>
-          <li><a href="/tags/%E6%B3%A8%E6%84%8F%E5%8A%9B/">注意力</a> <span class="meta">1</span></li>
-          <li><a href="/tags/%E8%AE%A4%E7%9F%A5%E7%A7%91%E5%AD%A6/">认知科学</a> <span class="meta">1</span></li>
-          <li><a href="/tags/%E8%AE%B0%E5%BF%86/">记忆</a> <span class="meta">1</span></li>
-          <li><a href="/tags/%E8%AE%BA%E8%AF%81/">论证</a> <span class="meta">1</span></li>
-          <li><a href="/tags/%E8%AE%BE%E8%AE%A1/">设计</a> <span class="meta">1</span></li>
-          <li><a href="/tags/%E9%98%85%E8%AF%BB/">阅读</a> <span class="meta">1</span></li>
-          <li><a href="/tags/%E9%9D%99%E6%80%81%E7%AB%99%E7%82%B9/">静态站点</a> <span class="meta">1</span></li>
-        </ul>
-        <p class="more"><a href="/tags/">全部 20 个标签 →</a></p>
-      </section>
-
-      <section aria-labelledby="series-h">
-        <h2 class="rail__h" id="series-h">系列</h2>
-        <ul class="serieslist">
-          <li><a href="/series/%E4%B8%AA%E4%BA%BA%E7%AB%99%E7%82%B9%E7%9A%84%E4%B8%89%E6%AC%A1%E6%94%B9%E7%89%88/">个人站点的三次改版</a> <span class="meta">3</span></li>
-        </ul>
-      </section>
+<main id="main" class="wrap">
+<div class="masonry">
+<div class="cell cell--intro">
+      <div class="card card--intro">
+        <div class="card__inner">
+          <div class="card__text">
+            <h1 class="card__h1">枫子十一：一个写字的地方</h1>
+            <p class="card__intro">三块地方：<a href="/literature/">文学</a>、<a href="/philosophy/">哲学</a>、<a href="/compsci/">计算机科学</a>。</p><p class="card__intro" style="margin-top:1rem">纯文本，没有图片、公式与代码高亮；也没有广告、追踪与社交功能。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+<div class="cell cell--wide">
+    <div class="card">
+      <div class="card__inner">
+        <div class="card__head">
+        <span><a class="card__cat" href="/compsci/">计算机科学</a>&nbsp;·&nbsp;技术文章</span>
+        <span class="card__arrow"><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M7.22 4.22a.75.75 0 011.06 0l5.25 5.25a.75.75 0 010 1.06l-5.25 5.25a.75.75 0 11-1.06-1.06L11.94 10 7.22 5.28a.75.75 0 010-1.06z" clip-rule="evenodd"></path></svg></span>
+      </div>
+        <div class="card__text">
+          <div class="card__chips"><span class="chip chip--neutral">纯文本</span><span class="chip chip--neutral">长期主义</span><span class="chip chip--neutral">数字人文</span></div>
+          <h3 class="card__title"><a class="card__link stretched" href="/compsci/why-plain-text/">为什么是纯文本</a></h3>
+          <span class="card__sub">2026-03-10</span>
+          <p class="card__body">一个只放文字的站点，在图片、公式与代码高亮触手可及的时候，这个选择需要理由。</p>
+        </div>
+      </div>
     </div>
   </div>
+<div class="cell cell--square">
+    <div class="card">
+      <div class="card__inner">
+        <div class="card__head">
+        <span><a class="card__cat" href="/reading/">阅读</a>&nbsp;·&nbsp;在读</span>
+        <span class="card__arrow"><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M7.22 4.22a.75.75 0 011.06 0l5.25 5.25a.75.75 0 010 1.06l-5.25 5.25a.75.75 0 11-1.06-1.06L11.94 10 7.22 5.28a.75.75 0 010-1.06z" clip-rule="evenodd"></path></svg></span>
+      </div>
+        <div class="card__text">
+          <div class="card__chips"><span class="chip chip--amber">写作方法</span></div>
+          <h3 class="card__title"><a class="card__link stretched" href="/reading/digital-garden/">数字花园与博客有什么区别</a></h3>
+          <span class="card__sub">待补 · 2026</span>
+          <p class="card__body">一本关于长期写作与知识组织的书。这一条是示例，可以删。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+<div class="cell cell--square">
+    <div class="card">
+      <div class="card__inner">
+        <div class="card__head">
+        <span><a class="card__cat" href="/philosophy/">哲学</a>&nbsp;·&nbsp;评论</span>
+        <span class="card__arrow"><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M7.22 4.22a.75.75 0 011.06 0l5.25 5.25a.75.75 0 010 1.06l-5.25 5.25a.75.75 0 11-1.06-1.06L11.94 10 7.22 5.28a.75.75 0 010-1.06z" clip-rule="evenodd"></path></svg></span>
+      </div>
+        <div class="card__text">
+          <div class="card__chips"><span class="chip chip--neutral">纯文本</span><span class="chip chip--neutral">论证</span><span class="chip chip--neutral">数字人文</span></div>
+          <h3 class="card__title"><a class="card__link stretched" href="/philosophy/plain-text-rebuttal/">反驳：纯文本也是一种格式</a></h3>
+          <span class="card__sub">2026-03-12</span>
+          <p class="card__body">对上文的一个反驳 —— 「纯文本寿命更长」这个论证把格式与媒介混为一谈了。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+<div class="cell cell--square">
+    <div class="card">
+      <div class="card__inner">
+        <div class="card__head">
+        <span><a class="card__cat" href="/compsci/">计算机科学</a>&nbsp;·&nbsp;工具</span>
+        <span class="card__arrow"><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M7.22 4.22a.75.75 0 011.06 0l5.25 5.25a.75.75 0 010 1.06l-5.25 5.25a.75.75 0 11-1.06-1.06L11.94 10 7.22 5.28a.75.75 0 010-1.06z" clip-rule="evenodd"></path></svg></span>
+      </div>
+        <div class="card__text">
+          <div class="card__chips"><span class="chip chip--neutral">静态站点</span><span class="chip chip--neutral">工具链</span><span class="chip chip--neutral">长期主义</span></div>
+          <h3 class="card__title"><a class="card__link stretched" href="/compsci/static-site-failure-locality/">静态站点的一个好处被说反了</a></h3>
+          <span class="card__sub">2026-02-25</span>
+          <p class="card__body">「没有数据库所以更快」是次要的。真正的好处是：损坏是局部的，而且下一次构建就能修好。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+<div class="cell cell--square">
+    <div class="card">
+      <div class="card__inner">
+        <div class="card__head">
+        <span><a class="card__cat" href="/hobbies/">爱好</a>&nbsp;·&nbsp;当前</span>
+        <span class="card__arrow"><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M7.22 4.22a.75.75 0 011.06 0l5.25 5.25a.75.75 0 010 1.06l-5.25 5.25a.75.75 0 11-1.06-1.06L11.94 10 7.22 5.28a.75.75 0 010-1.06z" clip-rule="evenodd"></path></svg></span>
+      </div>
+        <div class="card__text">
+          <div class="card__chips"><span class="chip chip--sky">手冲</span></div>
+          <h3 class="card__title"><a class="card__link stretched" href="/hobbies/coffee/">冲咖啡</a></h3>
+          <span class="card__sub">2026-02-20</span>
+          <p class="card__body">手冲、磨豆、水温。这一条是示例，可以删。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+<div class="cell cell--square">
+    <div class="card">
+      <div class="card__inner">
+        <div class="card__head">
+        <span><a class="card__cat" href="/compsci/">计算机科学</a>&nbsp;·&nbsp;踩坑</span>
+        <span class="card__arrow"><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M7.22 4.22a.75.75 0 011.06 0l5.25 5.25a.75.75 0 010 1.06l-5.25 5.25a.75.75 0 11-1.06-1.06L11.94 10 7.22 5.28a.75.75 0 010-1.06z" clip-rule="evenodd"></path></svg></span>
+      </div>
+        <div class="card__text">
+          <div class="card__chips"><span class="chip chip--neutral">动效</span><span class="chip chip--neutral">排版</span><span class="chip chip--neutral">无障碍</span></div>
+          <h3 class="card__title"><a class="card__link stretched" href="/compsci/why-the-wall-moved/">为什么这面墙一直在动</a></h3>
+          <span class="card__sub">2026-02-18</span>
+          <p class="card__body">自动移动的内容在网页上几乎总是错的。当年那面图墙是个例外，但理由必须说清楚。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+<div class="cell cell--square">
+    <div class="card">
+      <div class="card__inner">
+        <div class="card__head">
+        <span><a class="card__cat" href="/literature/">文学</a>&nbsp;·&nbsp;诗</span>
+        <span class="card__arrow"><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M7.22 4.22a.75.75 0 011.06 0l5.25 5.25a.75.75 0 010 1.06l-5.25 5.25a.75.75 0 11-1.06-1.06L11.94 10 7.22 5.28a.75.75 0 010-1.06z" clip-rule="evenodd"></path></svg></span>
+      </div>
+        <div class="card__text">
+          <div class="card__chips"><span class="chip chip--neutral">意象-夜</span><span class="chip chip--neutral">意象-窗</span><span class="chip chip--neutral">城市</span></div>
+          <h3 class="card__title"><a class="card__link stretched" href="/literature/夜航/">夜航</a></h3>
+          <span class="card__sub">2026-02-02</span>
+          <p class="card__body">一首关于夜班车与窗外的短诗。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+<div class="cell cell--square">
+    <div class="card">
+      <div class="card__inner">
+        <div class="card__head">
+        <span><a class="card__cat" href="/philosophy/">哲学</a>&nbsp;·&nbsp;札记</span>
+        <span class="card__arrow"><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M7.22 4.22a.75.75 0 011.06 0l5.25 5.25a.75.75 0 010 1.06l-5.25 5.25a.75.75 0 11-1.06-1.06L11.94 10 7.22 5.28a.75.75 0 010-1.06z" clip-rule="evenodd"></path></svg></span>
+      </div>
+        <div class="card__text">
+          <div class="card__chips"><span class="chip chip--neutral">记忆</span><span class="chip chip--neutral">叙述</span><span class="chip chip--neutral">认知科学</span></div>
+          <h3 class="card__title"><a class="card__link stretched" href="/philosophy/记不住的到底是哪一部分/">记不住的到底是哪一部分</a></h3>
+          <span class="card__sub">2026-01-20</span>
+          <p class="card__body">关于记忆的一个札记：我们记住的常常不是事件，而是讲述它的那句话。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+<div class="cell cell--square">
+    <div class="card">
+      <div class="card__inner">
+        <div class="card__head">
+        <span><a class="card__cat" href="/literature/">文学</a>&nbsp;·&nbsp;散文</span>
+        <span class="card__arrow"><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M7.22 4.22a.75.75 0 011.06 0l5.25 5.25a.75.75 0 010 1.06l-5.25 5.25a.75.75 0 11-1.06-1.06L11.94 10 7.22 5.28a.75.75 0 010-1.06z" clip-rule="evenodd"></path></svg></span>
+      </div>
+        <div class="card__text">
+          <div class="card__chips"><span class="chip chip--neutral">阅读</span><span class="chip chip--neutral">时间</span></div>
+          <h3 class="card__title"><a class="card__link stretched" href="/literature/关于把书读两遍/">关于把书读两遍</a></h3>
+          <span class="card__sub">2026-01-11</span>
+          <p class="card__body">一段散文，关于重读与第一次读之间的差别。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+<div class="cell cell--square">
+    <div class="card">
+      <div class="card__inner">
+        <div class="card__head">
+        <span><a class="card__cat" href="/philosophy/">哲学</a>&nbsp;·&nbsp;札记</span>
+        <span class="card__arrow"><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M7.22 4.22a.75.75 0 011.06 0l5.25 5.25a.75.75 0 010 1.06l-5.25 5.25a.75.75 0 11-1.06-1.06L11.94 10 7.22 5.28a.75.75 0 010-1.06z" clip-rule="evenodd"></path></svg></span>
+      </div>
+        <div class="card__text">
+          <div class="card__chips"><span class="chip chip--neutral">设计</span><span class="chip chip--neutral">注意力</span><span class="chip chip--neutral">感知</span></div>
+          <h3 class="card__title"><a class="card__link stretched" href="/philosophy/monochrome-screen/">单色的界面，彩色的画面</a></h3>
+          <span class="card__sub">2026-01-07</span>
+          <p class="card__body">一个只用黑白与纸色的界面，为什么反而让内容更亮。视觉重量是守恒的。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+  <p class="home__more">
+    <a href="/writing/">全部写作（8）</a>
+     · <a href="/reading/">阅读（1）</a>
+     · <a href="/hobbies/">爱好（1）</a>
+    · <a href="/archive/">归档</a>
+     · <a href="/tags/">标签（22）</a>
+     · <a href="/series/">系列（1）</a>
+    <span class="meta">共 10 项</span>
+  </p>
 </main>
 
 <footer class="foot">
   <div class="wrap">
     <nav class="foot__nav" aria-label="页脚导航">
       <a href="/">首页</a>
-      <a href="/literature/">文学</a>
-      <a href="/philosophy/">哲学</a>
-      <a href="/compsci/">计算机科学</a>
+      <a href="/writing/">写作</a>
+      <a href="/reading/">阅读</a>
+      <a href="/hobbies/">爱好</a>
       <a href="/tags/">标签</a>
+      <a href="/about/">关于</a>
       <a href="/archive/">归档</a>
-      <a href="/search/">搜索</a>
-      <a href="/series/">系列</a>
       <a href="/changelog/">更新</a>
-      <a href="/about/">自述</a>
+      <a href="/series/">系列</a>
       <a href="/rss.xml">RSS</a>
     </nav>
     <p class="foot__note">
@@ -229,9 +247,8 @@
       <a href="/about/#license">CC BY-NC-SA 4.0</a> ·
       <span class="meta">© 2026 fengzishiyi</span>
     </p>
-    <p class="foot__note meta">
+    <p class="foot__note">
       纯文本站点：没有图片、没有公式、没有代码高亮、没有第三方脚本、没有追踪。
-      用 Markdown 写作，用 Git 存档。
     </p>
     
   </div>

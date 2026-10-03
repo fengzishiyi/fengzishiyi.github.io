@@ -121,11 +121,13 @@
 
 h2 {
   font-size: var(--fs-h2);
+  letter-spacing: var(--tr-h2);
   margin: 2.2em 0 0.6em;
   scroll-margin-top: 3.5rem;
 }
 h3 {
   font-size: var(--fs-h3);
+  letter-spacing: var(--tr-h3);
   margin: 1.8em 0 0.5em;
   scroll-margin-top: 3.5rem;
 }
@@ -374,6 +376,21 @@ mark { background: var(--mark); color: var(--ink); }
 
 .srclist li, .revlist li, .notelist li { margin-bottom: 0.35em; }
 
+/* Similar links: the title, then the tags that earned the suggestion. Closer to
+   the backlink list than to the outline, because each row is a page with a
+   reason attached, not a heading. */
+.rellist { list-style: none; margin: 0; padding: 0; }
+.rellist li { padding: 0.4rem 0; border-bottom: 1px solid var(--rule); }
+.rellist li:last-child { border-bottom: 0; }
+.rellist a { text-decoration: none; font-size: var(--fs-small); }
+.rellist a:hover { text-decoration: underline; }
+.rellist__meta {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: var(--fs-tiny);
+  color: var(--ink-faint);
+}
+
 .revlist { list-style: none; padding-left: 0; }
 .revlist li {
   display: grid;
@@ -421,3 +438,209 @@ mark { background: var(--mark); color: var(--ink); }
 .cite__copy[data-done] { color: var(--ink); border-color: var(--rule-strong); }
 
 .lic { font-size: var(--fs-tiny); color: var(--ink-mute); border-top: 1px solid var(--rule); padding-top: 0.8rem; }
+
+/* ==========================================================================
+   block extensions — all five are plain markup, so all five survive with
+   scripting off. See render.mjs for why they are preprocessed rather than
+   added as a marked extension.
+   ========================================================================== */
+
+/* ---- admonition ------------------------------------------------------- */
+/* Reuses chester's card surface: a soft radius, a neutral fill, no border.
+   Type is distinguished by a glyph and a label rather than by colour, which
+   keeps the palette's chromatic budget for tags alone. */
+.admon {
+  margin: 1.8em 0;
+  padding: 1rem 1.25rem;
+  border-radius: var(--radius-card);
+  background: var(--card);
+}
+.admon__title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.6rem;
+  font-size: var(--fs-nav);
+  letter-spacing: var(--tr-nav);
+  color: var(--ink-muted);
+}
+.admon__glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: var(--radius-pill);
+  background: var(--inactive-area);
+  font-size: 0.75rem;
+  color: var(--ink-strong);
+}
+.admon > p:last-child { margin-bottom: 0; }
+.admon--warn { background: var(--chip-amber-bg); }
+.admon--warn .admon__glyph { background: var(--chip-amber-fg); color: var(--page); }
+
+/* ---- foldable paragraph / block --------------------------------------- */
+/* Rendered OPEN in the markup. The script adds the control and may hide the
+   body afterwards; a reader without script simply sees the text. */
+.fold {
+  margin: 1.8em 0;
+  padding: 0 0 0 1rem;
+  border-left: 2px solid var(--border);
+}
+.fold--inline { font-style: italic; color: var(--ink-body); }
+.fold__label {
+  margin: 0 0 0.5rem;
+  font-size: var(--fs-nav);
+  letter-spacing: var(--tr-nav);
+  color: var(--ink-muted);
+}
+.fold__toggle {
+  display: none;
+  margin-left: 0.5rem;
+  font: inherit;
+  font-size: var(--fs-tiny);
+  color: var(--ink-muted);
+  background: none;
+  border: 0;
+  padding: 0 0.2rem;
+  cursor: pointer;
+  border-radius: var(--radius-chip);
+}
+.fold.is-foldable > .fold__label .fold__toggle { display: inline-block; }
+.fold--folded > *:not(.fold__label) { display: none; }
+.fold--folded { padding-bottom: 0.2rem; }
+
+/* ---- epigraph --------------------------------------------------------- */
+.epigraph {
+  margin: 2.2em 0;
+  padding-left: 1.5rem;
+  border-left: 2px solid var(--ink-strong);
+}
+.epigraph blockquote {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-family: var(--serif);
+  font-style: normal;
+  font-size: 1.25rem;
+  line-height: 1.5;
+  letter-spacing: var(--tr-h3);
+  color: var(--ink-strong);
+}
+.epigraph blockquote p { font-family: inherit; font-size: inherit; line-height: inherit; }
+.epigraph__by {
+  margin: 0.75rem 0 0;
+  font-size: var(--fs-nav);
+  letter-spacing: var(--tr-nav);
+  color: var(--ink-muted);
+}
+
+/* ---- multi-column list ------------------------------------------------ */
+.columns { margin: 1.6em 0; }
+@media (min-width: 768px) {
+  .columns ul, .columns ol { columns: 2; column-gap: 2.5rem; }
+}
+@media (min-width: 1280px) {
+  .columns ul, .columns ol { columns: 3; }
+}
+.columns li { break-inside: avoid; }
+
+/* ---- keyed citations & reference list --------------------------------- */
+.citeref a {
+  font-size: 0.7em;
+  text-decoration: none;
+  color: var(--ink-muted);
+  padding: 0 0.1em;
+}
+.citeref a:hover { color: var(--ink-strong); text-decoration: underline; }
+
+.references { margin-top: 2.5em; }
+.references__h {
+  font-family: var(--sans);
+  font-size: var(--fs-nav);
+  font-weight: 400;
+  letter-spacing: var(--tr-nav);
+  color: var(--ink-muted);
+  margin: 0 0 0.6rem;
+}
+.references__list {
+  margin: 0;
+  padding-left: 1.4em;
+  font-size: var(--fs-nav);
+  letter-spacing: var(--tr-nav);
+  color: var(--ink-body);
+}
+.references__list li { margin-bottom: 0.4em; }
+
+/* ---- section-level backlinks ----------------------------------------- */
+.sectionback {
+  margin: 2rem 0 0;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-card);
+  background: var(--card);
+}
+.sectionback__h {
+  margin: 0 0 0.4rem;
+  font-size: var(--fs-tiny);
+  letter-spacing: var(--tr-nav);
+  color: var(--ink-muted);
+}
+.sectionback__list { margin: 0; padding-left: 1.1em; font-size: var(--fs-nav); }
+.sectionback__list a { color: var(--ink-strong); }
+.sectionback__ctx {
+  display: block;
+  color: var(--ink-muted);
+  font-size: var(--fs-tiny);
+  line-height: 1.6;
+}
+
+/* ---- link type icons -------------------------------------------------- */
+/* Four categories, drawn with a background-image data URI so nothing is
+   requested. The information is duplicated in the link's title attribute, so
+   the icon is decoration rather than the only signal. */
+.ext { padding-right: 1.1em; background-repeat: no-repeat; background-position: right center; background-size: 0.85em; }
+.ext--web {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23A3A3A3'%3E%3Cpath d='M4 3h9v9h-2V6.4L5.4 12 4 10.6 9.6 5H4z'/%3E%3C/svg%3E");
+}
+.ext--pdf {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23A3A3A3'%3E%3Cpath d='M3 1h6l4 4v10H3zm6 1v3h3z'/%3E%3C/svg%3E");
+}
+.ext--wikipedia {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23A3A3A3'%3E%3Cpath d='M1 3h3l2 7 2-7h2l2 7 2-7h1l-3 10H9L7 6 5 13H2z'/%3E%3C/svg%3E");
+}
+.ext--doi {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23A3A3A3'%3E%3Ccircle cx='8' cy='8' r='6'/%3E%3C/svg%3E");
+}
+.ext--arxiv {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23A3A3A3'%3E%3Cpath d='M2 12 8 2l6 10h-3L8 7l-3 5z'/%3E%3C/svg%3E");
+}
+
+/* ---- reader mode ------------------------------------------------------ */
+/* One switch, and the chrome goes: nav, footer, rail, citations, backlinks.
+   This replaces the old font-size / line-width / theme knobs — gwern.net's
+   reader mode does the same job with a single control. */
+:root[data-reader="on"] .nav,
+:root[data-reader="on"] .foot,
+:root[data-reader="on"] .rail,
+:root[data-reader="on"] .arthead__tools,
+:root[data-reader="on"] .taglist,
+:root[data-reader="on"] .sectionback { display: none; }
+:root[data-reader="on"] .artbody { display: block; }
+:root[data-reader="on"] .artmain { max-width: var(--measure); margin: 0 auto; }
+:root[data-reader="on"] .article { padding-top: 4rem; }
+
+.readerbtn {
+  font: inherit;
+  font-size: var(--fs-nav);
+  letter-spacing: var(--tr-nav);
+  color: var(--ink-muted);
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 0.2rem 0.7rem;
+  cursor: pointer;
+  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.readerbtn:hover { color: var(--ink-strong); border-color: var(--ink-muted); }
+.readerbtn[aria-pressed="true"] { color: var(--ink-strong); border-color: var(--ink-strong); }
+.arthead__tools { margin: 0.75rem 0 0; }

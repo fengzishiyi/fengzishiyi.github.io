@@ -65,6 +65,60 @@ export const CROSS_TAGS = [
   "认知科学", "逻辑与语言", "算法批评", "技术哲学", "数字人文"
 ];
 
+/* ══════════════════════════════════════════════════════════════════════ */
+/* cards                                                                 */
+/* ══════════════════════════════════════════════════════════════════════ */
+
+/** Card footprints in the homepage masonry. Transcribed from chester.how's
+ *  real markup, which uses exactly three: a large intro block, a 2:1 wide card,
+ *  and a square. Size is a front-matter override; without one it is inferred
+ *  from the content (see cardSizeFor in build.mjs). */
+export const CARD_SIZES = {
+  intro: "首页左上角的大方卡，放站点自述",
+  wide: "横向卡片，占两列",
+  square: "方卡，占一列"
+};
+
+/** The two collections that are not writing. Both are optional directories:
+ *  if `_reading/` does not exist the homepage simply carries no book cards. */
+export const COLLECTIONS = [
+  {
+    key: "reading",
+    dir: "_reading",
+    name: "阅读",
+    blurb: "读过的书与正在读的书。",
+    chip: "amber",          // matches chester's amber READING chip
+    statuses: [
+      { key: "reading", name: "在读", chip: "amber" },
+      { key: "read", name: "已读", chip: "green" },
+      { key: "abandoned", name: "弃读", chip: "neutral" }
+    ]
+  },
+  {
+    key: "hobbies",
+    dir: "_hobbies",
+    name: "爱好",
+    blurb: "写字之外的事。",
+    chip: "sky",
+    statuses: [
+      { key: "now", name: "当前", chip: "sky" },
+      { key: "past", name: "曾经", chip: "neutral" }
+    ]
+  }
+];
+
+export const collectionByKey = (key) => COLLECTIONS.find((c) => c.key === key) || null;
+export const collectionKeys = () => COLLECTIONS.map((c) => c.key);
+
+/** A collection entry's status, defaulting to the first one so an entry with no
+ *  `status:` still renders a chip rather than an empty slot. */
+export function statusOf(collectionKey, key) {
+  const c = collectionByKey(collectionKey);
+  if (!c) return null;
+  const want = String(key || "").trim();
+  return c.statuses.find((s) => s.key === want) || (want ? null : c.statuses[0]);
+}
+
 const byKey = new Map(DOMAINS.map((d) => [d.key, d]));
 
 export const domainByKey = (key) => byKey.get(String(key || "").trim()) || null;

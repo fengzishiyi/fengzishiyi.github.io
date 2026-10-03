@@ -8,6 +8,12 @@
  *    gets a compact toolbar that only appears once they start moving — the
  *    theme/size/measure controls have to be reachable, but never in the way.
  *
+ *  · Article pages carry one inert <template id="pv-slug"> per outbound
+ *    `{{ref:}}`, which is what the hover preview reads. The preview never makes
+ *    a request: the fragment it shows was rendered at build time, together with
+ *    the page that links to it. A `.ref` whose template is missing fails the
+ *    build, because the silent failure is a hover that does nothing at all.
+ *
  *  · The article page is a two-column grid: a narrow rail for the outline and
  *    backlinks, and the reading measure beside it. Sidenotes float into the
  *    rail from inside the prose via CSS, so the note text lives in the document
@@ -21,21 +27,41 @@ import { DOMAINS, STATUSES, CONFIDENCES, statusByKey, confidenceByKey, domainByK
 /* chrome                                                                */
 /* ══════════════════════════════════════════════════════════════════════ */
 
-export const CSS = ["tokens", "base", "prose", "components", "search"];
+export const CSS = ["tokens", "base", "grid", "prose", "components", "search"];
 
-export function head(site, { title, desc, canonical, type = "website", jsonld, extraCss = [] }) {
+/* ══════════════════════════════════════════════════════════════════════ */
+/* navigation                                                            */
+/* ══════════════════════════════════════════════════════════════════════ */
+
+/**
+ * The nav labels, in order. chester.how runs `Chester · Projects · Writing ·
+ * Reading · Hobbies`; Projects is dropped by request, and Tags/About take its
+ * place so a text-only site has somewhere to browse by topic.
+ *
+ * This array is the single source of truth — the build asserts the rendered
+ * nav matches it exactly, so a label cannot drift by accident.
+ */
+export const NAV = [
+  { key: "home", href: "/", text: "首页" },
+  { key: "writing", href: "/writing/", text: "写作" },
+  { key: "reading", href: "/reading/", text: "阅读" },
+  { key: "hobbies", href: "/hobbies/", text: "爱好" },
+  { key: "tags", href: "/tags/", text: "标签" },
+  { key: "about", href: "/about/", text: "关于" }
+];
+
+export function head(site, { title, desc, canonical, type = "website", jsonld, extraCss = [], headExtra = "" }) {
   const full = title === site.title ? title : `${title} — ${site.title}`;
   return `<!doctype html>
-<html lang="${esc(site.lang)}" data-theme="auto">
+<html lang="${esc(site.lang)}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(full)}</title>
 <meta name="description" content="${esc(desc || site.tagline)}">
 <link rel="canonical" href="${esc(canonical)}">
-<meta name="theme-color" content="#FBFAF9" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#141413" media="(prefers-color-scheme: dark)">
-<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#FFFFFF">
+<meta name="color-scheme" content="light">
 <meta name="author" content="${esc(site.author)}">
 <meta property="og:site_name" content="${esc(site.title)}">
 <meta property="og:type" content="${type}">
@@ -47,77 +73,43 @@ export function head(site, { title, desc, canonical, type = "website", jsonld, e
 <link rel="alternate" type="application/rss+xml" title="${esc(site.title)}" href="/rss.xml">
 ${[...CSS, ...extraCss].map((n) => `<link rel="stylesheet" href="/assets/${n}.css">`).join("\n")}
 ${jsonld ? `<script type="application/ld+json">${JSON.stringify(jsonld)}</script>` : ""}
+${headExtra}
 <!-- No analytics, no fonts, no CDN, no third-party script. See /about/ . -->
 </head>
 <body>
 <a class="skip" href="#main">跳到正文</a>`;
 }
 
-/** Site header. Deliberately small and non-sticky. */
-export function mast(site, active, counts) {
-  const c = counts || {};
-  const nav = [
-    ["literature", "/literature/", "文学"],
-    ["philosophy", "/philosophy/", "哲学"],
-    ["compsci", "/compsci/", "计算机科学"],
-    ["tags", "/tags/", "标签"],
-    ["archive", "/archive/", "归档"],
-    ["search", "/search/", "搜索"]
-  ];
-  return `
-<header class="mast">
-  <div class="wrap mast__in">
-    <a class="mast__home" href="/">${esc(site.title)}</a>
-    <nav class="mast__nav" aria-label="主导航">
-${nav.map(([key, href, text]) => {
-  const n = c[key] !== undefined ? `<span class="mast__n">${c[key]}</span>` : "";
-  return `      <a href="${href}"${active === key ? ' aria-current="page"' : ""}>${text}${n}</a>`;
-}).join("\n")}
-    </nav>
-  </div>
-</header>`;
-}
-
-/** Reading controls. Only on article pages: size, measure, theme and the
- *  sidenote switch are things you reach for while reading, and putting them on
- *  index pages would be chrome for its own sake.
+/**
+ * Sticky frosted nav with the sliding indicator.
  *
- *  Hidden until the reader scrolls — `hidden` in the markup, so with scripting
- *  off it never appears and nothing is lost, since these are all enhancements. */
-export function toolbar() {
+ * The indicator is one absolutely-positioned pill that JS moves behind the
+ * current link; with scripting off it never appears and the current link is
+ * still marked by colour plus aria-current, so nothing is lost.
+ */
+export function nav(active) {
   return `
-<div class="toolbar" data-toolbar hidden>
-  <div class="wrap toolbar__in">
-    <span class="toolbar__title" data-toolbar-title></span>
-    <span class="toolbar__group" role="group" aria-label="阅读设置">
-      <button type="button" data-size="-1" aria-label="正文缩小">A−</button>
-      <button type="button" data-size="1" aria-label="正文放大">A+</button>
-      <button type="button" data-measure="-1" aria-label="行宽变窄">窄</button>
-      <button type="button" data-measure="1" aria-label="行宽变宽">宽</button>
-      <button type="button" data-theme-toggle aria-label="切换明暗主题" aria-pressed="false">主题</button>
-      <button type="button" data-notes-toggle aria-label="切换边注显示方式" aria-pressed="true">边注</button>
-      <a class="toolbar__top" href="#top" aria-label="回到顶部">↑</a>
-    </span>
-  </div>
-  <div class="progress" data-progress aria-hidden="true"></div>
+<div class="wrap">
+  <nav class="nav" aria-label="主导航">
+    <div class="nav__pill" data-nav-pill>
+      <span class="nav__indicator" data-nav-indicator aria-hidden="true"></span>
+${NAV.map((n) => `      <a class="nav__link" href="${n.href}"${
+        active === n.key ? ' aria-current="page"' : ""
+      }>${esc(n.text)}</a>`).join("\n")}
+    </div>
+  </nav>
 </div>`;
 }
 
-export function foot(site, { prev, next } = {}) {
+export function foot(site, { prev, next, reading = false } = {}) {
   return `
 <footer class="foot">
   <div class="wrap">
     <nav class="foot__nav" aria-label="页脚导航">
-      <a href="/">首页</a>
-      <a href="/literature/">文学</a>
-      <a href="/philosophy/">哲学</a>
-      <a href="/compsci/">计算机科学</a>
-      <a href="/tags/">标签</a>
+${NAV.map((n) => `      <a href="${n.href}">${esc(n.text)}</a>`).join("\n")}
       <a href="/archive/">归档</a>
-      <a href="/search/">搜索</a>
-      <a href="/series/">系列</a>
       <a href="/changelog/">更新</a>
-      <a href="/about/">自述</a>
+      <a href="/series/">系列</a>
       <a href="/rss.xml">RSS</a>
     </nav>
     <p class="foot__note">
@@ -125,9 +117,8 @@ export function foot(site, { prev, next } = {}) {
       <a href="/about/#license">${esc(site.license)}</a> ·
       <span class="meta">© ${new Date().getFullYear()} ${esc(site.author)}</span>
     </p>
-    <p class="foot__note meta">
+    <p class="foot__note">
       纯文本站点：没有图片、没有公式、没有代码高亮、没有第三方脚本、没有追踪。
-      用 Markdown 写作，用 Git 存档。
     </p>
     ${prev || next ? `<nav class="foot__chrono" aria-label="相邻文章">
       ${next ? `<a rel="prev" href="${esc(next.url)}">← ${esc(next.title)}</a>` : ""}
@@ -138,6 +129,91 @@ export function foot(site, { prev, next } = {}) {
 <script src="/assets/site.js" defer></script>
 </body>
 </html>`;
+}
+
+/* ══════════════════════════════════════════════════════════════════════ */
+/* cards                                                                 */
+/* ══════════════════════════════════════════════════════════════════════ */
+
+const arrowSvg = `<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M7.22 4.22a.75.75 0 011.06 0l5.25 5.25a.75.75 0 010 1.06l-5.25 5.25a.75.75 0 11-1.06-1.06L11.94 10 7.22 5.28a.75.75 0 010-1.06z" clip-rule="evenodd"></path></svg>`;
+
+/** One tag chip. Colour is a decoration, never the only carrier of meaning —
+ *  the status name is always printed next to it. */
+function chip(label, colour) {
+  return `<span class="chip chip--${esc(colour || "neutral")}">${esc(label)}</span>`;
+}
+
+/**
+ * Render one card.
+ *
+ * Every card links to a page inside this site — chester.how's cards point at
+ * external projects, and that is the part being replaced.
+ *
+ * The card is NOT one big <a>. Its header carries a link of its own, and an
+ * anchor inside an anchor is invalid HTML: the parser closes the outer one, the
+ * DOM comes out restructured, and the card breaks its own layout — measured at
+ * 883px wide inside a 390px grid, with the overflow hidden by the page. So the
+ * card is a plain block holding TWO sibling links: the title link, and an
+ * overlay pseudo-element on it that stretches over the whole card so the click
+ * target is still the card rather than the words alone.
+ */
+export function card(item, size) {
+  const category = item.collectionName || item.domainName || "";
+  const label = item.collectionName ? (item.statusName || item.kind || "") : (item.kind || "");
+  const catHref = item.collection ? `/${item.collection}/` : `/${item.domain}/`;
+
+  const head = `<div class="card__head">
+        <span><a class="card__cat" href="${esc(catHref)}">${esc(category)}</a>${
+          label ? `&nbsp;·&nbsp;${esc(label)}` : ""
+        }</span>
+        <span class="card__arrow">${arrowSvg}</span>
+      </div>`;
+
+  if (size === "intro") {
+    return `<div class="cell cell--intro">
+      <div class="card card--intro">
+        <div class="card__inner">
+          <div class="card__text">
+            ${item.h1 ? `<h1 class="card__h1">${item.h1}</h1>` : ""}
+            ${item.introHtml || ""}
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  const chips = item.tags && item.tags.length
+    ? `<div class="card__chips">${item.tags.slice(0, 3).map((t) => chip(t, item.chip)).join("")}</div>`
+    : (item.collection && item.statusName ? `<div class="card__chips">${chip(item.statusName, item.chip)}</div>` : "");
+
+  const sub = item.author
+    ? `<span class="card__sub">${esc(item.author)}${item.created ? ` · ${esc(item.created.slice(0, 4))}` : ""}</span>`
+    : `<span class="card__sub">${esc(item.created || "")}</span>`;
+
+  const bodyText = item.note || item.description || "";
+  const body = bodyText ? `<p class="card__body">${esc(bodyText)}</p>` : "";
+
+  return `<div class="cell cell--${esc(size)}">
+    <div class="card">
+      <div class="card__inner">
+        ${head}
+        <div class="card__text">
+          ${chips}
+          <h3 class="card__title"><a class="card__link stretched" href="${esc(item.url)}">${esc(item.title)}</a></h3>
+          ${sub}
+          ${body}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/** The whole grid. An empty grid says so rather than rendering nothing. */
+export function masonry(cards) {
+  if (!cards.length) {
+    return `<div class="masonry"><p class="masonry__empty">还没有内容。把 .md 放进 _articles/ ，或运行 npm run new。</p></div>`;
+  }
+  return `<div class="masonry">\n${cards.join("\n")}\n</div>`;
 }
 
 /* ══════════════════════════════════════════════════════════════════════ */
@@ -190,6 +266,60 @@ ${backlinks.map((b) => `    <li>
       <a href="${esc(b.fromUrl)}${b.anchor ? "#" + encodeURIComponent(b.anchor) : ""}">${esc(b.fromTitle)}</a>
       <span class="backlist__meta meta">${esc(b.fromKind)}</span>
       ${b.context ? `<p class="backlist__ctx">${esc(b.context)}</p>` : ""}
+    </li>`).join("\n")}
+  </ul>
+</section>`;
+}
+
+/**
+ * One inert `<template>` per outbound link — the body of the hover preview.
+ *
+ * The preview is the reason a `{{ref:}}` is worth writing instead of a bare
+ * link: the reader can see what a piece is before leaving the sentence they are
+ * reading. It is rendered here, at build time, so hovering costs no request and
+ * leaks nothing to anyone; gwern fetches the target page live, which is the one
+ * part of its preview worth not copying.
+ *
+ * `<template>` content is inert — not rendered, not announced, not indexed. The
+ * one thing that must hold is that every `data-preview="x"` has an `id="pv-x"`,
+ * which the build asserts, because a missing template fails as *nothing
+ * happening on hover*, which no reader would ever report as a bug.
+ */
+function previewTemplates(outgoing, bySlug) {
+  const seen = new Set();
+  const blocks = [];
+  for (const l of outgoing || []) {
+    if (seen.has(l.to)) continue;
+    seen.add(l.to);
+    const t = bySlug.get(l.to);
+    if (!t) continue;
+    blocks.push(`<template id="pv-${esc(t.slug)}">
+  <p class="preview__title">${esc(t.title)}</p>
+  <p class="preview__meta meta">${esc(t.domainName)} · ${esc(t.kind)} · ${esc(dateDots(t.created))}${
+    t.chars ? ` · ${t.chars} 字` : ""}</p>
+  <p class="preview__desc">${esc(t.description)}</p>
+</template>`);
+  }
+  return blocks.join("\n");
+}
+
+/**
+ * "Similar links" — the pieces a reader is most likely to want next.
+ *
+ * gwern builds these from a neural embedding of the text. There is no model
+ * here, so the signal is shared tags (weighted towards rare ones) plus the same
+ * series, computed in build.mjs. The reason is named in the list rather than
+ * hidden: a suggestion the reader cannot account for is just noise, whereas
+ * "系列 · 个人站点的三次改版" is a reason they can accept or reject.
+ */
+function relatedSection(related) {
+  if (!related || !related.length) return "";
+  return `<section class="railsec" id="related" aria-labelledby="related-h">
+  <h2 class="rail__h" id="related-h">相关 <span class="meta">${related.length}</span></h2>
+  <ul class="rellist">
+${related.map((r) => `    <li>
+      <a href="${esc(r.url)}">${esc(r.title)}</a>
+      <span class="rellist__meta meta">${esc(r.why.join(" · "))}</span>
     </li>`).join("\n")}
   </ul>
 </section>`;
@@ -277,7 +407,7 @@ ${revisions.map((r, i) => `    <li>
 }
 
 export function pageArticle(site, a, ctx) {
-  const { revisions, backlinks, outgoing, bySlug, notes, notesHtml, headings, prev, next } = ctx;
+  const { revisions, backlinks, outgoing, related, bySlug, notesHtml, headings, prev, next, sectionBacklinks } = ctx;
   const status = statusByKey(a.status);
 
   return `${head(site, {
@@ -299,19 +429,22 @@ export function pageArticle(site, a, ctx) {
       ...(a.license || site.license ? { license: a.license || site.license } : {})
     }
   })}
-${mast(site, a.domain, null)}
-${toolbar()}
+${nav(a.domain === "literature" || a.domain === "philosophy" || a.domain === "compsci" ? "writing" : "home")}
 <a id="top"></a>
-<main id="main" class="wrap article">
+<main id="main" class="wrap wrap--reading article">
   <header class="arthead">
     <p class="arthead__kicker">
-      <a href="/${esc(a.domain)}/">${esc(a.domainName)}</a>
+      <a href="/writing/">写作</a>
+      <span aria-hidden="true"> · </span><a href="/${esc(a.domain)}/">${esc(a.domainName)}</a>
       <span aria-hidden="true"> · </span>${esc(a.kind)}
       ${status ? `<span aria-hidden="true"> · </span><span class="status status--${esc(a.status)}">${esc(status.name)}</span>` : ""}
     </p>
-    <h1 class="arthead__title" data-toolbar-title-text="${esc(a.title)}">${esc(a.title)}</h1>
+    <h1 class="arthead__title">${esc(a.title)}</h1>
     <p class="arthead__desc">${esc(a.description)}</p>
 ${tagList(a.tags)}
+    <p class="arthead__tools">
+      <button type="button" class="readerbtn" data-reader-toggle aria-pressed="false">阅读模式</button>
+    </p>
   </header>
 
   <div class="artbody">
@@ -319,16 +452,18 @@ ${tagList(a.tags)}
 ${notesHtml}
     </div>
 
-    <aside class="rail" aria-label="页面工具">
+    <aside class="rail" aria-label="页面工具" data-rail>
 ${metaBlock(a, { revisions })}
 ${outline(headings)}
 ${sourcesSection(outgoing, bySlug)}
 ${backlinksSection(backlinks)}
+${relatedSection(related)}
 ${citationBlock(site, a, revisions)}
 ${revisionSection(revisions)}
       <p class="railsec lic"><span class="meta">许可</span> ${esc(a.license || site.license)}</p>
     </aside>
   </div>
+${previewTemplates(outgoing, bySlug)}
 </main>
 ${foot(site, { prev, next })}`;
 }
@@ -337,14 +472,27 @@ ${foot(site, { prev, next })}`;
 /* index-ish pages                                                       */
 /* ══════════════════════════════════════════════════════════════════════ */
 
-/** An article as it appears in any list: title, kind, date, description. */
+/**
+ * An article as it appears in any list: title, kind, date, description.
+ *
+ * Mixed lists (a tag page, the archive) hold both articles and collection
+ * entries, and the two do not carry the same fields: a book in `_reading` has
+ * no `domain` and no `kind`, it has a collection and a status of its own. Both
+ * shapes resolve to the same "which list does this belong to, and what is it"
+ * line, so ask each shape for its own answer rather than assuming one.
+ */
 function entry(a, { showDomain = false } = {}) {
+  // Collection entries carry `collection`/`collectionName`; articles carry
+  // `domain`/`domainName`. Pick whichever this item actually has.
+  const owner = a.domain || a.collection || "";
+  const ownerName = a.domainName || a.collectionName || "";
+  const kind = a.kind || a.statusName || "";
+  const statusName = statusByKey(a.status)?.name || a.statusName || a.status;
   return `    <li class="entry">
       <a class="entry__title" href="${esc(a.url)}">${esc(a.title)}</a>
       <p class="entry__meta meta">
-        ${showDomain ? `<a href="/${esc(a.domain)}/">${esc(a.domainName)}</a> · ` : ""}${esc(a.kind)} ·
-        <time datetime="${esc(a.created)}">${esc(dateDots(a.created))}</time>
-        ${a.status !== "finished" ? `· <span class="status status--${esc(a.status)}">${esc(statusByKey(a.status)?.name || a.status)}</span>` : ""}
+        ${showDomain && owner ? `<a href="/${esc(owner)}/">${esc(ownerName)}</a> · ` : ""}${kind ? `${esc(kind)} · ` : ""}<time datetime="${esc(a.created)}">${esc(dateDots(a.created))}</time>
+        ${a.status !== "finished" && statusName ? `· <span class="status status--${esc(a.status)}">${esc(statusName)}</span>` : ""}
       </p>
       <p class="entry__desc">${esc(a.description)}</p>
     </li>`;
@@ -354,8 +502,58 @@ const entryList = (items, opts) => items.length
   ? `<ol class="entries reveal">\n${items.map((a) => entry(a, opts)).join("\n")}\n</ol>`
   : `<p class="empty">这里还没有文章。</p>`;
 
+/**
+ * Choose a card footprint.
+ *
+ * The first card in the grid is always the intro block — a large square holding
+ * the site's own description, exactly where chester.how puts its greeting. After
+ * that, an explicit `card:` in front matter wins; otherwise the shape follows
+ * from what the item IS: poetry and fragments are short so they read well small,
+ * books and hobby notes are square, and anything explicitly marked wide gets the
+ * 2:1 cell. Variation is the point — a grid of identical squares is a table.
+ */
+function sizeFor(item, isFirst) {
+  if (isFirst) return "intro";
+  if (item.card && ["intro", "wide", "square"].includes(item.card)) return item.card;
+  if (item.card === "wide") return "wide";
+  return "square";
+}
+
+/** Merge writing and the optional collections into one ordered card list. */
+export function buildCards(articles, collections, site) {
+  const pinned = [];
+  const rest = [];
+
+  const push = (item) => (item.pin > 0 ? pinned : rest).push(item);
+  for (const a of articles) push(a);
+  for (const key of Object.keys(collections)) for (const e of collections[key]) push(e);
+
+  // pinned first by their number, then newest first
+  pinned.sort((a, b) => a.pin - b.pin || (a.created < b.created ? 1 : -1));
+  rest.sort((a, b) => (a.created < b.created ? 1 : a.created > b.created ? -1 : 0));
+
+  const ordered = pinned.concat(rest);
+  // The intro block is also the page's only <h1>. Putting a visible heading
+  // elsewhere would fight chester's design, where the greeting IS the top of
+  // the page; a visually-hidden <h1> would satisfy the checker and no reader.
+  const intro = {
+    h1: site.introH1 || site.title,
+    introHtml: site.introHtml || `<p class="card__intro">这里是 <span class="accent">${esc(site.title)}</span>，一个写字的地方。</p>`
+  };
+
+  const cards = [];
+  ordered.forEach((item, i) => {
+    cards.push(card(item, sizeFor(item, false)));
+    void i;
+  });
+  cards.unshift(card(intro, "intro"));
+  return cards;
+}
+
 export function pageHome(site, ctx) {
-  const { articles, byDomain, tags, series, latest, random, counts } = ctx;
+  const { articles, collections, tags, series, counts } = ctx;
+  const cards = buildCards(articles, collections, site);
+  const total = articles.length + Object.values(collections).reduce((n, list) => n + list.length, 0);
 
   return `${head(site, {
     title: site.title,
@@ -367,58 +565,108 @@ export function pageHome(site, ctx) {
       description: site.tagline
     }
   })}
-${mast(site, "home", counts)}
+${nav("home")}
 <a id="top"></a>
-<main id="main" class="wrap home">
-  <h1 class="home__title">${esc(site.title)}</h1>
-  <p class="home__tagline">${esc(site.tagline)}</p>
+<main id="main" class="wrap">
+${masonry(cards)}
+  <p class="home__more">
+    <a href="/writing/">全部写作（${articles.length}）</a>
+    ${collections.reading.length ? ` · <a href="/reading/">阅读（${collections.reading.length}）</a>` : ""}
+    ${collections.hobbies.length ? ` · <a href="/hobbies/">爱好（${collections.hobbies.length}）</a>` : ""}
+    · <a href="/archive/">归档</a>
+    ${tags.length ? ` · <a href="/tags/">标签（${tags.length}）</a>` : ""}
+    ${series.length ? ` · <a href="/series/">系列（${series.length}）</a>` : ""}
+    <span class="meta">共 ${total} 项</span>
+  </p>
+</main>
+${foot(site)}`;
+}
 
-  <section class="domains" aria-label="三个领域">
+/** `/writing/` — the index that the three domains used to occupy directly. */
+export function pageWriting(site, ctx) {
+  const { articles, byDomain, counts } = ctx;
+  return `${head(site, {
+    title: "写作",
+    desc: site.writingBlurb || "按领域分组的全部文章。",
+    canonical: `${site.origin}/writing/`
+  })}
+${nav("writing")}
+<a id="top"></a>
+<main id="main" class="wrap">
+  <header class="pagehead">
+    <h1>写作</h1>
+    <p class="pagehead__desc">${esc(site.writingBlurb || "文学、哲学与计算机科学。三个领域各自成列，也可以按标签横着找。")}</p>
+  </header>
 ${DOMAINS.map((d) => {
   const items = byDomain.get(d.key) || [];
-  return `    <article class="domain">
-      <h2><a href="/${d.key}/">${esc(d.name)}</a> <span class="meta">${items.length}</span></h2>
-      <p class="domain__blurb">${esc(d.blurb)}</p>
-      <ul class="domain__kinds">
-${d.kinds.map((k) => {
-  const n = items.filter((x) => x.kind === k).length;
-  return n ? `        <li><span class="meta">${esc(k)}</span> ${n}</li>` : "";
-}).filter(Boolean).join("\n")}
-      </ul>
-    </article>`;
+  return `  <section class="secblock" aria-labelledby="d-${esc(d.key)}">
+    <h2 id="d-${esc(d.key)}" class="secblock__h"><a href="/${esc(d.key)}/">${esc(d.name)}</a> <span class="meta">${items.length}</span></h2>
+    <p class="secblock__blurb">${esc(d.blurb)}</p>
+${entryList(items.slice(0, 6))}
+${items.length > 6 ? `    <p class="more"><a href="/${esc(d.key)}/">全部 ${items.length} 篇 →</a></p>` : ""}
+  </section>`;
 }).join("\n")}
-  </section>
+</main>
+${foot(site)}`;
+}
 
-  <div class="homecols">
-    <section class="homecol" aria-labelledby="latest-h">
-      <h2 class="rail__h" id="latest-h">最新更新</h2>
-${entryList(latest.slice(0, 8), { showDomain: true })}
-      <p class="more"><a href="/archive/">全部 ${articles.length} 篇 →</a></p>
-    </section>
+/** A collection index: `/reading/`, `/hobbies/`. Works when empty. */
+export function pageCollection(site, c, items, counts, activeKey) {
+  // No intro block here — that belongs on the homepage only, so every card is
+  // an entry and the grid stays a list.
+  const cards = items.map((e) => card(e, e.card === "wide" ? "wide" : "square"));
+  return `${head(site, {
+    title: c.name,
+    desc: c.blurb,
+    canonical: `${site.origin}/${c.key}/`
+  })}
+${nav(activeKey || c.key)}
+<a id="top"></a>
+<main id="main" class="wrap">
+  <header class="pagehead">
+    <h1>${esc(c.name)}</h1>
+    <p class="pagehead__desc">${esc(c.blurb)}</p>
+  </header>
+${items.length ? masonry(cards) : `<p class="empty">还没有条目。在 <code>${esc(c.dir)}/</code> 里放一个 .md 就会出现。</p>`}
+</main>
+${foot(site)}`;
+}
 
-    <div class="homecol">
-      <section aria-labelledby="random-h">
-        <h2 class="rail__h" id="random-h">随便读一篇</h2>
-${random ? entryList([random], { showDomain: true }) : `<p class="empty">还没有文章。</p>`}
-        <p class="more"><button type="button" class="linkbtn" data-random>换一篇</button></p>
-      </section>
-
-      <section aria-labelledby="tags-h">
-        <h2 class="rail__h" id="tags-h">标签</h2>
-        <ul class="tagcloud">
-${tags.slice(0, 24).map((t) => `          <li><a href="/tags/${encodeURIComponent(t.name)}/">${esc(t.name)}</a> <span class="meta">${t.count}</span></li>`).join("\n")}
-        </ul>
-        <p class="more"><a href="/tags/">全部 ${tags.length} 个标签 →</a></p>
-      </section>
-
-      ${series.length ? `<section aria-labelledby="series-h">
-        <h2 class="rail__h" id="series-h">系列</h2>
-        <ul class="serieslist">
-${series.slice(0, 8).map((s) => `          <li><a href="/series/${encodeURIComponent(s.name)}/">${esc(s.name)}</a> <span class="meta">${s.items.length}</span></li>`).join("\n")}
-        </ul>
-      </section>` : ""}
+/** One collection entry: a book, a hobby note. */
+export function pageCollectionEntry(site, c, e, bodyHtml) {
+  return `${head(site, {
+    title: e.title,
+    desc: e.description || e.title,
+    canonical: `${site.origin}${e.url}`,
+    type: "article",
+    jsonld: {
+      "@context": "https://schema.org",
+      "@type": c.key === "reading" ? "Book" : "CreativeWork",
+      name: e.title,
+      ...(e.author ? { author: { "@type": "Person", name: e.author } } : {}),
+      inLanguage: site.lang
+    }
+  })}
+${nav(c.key)}
+<a id="top"></a>
+<main id="main" class="wrap wrap--reading">
+  <article>
+    <header class="arthead">
+      <p class="arthead__kicker">
+        <a href="/${esc(c.key)}/">${esc(c.name)}</a>
+        ${e.statusName ? `<span aria-hidden="true"> · </span>${chip(e.statusName, e.chip)}` : ""}
+      </p>
+      <h1 class="arthead__title">${esc(e.title)}</h1>
+      ${e.author ? `<p class="arthead__desc">${esc(e.author)}</p>` : ""}
+${tagList(e.tags)}
+      <p class="arthead__tools">
+        <button type="button" class="readerbtn" data-reader-toggle aria-pressed="false">阅读模式</button>
+      </p>
+    </header>
+    <div class="prose">
+${bodyHtml}
     </div>
-  </div>
+  </article>
 </main>
 ${foot(site)}`;
 }
@@ -430,7 +678,7 @@ export function pageDomain(site, d, articles, counts) {
     desc: d.blurb,
     canonical: `${site.origin}/${d.key}/`
   })}
-${mast(site, d.key, counts)}
+${nav("writing")}
 <a id="top"></a>
 <main id="main" class="wrap">
   <header class="pagehead">
@@ -457,7 +705,7 @@ export function pageArchive(site, ctx) {
     desc: "全部文章，按时间、领域、类型与年份。",
     canonical: `${site.origin}/archive/`
   })}
-${mast(site, "archive", counts)}
+${nav("home")}
 <a id="top"></a>
 <main id="main" class="wrap">
   <header class="pagehead">
@@ -495,7 +743,7 @@ export function pageTags(site, tags, counts) {
     desc: "全部标签及其下的文章。",
     canonical: `${site.origin}/tags/`
   })}
-${mast(site, "tags", counts)}
+${nav("tags")}
 <a id="top"></a>
 <main id="main" class="wrap">
   <header class="pagehead">
@@ -519,7 +767,7 @@ export function pageTag(site, name, items, backlinks, counts) {
     desc: `${items.length} 篇关于「${name}」的文章。`,
     canonical: `${site.origin}/tags/${encodeURIComponent(name)}/`
   })}
-${mast(site, "tags", counts)}
+${nav("tags")}
 <a id="top"></a>
 <main id="main" class="wrap">
   <header class="pagehead">
@@ -538,7 +786,7 @@ export function pageSeries(site, name, items, counts) {
     desc: `${items.length} 篇的系列。`,
     canonical: `${site.origin}/series/${encodeURIComponent(name)}/`
   })}
-${mast(site, "series", counts)}
+${nav("writing")}
 <a id="top"></a>
 <main id="main" class="wrap">
   <header class="pagehead">
@@ -552,7 +800,7 @@ ${foot(site)}`;
 
 export function pageSeriesIndex(site, series, counts) {
   return `${head(site, { title: "系列", desc: "成组的文章。", canonical: `${site.origin}/series/` })}
-${mast(site, "series", counts)}
+${nav("writing")}
 <a id="top"></a>
 <main id="main" class="wrap">
   <header class="pagehead"><h1>系列</h1>
@@ -572,7 +820,7 @@ export function pageSearch(site, counts) {
     canonical: `${site.origin}/search/`,
     extraCss: []
   })}
-${mast(site, "search", counts)}
+${nav("home")}
 <a id="top"></a>
 <main id="main" class="wrap">
   <header class="pagehead">
@@ -624,7 +872,7 @@ export function pageAbout(site, ctx) {
     desc: "关于这个站点，以及它为什么长成现在这样。",
     canonical: `${site.origin}/about/`
   })}
-${mast(site, "about", counts)}
+${nav("about")}
 <a id="top"></a>
 <main id="main" class="wrap prose narrow">
   <header class="pagehead">
@@ -648,8 +896,10 @@ ${mast(site, "about", counts)}
     <ul>
       <li>用 Markdown 写作，用 Git 存档，静态生成后托管在 GitHub Pages 上。</li>
       <li>每个页面都有稳定的永久链接与一份从 Git 提交自动生成的修订记录。</li>
-      <li>文章之间双向互链：你说到别人，别人页面上就会出现你。</li>
-      <li>排版手法参考 <a href="https://gwern.net/design">gwern.net</a>：元信息块、边注、可折叠章节、语义缩放；但中文字距、行宽与边注规则是重新定的，不照搬拉丁版式。</li>
+      <li>文章之间双向互链：你说到别人，别人页面上就会出现你；引用可以落到具体某一节，那一节里就会出现「本节被这些地方引用」。</li>
+      <li>悬停站内互链会浮出目标那一篇的标题与摘要，片段在构建期就生成好，不发出任何请求。</li>
+      <li>排版手法参考 <a href="https://gwern.net/design">gwern.net</a>：元信息块、边注、可折叠章节、语义缩放、双向链接；但中文字距、行宽与边注规则是重新定的，不照搬拉丁版式。</li>
+      <li>外观参考 <a href="https://chester.how/">chester.how</a>：砖石网格、卡片尺寸、字体刻度与标签配色都照它的数值来。字体不下载，用系统字体栈 —— 字号与字距一致，字形由你的机器决定。</li>
     </ul>
   </section>
 
@@ -657,10 +907,10 @@ ${mast(site, "about", counts)}
     <h2 id="s4">无障碍<a class="anchor" href="#s4" aria-label="本节链接">#</a></h2>
     <ul>
       <li>语义化 HTML，每页只有一个一级标题，标题层级不跳级。</li>
-      <li>对比度达标：正文与次要文字都过 WCAG AA，明亮与暗色主题分别实测。</li>
-      <li>键盘可达：折叠、悬浮预览、搜索、主题切换都能只用键盘操作。</li>
-      <li>关闭 JavaScript 后正文、脚注、目录、标签与互链仍然完整可读。</li>
-      <li>尊重系统的「减弱动态效果」设置。</li>
+      <li>对比度达标：正文 21.0:1、卡片正文 9.9:1、次要文字 4.3:1，都过 WCAG AA。全站只有一套亮色配色，因此只有一组数字需要守。</li>
+      <li>键盘可达：折叠、链接预览、搜索、阅读模式都能只用键盘操作。</li>
+      <li>关闭 JavaScript 后正文、脚注、目录、标签与互链仍然完整可读。唯一的例外是 404 页面的「是不是想找」—— 那一步需要脚本，无脚本时给出搜索与归档两条退路。</li>
+      <li>尊重系统的「减弱动态效果」设置：动效只作用于导航与索引列表，正文里没有任何动画。</li>
     </ul>
   </section>
 
@@ -680,7 +930,7 @@ export function pageChangelog(site, ctx) {
     desc: "全站最近写了什么。",
     canonical: `${site.origin}/changelog/`
   })}
-${mast(site, "changelog", counts)}
+${nav("home")}
 <a id="top"></a>
 <main id="main" class="wrap">
   <header class="pagehead">
@@ -692,14 +942,30 @@ ${entryList(recent, { showDomain: true })}
 ${foot(site)}`;
 }
 
-export function page404(site, guess, counts) {
-  return `${head(site, { title: "404", desc: "没有这一页。", canonical: `${site.origin}/404.html` })}
-${mast(site, "", counts)}
+/**
+ * The 404 page, with gwern's "did you mean" guess.
+ *
+ * gwern answers a mistyped address on the SERVER, where the request path is
+ * available. GitHub Pages serves this one static file for every missing path and
+ * has no server logic, so the guess is made in the reader's browser instead —
+ * guess404.js compares the requested path against the published slugs. Without
+ * scripting the page still offers search and the archive, which is why the
+ * fallback below is never hidden behind the guess.
+ */
+export function page404(site, counts) {
+  return `${head(site, {
+    title: "404",
+    desc: "没有这一页。",
+    canonical: `${site.origin}/404.html`,
+    headExtra: `<script src="/assets/guess404.js" defer></script>`
+  })}
+${nav("")}
 <a id="top"></a>
 <main id="main" class="wrap prose narrow">
   <header class="pagehead"><h1>没有这一页</h1></header>
-  <p>这个地址下没有内容。${guess ? "不过下面这一篇看起来像你要找的：" : ""}</p>
-${guess ? entryList([guess]) : `<p class="meta">可以试试<a href="/search/">搜索</a>，或者从<a href="/archive/">归档</a>里翻。</p>`}
+  <p>这个地址下没有内容。</p>
+  <div class="guess" data-guess hidden></div>
+  <p class="meta">可以试试<a href="/search/">搜索</a>，或者从<a href="/archive/">归档</a>里翻。</p>
 </main>
 ${foot(site)}`;
 }
@@ -707,20 +973,14 @@ ${foot(site)}`;
 /** Old magazine URLs, kept alive as redirects. A link someone saved two
  *  redesigns ago should still land somewhere sensible. */
 export function pageRedirect(site, from, to, why, counts) {
-  return `<!doctype html>
-<html lang="${esc(site.lang)}" data-theme="auto">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>页面已迁移 — ${esc(site.title)}</title>
-<meta http-equiv="refresh" content="0; url=${esc(to)}">
-<link rel="canonical" href="${esc(site.origin + to)}">
-<meta name="robots" content="noindex,follow">
-<meta name="color-scheme" content="light dark">
-${CSS.map((n) => `<link rel="stylesheet" href="/assets/${n}.css">`).join("\n")}
-</head>
-<body>
-${mast(site, "", counts)}
+  return `${head(site, {
+    title: "页面已迁移",
+    desc: "这个地址已经迁移到新的位置。",
+    canonical: site.origin + to,
+    headExtra: `<meta http-equiv="refresh" content="0; url=${esc(to)}">
+<meta name="robots" content="noindex,follow">`
+  })}
+${nav("")}
 <main id="main" class="wrap prose narrow">
   <header class="pagehead"><h1>页面已迁移</h1></header>
   <p><code>${esc(from)}</code> 现在在 <a href="${esc(to)}">${esc(to)}</a>。</p>
@@ -731,8 +991,8 @@ ${foot(site)}`;
 
 export function favicon(site) {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-<rect width="64" height="64" fill="#FBFAF9"/>
-<text x="32" y="45" font-family="Georgia,serif" font-size="38" fill="#1C1C1C" text-anchor="middle">${esc(site.title.slice(0, 1))}</text>
+<rect width="64" height="64" fill="#FFFFFF"/>
+<text x="32" y="45" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans SC',sans-serif" font-size="38" font-weight="300" fill="#000000" text-anchor="middle">${esc(site.title.slice(0, 1))}</text>
 </svg>`;
 }
 

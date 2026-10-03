@@ -1,17 +1,19 @@
 /* ==========================================================================
    site.js — the only script on the site.
 
-   Every job here is an ENHANCEMENT of a default that already works without it:
+   Everything here is an enhancement of a default that already works:
 
-     · notes     — inline in the prose, readable at any width; script only
-                   moves them into the margin and keeps them from colliding
-     · folding   — sections render open; script adds the collapse control
-     · previews  — links resolve and read fine as plain links
-     · search    — the archive and tags pages cover the same ground
-     · theme     — follows the OS; script only remembers a manual override
+     · nav indicator — the current link is marked by colour and aria-current
+                       regardless; the sliding pill is decoration
+     · folding       — sections and folds render OPEN; this adds the control
+     · reader mode   — strips the chrome for reading; off by default
+     · previews      — links resolve and read fine as plain links
+     · search        — the archive and tags pages cover the same ground
 
-   That ordering matters. A gwern-derived site must survive being read with
-   scripting off, so nothing that is required to read a page may live here.
+   Removed in this revision, deliberately: the dark/light theme switch, the
+   font-size and line-width steppers, and the reading-progress bar. The design
+   is light-only and has no reading controls — the reader mode replaces all of
+   them with one switch.
 
    No third-party code, no network requests, no analytics.
    ========================================================================== */
@@ -29,187 +31,181 @@
   };
 
   /* ---------------------------------------------------------------- */
-  /* theme                                                            */
+  /* nav: the sliding indicator                                        */
   /* ---------------------------------------------------------------- */
 
-  function applyTheme(value) {
-    root.setAttribute("data-theme", value || "auto");
-    var btn = document.querySelector("[data-theme-toggle]");
-    if (btn) {
-      var dark = value === "dark" ||
-        (value !== "light" && window.matchMedia &&
-          window.matchMedia("(prefers-color-scheme: dark)").matches);
-      btn.setAttribute("aria-pressed", dark ? "true" : "false");
-      btn.setAttribute("aria-label", dark ? "当前暗色，切换到亮色" : "当前亮色，切换到暗色");
-    }
-  }
+  function setupNav() {
+    var pill = document.querySelector("[data-nav-pill]");
+    var indicator = document.querySelector("[data-nav-indicator]");
+    if (!pill || !indicator) return;
 
-  var theme = store.get("theme") || "auto";
-  applyTheme(theme);
+    var current = pill.querySelector('.nav__link[aria-current="page"]');
+    if (!current) return;
 
-  document.addEventListener("click", function (e) {
-    var btn = e.target.closest && e.target.closest("[data-theme-toggle]");
-    if (!btn) return;
-    theme = theme === "dark" ? "light" : "dark";
-    store.set("theme", theme);
-    applyTheme(theme);
-  });
-
-  if (window.matchMedia) {
-    var m = window.matchMedia("(prefers-color-scheme: dark)");
-    var onChange = function () { if ((store.get("theme") || "auto") === "auto") applyTheme("auto"); };
-    if (m.addEventListener) m.addEventListener("change", onChange);
-  }
-
-  /* ---------------------------------------------------------------- */
-  /* reading controls: font size and measure                          */
-  /* ---------------------------------------------------------------- */
-
-  var MAX_STEP = 3;
-
-  function applySize(step) {
-    root.style.setProperty("--size-shift", (step * 0.5) + "px");
-    root.setAttribute("data-size", String(step));
-  }
-  function applyMeasure(step) {
-    root.style.setProperty("--measure-shift", (step * 1.5) + "em");
-    root.setAttribute("data-measure", String(step));
-  }
-
-  var sizeStep = parseInt(store.get("size") || "0", 10);
-  var measureStep = parseInt(store.get("measure") || "0", 10);
-  if (!isFinite(sizeStep)) sizeStep = 0;
-  if (!isFinite(measureStep)) measureStep = 0;
-  applySize(sizeStep);
-  applyMeasure(measureStep);
-
-  document.addEventListener("click", function (e) {
-    if (!e.target.closest) return;
-
-    var sizeBtn = e.target.closest("[data-size]");
-    if (sizeBtn) {
-      sizeStep = Math.max(-MAX_STEP, Math.min(MAX_STEP, sizeStep + Number(sizeBtn.getAttribute("data-size"))));
-      store.set("size", String(sizeStep));
-      applySize(sizeStep);
-      return;
-    }
-
-    var measureBtn = e.target.closest("[data-measure]");
-    if (measureBtn) {
-      measureStep = Math.max(-MAX_STEP, Math.min(MAX_STEP, measureStep + Number(measureBtn.getAttribute("data-measure"))));
-      store.set("measure", String(measureStep));
-      applyMeasure(measureStep);
-      return;
-    }
-
-    var notesBtn = e.target.closest("[data-notes-toggle]");
-    if (notesBtn) {
-      var off = root.getAttribute("data-notes") === "off";
-      root.setAttribute("data-notes", off ? "on" : "off");
-      store.set("notes", off ? "on" : "off");
-      notesBtn.setAttribute("aria-pressed", off ? "true" : "false");
-      layoutNotes();
-      return;
-    }
-
-    var copy = e.target.closest("[data-copy]");
-    if (copy) {
-      var text = copy.getAttribute("data-copy") || "";
-      var done = function () {
-        var was = copy.textContent;
-        copy.textContent = "已复制";
-        copy.setAttribute("data-done", "1");
-        setTimeout(function () { copy.textContent = was; copy.removeAttribute("data-done"); }, 1600);
-      };
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).then(done).catch(function () { /* denied */ });
-      }
-      return;
-    }
-
-    var rand = e.target.closest("[data-random]");
-    if (rand) {
-      // pick from the index the page already carries — no request
-      var links = document.querySelectorAll(".entry__title");
-      if (links.length) {
-        var pick = links[Math.floor(Math.random() * links.length)];
-        window.location.href = pick.getAttribute("href");
-      }
-    }
-  });
-
-  var notesPref = store.get("notes");
-  if (notesPref === "off") {
-    root.setAttribute("data-notes", "off");
-    var nb = document.querySelector("[data-notes-toggle]");
-    if (nb) nb.setAttribute("aria-pressed", "false");
-  }
-
-  /* ---------------------------------------------------------------- */
-  /* toolbar: appears once the reader starts moving                   */
-  /* ---------------------------------------------------------------- */
-
-  var toolbar = document.querySelector("[data-toolbar]");
-  var progress = document.querySelector("[data-progress]");
-  var titleOut = document.querySelector("[data-toolbar-title]");
-  var titleSrc = document.querySelector("[data-toolbar-title-text]");
-
-  if (toolbar) {
-    var ticking = false;
-    var update = function () {
-      ticking = false;
-      var y = window.scrollY || window.pageYOffset || 0;
-      var doc = document.documentElement;
-      var max = Math.max(1, doc.scrollHeight - window.innerHeight);
-
-      if (y > 120) {
-        toolbar.hidden = false;
-        if (titleOut && titleSrc && !titleOut.textContent) {
-          titleOut.textContent = titleSrc.getAttribute("data-toolbar-title-text") || "";
-        }
-      } else {
-        toolbar.hidden = true;
-      }
-
-      if (progress) {
-        var p = Math.max(0, Math.min(1, y / max));
-        progress.style.setProperty("--progress", p.toFixed(4));
-      }
+    // Measured rather than hard-coded: the labels are Chinese and their widths
+    // depend on the fallback font, so any fixed offset would be wrong on some
+    // systems. offsetLeft is relative to the pill, which is what transform wants.
+    var place = function () {
+      indicator.style.width = current.offsetWidth + "px";
+      indicator.style.transform = "translateX(" + current.offsetLeft + "px)";
+      indicator.setAttribute("data-on", "true");
     };
-    window.addEventListener("scroll", function () {
-      if (ticking) return;
-      ticking = true;
-      window.requestAnimationFrame(update);
-    }, { passive: true });
-    window.addEventListener("resize", update, { passive: true });
-    update();
+
+    place();
+    // fonts change metrics after first paint
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(place).catch(function () {});
+    window.addEventListener("resize", place, { passive: true });
   }
 
   /* ---------------------------------------------------------------- */
-  /* notes: keep them from colliding in the margin                    */
+  /* folding: sections and standalone folds                            */
   /* ---------------------------------------------------------------- */
 
-  var noteEls = function () {
+  function foldControl(host, bodySelector, labelEl) {
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "fold__toggle";
+    btn.setAttribute("aria-expanded", "true");
+    btn.textContent = "收起";
+    labelEl.appendChild(btn);
+
+    var setFolded = function (on) {
+      host.classList.toggle("is-collapsed", on);
+      btn.textContent = on ? "展开" : "收起";
+      btn.setAttribute("aria-expanded", on ? "false" : "true");
+    };
+    btn.addEventListener("click", function () {
+      setFolded(!host.classList.contains("is-collapsed"));
+    });
+    return { setFolded: setFolded, btn: btn };
+  }
+
+  function setupSections() {
+    var sections = Array.prototype.slice.call(document.querySelectorAll(".sec"));
+    if (!sections.length) return;
+
+    var state = {};
+    try { state = JSON.parse(store.get("folded") || "{}") || {}; } catch (e) { state = {}; }
+
+    sections.forEach(function (sec) {
+      var heading = sec.querySelector("h2");
+      if (!heading || !heading.id) return;
+
+      // everything after the heading is the collapsible part
+      var rest = document.createElement("div");
+      rest.className = "sec__rest";
+      var node = heading.nextSibling;
+      while (node) {
+        var next = node.nextSibling;
+        rest.appendChild(node);
+        node = next;
+      }
+      sec.appendChild(rest);
+
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "sec__toggle";
+      btn.setAttribute("aria-controls", heading.id + "-body");
+      btn.setAttribute("aria-expanded", "true");
+      rest.id = heading.id + "-body";
+      heading.appendChild(btn);
+
+      var setFolded = function (on) {
+        sec.classList.toggle("sec--folded", on);
+        btn.textContent = on ? "+" : "−";
+        btn.setAttribute("aria-expanded", on ? "false" : "true");
+        btn.setAttribute("aria-label", on ? "展开本节" : "折叠本节");
+        state[heading.id] = on;
+        store.set("folded", JSON.stringify(state));
+        layoutNotes();
+      };
+      btn.textContent = "−";
+      btn.setAttribute("aria-label", "折叠本节");
+      btn.addEventListener("click", function () {
+        setFolded(!sec.classList.contains("sec--folded"));
+      });
+      sec.classList.add("is-foldable");
+      if (state[heading.id]) setFolded(true);
+
+      // A link into a folded section must open it, or an anchor is a dead end.
+      var openIfTarget = function (hashId) {
+        if (hashId === heading.id && sec.classList.contains("sec--folded")) setFolded(false);
+      };
+      window.addEventListener("hashchange", function () {
+        openIfTarget(decodeURIComponent(window.location.hash.slice(1)));
+      });
+      openIfTarget(decodeURIComponent(window.location.hash.slice(1)));
+      sec.addEventListener("click", function (e) {
+        var a = e.target.closest && e.target.closest('a[href^="#"]');
+        if (a) openIfTarget(decodeURIComponent(a.getAttribute("href").slice(1)));
+      });
+    });
+  }
+
+  /** Standalone `+++` folds. They render open; this only adds the toggle. */
+  function setupFolds() {
+    Array.prototype.forEach.call(document.querySelectorAll(".fold"), function (fold) {
+      var label = fold.querySelector(".fold__label");
+      if (!label) {
+        // an inline fold has no label element, so make one to hang the control on
+        var p = document.createElement("span");
+        label = p;
+        fold.insertBefore(p, fold.firstChild);
+        p.className = "fold__label fold__label--inline";
+      }
+      var ctl = foldControl(fold, null, label);
+      fold.classList.add("is-foldable");
+      void ctl;
+    });
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* reader mode                                                       */
+  /* ---------------------------------------------------------------- */
+
+  function setupReader() {
+    var btns = document.querySelectorAll("[data-reader-toggle]");
+    if (!btns.length) return;
+
+    var apply = function (on) {
+      root.setAttribute("data-reader", on ? "on" : "off");
+      Array.prototype.forEach.call(btns, function (b) {
+        b.setAttribute("aria-pressed", on ? "true" : "false");
+        b.textContent = on ? "退出阅读模式" : "阅读模式";
+      });
+      layoutNotes();
+    };
+
+    apply(store.get("reader") === "on");
+    document.addEventListener("click", function (e) {
+      var b = e.target.closest && e.target.closest("[data-reader-toggle]");
+      if (!b) return;
+      var on = root.getAttribute("data-reader") !== "on";
+      store.set("reader", on ? "on" : "off");
+      apply(on);
+    });
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* notes: keep them from colliding in the margin                      */
+  /* ---------------------------------------------------------------- */
+
+  function noteEls() {
     return Array.prototype.slice.call(document.querySelectorAll(".note"));
-  };
+  }
 
   function layoutNotes() {
     var body = document.querySelector(".artbody");
     if (!body) return;
-    // Must match the CSS breakpoint that engages the side columns, or notes get
-    // offsets in a layout that is not using them.
+    // Must match the CSS breakpoint that engages the side columns.
     var wide = window.matchMedia && window.matchMedia("(min-width: 1160px)").matches;
     var notes = noteEls();
 
-    if (!wide || root.getAttribute("data-notes") === "off") {
+    if (!wide || root.getAttribute("data-reader") === "on") {
       for (var i = 0; i < notes.length; i++) notes[i].style.removeProperty("--note-offset");
       return;
     }
 
-    // Anchor each note to the top of the line its reference sits on, then push
-    // it below the previous note so two long notes in a row cannot overlap.
-    // The x position is pure CSS (grid column 1); only the vertical offset is
-    // measured, and it is measured against the same box that positions them.
     var bodyTop = body.getBoundingClientRect().top + (window.scrollY || window.pageYOffset || 0);
     var GAP = 14;
     var cursor = -Infinity;
@@ -232,86 +228,11 @@
   }
 
   /* ---------------------------------------------------------------- */
-  /* folding sections (semantic zoom)                                 */
-  /* ---------------------------------------------------------------- */
-
-  function setupFold() {
-    var sections = Array.prototype.slice.call(document.querySelectorAll(".sec"));
-    if (!sections.length) return;
-
-    var foldedState = store.get("folded");
-    var folded = {};
-    if (foldedState) {
-      try { folded = JSON.parse(foldedState) || {}; } catch (e) { folded = {}; }
-    }
-
-    sections.forEach(function (sec) {
-      var heading = sec.querySelector("h2");
-      if (!heading) return;
-      var id = heading.id || "";
-      if (!id) return;
-
-      // everything after the heading is the collapsible part
-      var rest = document.createElement("div");
-      rest.className = "sec__rest";
-      var node = heading.nextSibling;
-      while (node) {
-        var next = node.nextSibling;
-        rest.appendChild(node);
-        node = next;
-      }
-      sec.appendChild(rest);
-
-      var btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "sec__toggle";
-      btn.setAttribute("aria-expanded", "true");
-      btn.setAttribute("aria-controls", id + "-body");
-      btn.setAttribute("aria-label", "折叠本节");
-      btn.textContent = "−";
-      rest.id = id + "-body";
-
-      heading.appendChild(btn);
-
-      var setFolded = function (on) {
-        sec.classList.toggle("sec--folded", on);
-        btn.textContent = on ? "+" : "−";
-        btn.setAttribute("aria-expanded", on ? "false" : "true");
-        btn.setAttribute("aria-label", on ? "展开本节" : "折叠本节");
-        folded[id] = on;
-        store.set("folded", JSON.stringify(folded));
-        layoutNotes();
-      };
-
-      btn.addEventListener("click", function () {
-        setFolded(!sec.classList.contains("sec--folded"));
-      });
-
-      sec.classList.add("is-foldable");
-      if (folded[id]) setFolded(true);
-
-      // A link into a folded section must open it — otherwise an anchor is a
-      // dead end, which is the one thing folding must never cause.
-      var openIfTarget = function (hashId) {
-        if (hashId === id && sec.classList.contains("sec--folded")) setFolded(false);
-      };
-      window.addEventListener("hashchange", function () {
-        openIfTarget(decodeURIComponent(window.location.hash.slice(1)));
-      });
-      openIfTarget(decodeURIComponent(window.location.hash.slice(1)));
-      sec.addEventListener("click", function (e) {
-        var a = e.target.closest && e.target.closest("a[href^='#']");
-        if (a) openIfTarget(decodeURIComponent(a.getAttribute("href").slice(1)));
-      });
-    });
-  }
-
-  /* ---------------------------------------------------------------- */
-  /* link previews — local content only, never a network request      */
+  /* link previews — local content only, never a network request        */
   /* ---------------------------------------------------------------- */
 
   var preview = null;
-  var pinTimer = null;
+  var previewTimer = null;
 
   function ensurePreview() {
     if (preview) return preview;
@@ -329,32 +250,25 @@
     p.innerHTML = html;
     p.hidden = false;
     var box = anchor.getBoundingClientRect();
-    var pad = 12;
-    var left = Math.min(box.left + (window.scrollX || 0), window.innerWidth - 380);
-    p.style.left = Math.max(pad, left) + "px";
-    p.style.top = (box.bottom + (window.scrollY || 0) + 8) + "px";
+    p.style.left = Math.max(12, Math.min(box.left + (window.scrollX || 0), window.innerWidth - 380)) + "px";
+    p.style.top = (box.bottom + (window.scrollY || window.pageYOffset || 0) + 8) + "px";
   }
 
-  function hidePreview() {
-    if (preview) preview.hidden = true;
-  }
+  function hidePreview() { if (preview) preview.hidden = true; }
 
   document.addEventListener("mouseover", function (e) {
     var a = e.target.closest && e.target.closest(".ref[data-preview]");
-    if (!a || prefersReduced) return;
+    if (!a) return;
     var tpl = document.getElementById("pv-" + a.getAttribute("data-preview"));
     if (!tpl) return;
-    clearTimeout(pinTimer);
-    pinTimer = setTimeout(function () { showPreview(a, tpl.innerHTML); }, 120);
+    clearTimeout(previewTimer);
+    previewTimer = setTimeout(function () { showPreview(a, tpl.innerHTML); }, 120);
   });
-
   document.addEventListener("mouseout", function (e) {
-    var a = e.target.closest && e.target.closest(".ref[data-preview]");
-    if (!a) return;
-    clearTimeout(pinTimer);
+    if (!e.target.closest || !e.target.closest(".ref[data-preview]")) return;
+    clearTimeout(previewTimer);
     hidePreview();
   });
-
   document.addEventListener("focusin", function (e) {
     var a = e.target.closest && e.target.closest(".ref[data-preview]");
     if (!a) return;
@@ -362,12 +276,10 @@
     if (tpl) showPreview(a, tpl.innerHTML);
   });
   document.addEventListener("focusout", hidePreview);
-  document.addEventListener("keydown", function (e) {
-    if (e.key === "Escape") hidePreview();
-  });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") hidePreview(); });
 
   /* ---------------------------------------------------------------- */
-  /* reveal on scroll — index lists only, never prose                 */
+  /* reveal on scroll — index lists only, never prose                   */
   /* ---------------------------------------------------------------- */
 
   function setupReveal() {
@@ -408,7 +320,7 @@
     var index = null;
     var loading = false;
     var cursor = -1;
-
+    var debounce = null;
     var params = new URLSearchParams(window.location.search);
 
     function ensureIndex() {
@@ -417,14 +329,8 @@
       status.textContent = "正在载入索引…";
       fetch("/search/index.json", { credentials: "same-origin" })
         .then(function (r) { if (!r.ok) throw new Error("索引 " + r.status); return r.json(); })
-        .then(function (data) {
-          index = data;
-          fillFacets();
-          run();
-        })
-        .catch(function () {
-          status.textContent = "索引载入失败。可以用标签或归档页浏览。";
-        });
+        .then(function (data) { index = data; fillFacets(); run(); })
+        .catch(function () { status.textContent = "索引载入失败。可以用标签或归档页浏览。"; });
     }
 
     function fillFacets() {
@@ -456,9 +362,6 @@
       return (input.value || "").toLowerCase().split(/\s+/).filter(Boolean);
     }
 
-    /** Every term must appear somewhere; the score decides the order. Ranking
-     *  is deliberately simple and inspectable: a title hit dominates, then tags,
-     *  then the description, then the body. */
     function score(a, ts) {
       var title = a.title.toLowerCase();
       var desc = a.description.toLowerCase();
@@ -484,6 +387,11 @@
       if (i < 0) return a.description;
       var start = Math.max(0, i - 40);
       return (start > 0 ? "…" : "") + text.slice(start, start + 180) + "…";
+    }
+
+    function esc(s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
     }
 
     function run() {
@@ -519,10 +427,9 @@
         var li = document.createElement("li");
         li.className = "entry";
         li.innerHTML =
-          '<h3><a href="' + a.url + '">' + esc(a.title) + "</a></h3>" +
-          '<p class="meta">' + esc(a.domainName) + " · " + esc(a.kind) + " · " +
-          '<time datetime="' + a.date + '">' + a.date.replace(/-/g, ".") + "</time>" +
-          (a.status !== "finished" ? " · " + esc(a.status) : "") + "</p>" +
+          '<a class="entry__title" href="' + a.url + '">' + esc(a.title) + "</a>" +
+          '<span class="entry__meta">' + esc(a.domainName) + " · " + esc(a.kind) + " · " +
+          '<time datetime="' + a.date + '">' + a.date.replace(/-/g, ".") + "</time></span>" +
           '<p class="entry__ctx">' + esc(ts.length ? ctx(a, ts[0]) : a.description) + "</p>";
         li.setAttribute("aria-current", "false");
         results.appendChild(li);
@@ -531,23 +438,13 @@
       status.textContent = hits.length
         ? hits.length + " 篇" + (ts.length ? "匹配" : "") +
           (f.domain || f.kind || f.tag || f.year ? "（已筛选）" : "")
-        : (ts.length || f.domain || f.kind || f.tag || f.year
-          ? "没有匹配的文章。"
-          : "输入关键词开始检索。");
+        : (ts.length || f.domain || f.kind || f.tag || f.year ? "没有匹配的文章。" : "输入关键词开始检索。");
 
-      // keep the URL shareable
       var q = new URLSearchParams();
       if (input.value) q.set("q", input.value);
       Object.keys(f).forEach(function (k) { if (f[k]) q.set(k, f[k]); });
       var qs = q.toString();
       history.replaceState(null, "", qs ? "?" + qs : window.location.pathname);
-
-      layoutNotes();
-    }
-
-    function esc(s) {
-      return String(s == null ? "" : s)
-        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
     }
 
     function move(delta) {
@@ -559,8 +456,11 @@
       items[cursor].scrollIntoView({ block: "nearest" });
     }
 
-    input.addEventListener("input", function () { ensureIndex(); clearTimeout(pinTimer2); pinTimer2 = setTimeout(run, 120); });
-    var pinTimer2 = null;
+    input.addEventListener("input", function () {
+      ensureIndex();
+      clearTimeout(debounce);
+      debounce = setTimeout(run, 120);
+    });
     form.addEventListener("submit", function (e) { e.preventDefault(); ensureIndex(); run(); });
     Object.keys(filters).forEach(function (k) {
       if (filters[k]) filters[k].addEventListener("change", function () { ensureIndex(); run(); });
@@ -584,7 +484,10 @@
   /* go                                                               */
   /* ---------------------------------------------------------------- */
 
-  setupFold();
+  setupNav();
+  setupSections();
+  setupFolds();
+  setupReader();
   layoutNotes();
   setupReveal();
   setupSearch();
@@ -595,8 +498,7 @@
     resizeTimer = setTimeout(layoutNotes, 150);
   }, { passive: true });
 
-  // fonts change metrics; re-place notes once they have settled
   if (document.fonts && document.fonts.ready) {
-    document.fonts.ready.then(layoutNotes).catch(function () { /* ignore */ });
+    document.fonts.ready.then(layoutNotes).catch(function () {});
   }
 })();

@@ -24,8 +24,9 @@ import { fileURLToPath } from "node:url";
 import { esc, plain, slugify, walk, relative, rm, ensure, exists } from "./lib.mjs";
 import { Problems, nearMiss, hexFrom, contrast, todayISO } from "./lib.mjs";
 import { DOMAINS, domainByKey, domainKeys, statusByKey } from "./taxonomy.mjs";
-import { loadSources, buildLinkGraph } from "./content.mjs";
-import { renderBody, searchText, excerpt } from "./render.mjs";
+import { loadSources, loadCollections, buildLinkGraph } from "./content.mjs";
+import { renderBody, searchText } from "./render.mjs";
+import { COLLECTIONS, collectionByKey } from "./taxonomy.mjs";
 import * as T from "./templates.mjs";
 
 /* ══════════════════════════════════════════════════════════════════════ */
@@ -57,7 +58,8 @@ const DEFAULTS = {
  *  stylesheets — because nothing ever overwrote it. Every local check was green,
  *  because every local check was reading the freshly-written stage. */
 const MANAGED = [
-  "literature", "philosophy", "compsci",
+  "literature", "philosophy", "compsci", "writing",
+  "reading", "hobbies",
   "tags", "series", "archive", "search", "changelog", "about",
   "articles", "contents", "images",
   "assets", "index.html", "404.html", "rss.xml", "sitemap.xml", "robots.txt",
@@ -74,7 +76,7 @@ const LEGACY = [
 
 const PRIVATE = new Set([
   ".git", ".github", "node_modules", ".build", ".shots", "src",
-  "_articles", "_images", "_issues",
+  "_articles", "_images", "_issues", "_reading", "_hobbies",
   "package.json", "package-lock.json", "README.md", "DESIGN-NOTES.md", "LICENSE"
 ]);
 const isPrivate = (name) => PRIVATE.has(name) || name.startsWith("_") || name.startsWith(".");
@@ -135,21 +137,32 @@ function revisionsFor(file) {
 /* derived collections                                                   */
 /* ══════════════════════════════════════════════════════════════════════ */
 
-function collectTags(articles) {
+/**
+ * Tags span BOTH content kinds.
+ *
+ * They were originally collected from articles alone, so a tag on a reading or
+ * hobby entry rendered as a chip that linked to a tag page the build never
+ * created — 404s that only the smoke suite (which walks every href) caught.
+ * A tag is a property of the collection, not of one content type.
+ */
+function collectTags(articles, collections = {}) {
   const map = new Map();
-  for (const a of articles) {
-    for (const t of a.tags) {
+  const add = (item) => {
+    for (const t of item.tags || []) {
       if (!map.has(t)) map.set(t, []);
-      map.get(t).push(a);
+      map.get(t).push(item);
     }
-  }
+  };
+  for (const a of articles) add(a);
+  for (const key of Object.keys(collections)) for (const e of collections[key]) add(e);
+
   return [...map.entries()]
     .map(([name, items]) => ({
       name,
-      items,
+      items: items.sort((a, b) => (a.created < b.created ? 1 : -1)),
       count: items.length,
       // the tag page's own one-line summary: the newest piece under it
-      blurb: items[0] ? items[0].description : ""
+      blurb: items[0] ? (items[0].description || items[0].title) : ""
     }))
     .sort((a, b) => b.count - a.count || (a.name < b.name ? -1 : 1));
 }
@@ -179,35 +192,100 @@ function buildCounts(articles) {
 /* assertions                                                            */
 /* ══════════════════════════════════════════════════════════════════════ */
 
-/** gwern's four principles, as checks. These exist so a later edit cannot
- *  quietly walk the site back toward a design that only looks good. */
+/**
+ * The design contract, as checks.
+ *
+ * The previous revision of this file asserted a MONOCHROME system — no shadows,
+ * no rounded corners, no gradients, one grayscale palette. chester.how is the
+ * opposite of that: rounded cards, three shadow levels, and colour used as tag
+ * decoration. Those assertions are gone, and what replaces them is what matters
+ * about this design instead:
+ *
+ *   · the measured type ramp (weight 300, negative tracking, 16/26 body)
+ *   · the light-only commitment — a dark palette must NOT exist
+ *   · the card grid stays a grid: every card links inside the site
+ *   · the content promises (Chinese measure, inline notes, no third parties)
+ */
 function checkDesign(log) {
   const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "");
   const forScreen = (s) => s.replace(/@media\s+print\s*\{[\s\S]*?\n\}/g, "");
   const css = forScreen(strip(T.CSS.map((n) => fs.readFileSync(path.join(ASSETS, `${n}.css`), "utf8")).join("\n")));
+  const tokens = strip(fs.readFileSync(path.join(ASSETS, "tokens.css"), "utf8"));
   const js = strip(fs.readFileSync(path.join(ASSETS, "site.js"), "utf8"));
   const failures = [];
 
-  // ---- 极简：no ornament -------------------------------------------------
-  const FORBIDDEN = [
-    [/box-shadow\s*:(?!\s*none)/g, "出现了阴影（极简原则）"],
-    [/border-radius\s*:\s*(?!0)/g, "出现了圆角"],
-    [/(?:linear|radial|conic)-gradient/g, "出现了渐变"],
-    [/\btext-shadow\s*:/g, "出现了文字阴影"]
+  // ---- light only ------------------------------------------------------
+  // chester.how states "no dark surfaces or backgrounds" as a rule, and the
+  // previous two-theme system is deliberately retired. If a dark branch ever
+  // comes back it should be a decision, not a drift.
+  if (/data-theme|prefers-color-scheme:\s*dark/.test(css + js)) {
+    failures.push("出现了暗色主题分支 —— 本站是纯亮色设计（chester.how 的明确规则）");
+  }
+  if (/--paper-dark|--ink-dark/.test(css)) failures.push("tokens.css 里又出现了暗色令牌");
+
+  // ---- the type ramp ---------------------------------------------------
+  // Read out of the stylesheet, because the whole design is these numbers and a
+  // quiet edit to any of them is a design change. Values are normalised to px
+  // (1rem = 16px) so the comparison does not depend on the unit chosen.
+  //
+  // chester.how publishes four roles: H1 36/300/−1.08, H3 30/300/−0.90, body
+  // 16/400/−0.40, nav 14/400/−0.35. An article here needs three heading levels —
+  // the page title, its sections, and subsections within a section — so the two
+  // heading numbers chester does publish go on the two levels that exist
+  // (page title = 36, section = 30) and the third is derived one step below.
+  const ramp = [
+    ["--fs-body", 16, 0, "正文 16px"],
+    ["--lh-body", 1.625, 0.02, "正文行高 26/16"],
+    ["--tr-body", -0.4, 0.05, "正文字距 −0.40px"],
+    ["--fs-h1", 36, 0, "H1 36px"],
+    ["--fs-h2", 30, 0, "H2 30px"],
+    ["--fs-h3", 24, 0, "H3 24px"]
   ];
-  for (const [re, msg] of FORBIDDEN) {
-    const hits = (css.match(re) || []).concat(js.match(re) || []);
-    if (hits.length) failures.push(`${msg} → ${[...new Set(hits)].slice(0, 3).join(", ")}`);
+  const rampPx = new Map();
+  for (const [name, want, tol, label] of ramp) {
+    // unitless is legitimate for a line-height, so accept all three forms
+    const m = new RegExp(`${name}:\\s*(-?[\\d.]+)(px|rem|)\\s*;`).exec(tokens);
+    if (!m) { failures.push(`tokens.css 缺少 ${name}`); continue; }
+    const raw = parseFloat(m[1]);
+    const value = m[2] === "rem" ? raw * 16 : raw;   // px or unitless-as-px
+    rampPx.set(name, value);
+    const ok = Math.abs(value - want) <= tol;
+    log(`  ${ok ? "ok  " : "FAIL"} ${label.padEnd(22)} ${m[1]}${m[2] || ""}`);
+    if (!ok) failures.push(`${label} 变成了 ${m[1]}${m[2] || ""}`);
+  }
+  // The hierarchy itself, asserted separately from the individual numbers.
+  // `font-size: var(--fs-h2)` with --fs-h2 undefined is not an error anywhere:
+  // the declaration is dropped and the element inherits its parent's size, so an
+  // H2 rendered at 16px — SMALLER than the H3 under it — with every check green.
+  // It took a screenshot to notice. This is the check that states the invariant.
+  const h1 = rampPx.get("--fs-h1"), h2 = rampPx.get("--fs-h2"), h3 = rampPx.get("--fs-h3");
+  if (h1 && h2 && h3) {
+    const ranked = h1 > h2 && h2 > h3;
+    log(`  ${ranked ? "ok  " : "FAIL"} 标题层级       H1 ${h1} > H2 ${h2} > H3 ${h3}`);
+    if (!ranked) failures.push(`标题层级乱了：H1 ${h1} / H2 ${h2} / H3 ${h3}，必须逐级递减`);
   }
 
-  // Colour must be defined once, in tokens.css. A hex literal anywhere else is
-  // how a monochrome site silently grows a second palette.
-  for (const name of T.CSS.filter((n) => n !== "tokens")) {
-    const body = strip(fs.readFileSync(path.join(ASSETS, `${name}.css`), "utf8"));
-    const loose = body.match(/#[0-9a-fA-F]{3,8}\b/g) || [];
-    if (loose.length) {
-      failures.push(`${name}.css 里出现了硬编码颜色 ${[...new Set(loose)].slice(0, 4).join(", ")} —— 颜色只能定义在 tokens.css`);
-    }
+  // ---- every referenced custom property must exist ---------------------
+  // Same failure mode as above, caught in general: an undefined custom property
+  // makes the whole declaration invalid, and the element quietly inherits.
+  // `--note-offset` is the one legitimate exception — site.js sets it on the
+  // element, so it can never appear in a stylesheet.
+  const defined = new Set([...tokens.matchAll(/(--[a-z0-9-]+)\s*:/gi)].map((m) => m[1]));
+  const RUNTIME_VARS = new Set(["--note-offset"]);
+  const undefinedVars = new Set();
+  for (const m of css.matchAll(/var\((--[a-z0-9-]+)/gi)) {
+    if (!defined.has(m[1]) && !RUNTIME_VARS.has(m[1])) undefinedVars.add(m[1]);
+  }
+  if (undefinedVars.size) {
+    failures.push(`这些变量没有定义，用到它们的整条声明会被丢弃：${[...undefinedVars].join(", ")}`);
+  } else {
+    log(`  ok   变量引用      ${defined.size} 个变量，每个 var() 都有着落`);
+  }
+  // headings at weight 300 — the lightness IS the aesthetic
+  const hRule = /(?:^|[\s,])(?:h1|h2|h3|h4)[^{]*\{[^}]*\}/g;
+  for (const block of css.match(hRule) || []) {
+    const w = /font-weight:\s*(\d+)/.exec(block);
+    if (w && w[1] !== "300") failures.push(`标题字重变成了 ${w[1]} —— chester 的排版是 300`);
   }
 
   // ---- no third-party anything -----------------------------------------
@@ -216,58 +294,56 @@ function checkDesign(log) {
   if (external.length) failures.push(`引用了外部脚本/字体：${[...new Set(external)].slice(0, 3).join(", ")}`);
   if (/@import\s+url\(/i.test(css)) failures.push("CSS 里出现了 @import url()，会引入站外请求");
 
-  // ---- 渐进增强：core reading must not need JS --------------------------
+  // ---- progressive enhancement -----------------------------------------
   const srcFiles = fs.readdirSync(HERE).filter((f) => f.endsWith(".mjs"));
   const markup = srcFiles.map((f) => fs.readFileSync(path.join(HERE, f), "utf8")).join("\n");
-  if (/<aside class="note"/.test(markup) === false) {
+  if (!/<aside class="note"/.test(markup)) {
     failures.push("脚注不再是内联 <aside>，关掉 JS 后边注会丢失");
+  }
+  for (const marker of ['class="admon', 'class="fold', 'class="epigraph', 'class="columns']) {
+    if (!markup.includes(marker)) failures.push(`标记不见了：${marker}（关掉 JS 后应仍然可见）`);
   }
   if (!/prefers-reduced-motion/.test(css)) failures.push("没有 prefers-reduced-motion 回退");
 
   // ---- 中文行宽：30–34 字 ----------------------------------------------
   const measure = /--measure:\s*([\d.]+)em/.exec(css);
-  const bodyPx = /--fs-body:\s*([\d.]+)rem/.exec(css);
-  if (!measure || !bodyPx) {
-    failures.push("--measure 或 --fs-body 未定义，无法校验中文行宽");
+  if (!measure) {
+    failures.push("--measure 未定义，无法校验中文行宽");
   } else {
-    // 1em of measure ≈ 1 汉字 of body size, since 汉字 are full-width
     const perLine = parseFloat(measure[1]);
     const ok = perLine >= 29 && perLine <= 35;
     log(`  ${ok ? "ok  " : "FAIL"} 正文行宽 ${perLine.toFixed(1)} 字 (目标 30–34)`);
     if (!ok) failures.push(`正文行宽是 ${perLine.toFixed(1)} 字，超出 30–34 的目标区间`);
   }
 
-  // ---- 对比度：亮色与暗色分别实测 ---------------------------------------
-  // Dark values live inside :root[data-theme="dark"], not the base :root, so
-  // they need their own reader — reading the base block and pretending it is
-  // the dark palette would "pass" while measuring the wrong colours.
-  const hexInTheme = (theme, name) => {
-    if (!theme) return hexFrom(css, name, null);
-    const block = new RegExp(`:root\\[data-theme="${theme}"\\]\\s*\\{([\\s\\S]*?)\\}`).exec(css);
-    if (!block) return null;
-    return hexFrom(block[1], name, hexFrom(css, name, null));
-  };
-
+  // ---- contrast, against the white canvas ------------------------------
   const pairs = [
-    ["亮色 正文", "ink", "paper", null],
-    ["亮色 次要", "ink-mute", "paper", null],
-    ["亮色 链接", "link", "paper", null],
-    ["暗色 正文", "ink", "paper", "dark"],
-    ["暗色 次要", "ink-mute", "paper", "dark"],
-    ["暗色 链接", "link", "paper", "dark"]
+    ["正文", "ink", "page"],
+    ["卡片正文", "ink-body", "card"],
+    ["次要文字", "ink-muted", "page"]
   ];
-  for (const [name, fg, bg, theme] of pairs) {
-    const a = hexInTheme(theme, fg);
-    const b = hexInTheme(theme, bg);
-    if (!a || !b) {
-      failures.push(`色板缺少 ${theme ? "暗色" : "亮色"}的 --${fg} 或 --${bg}，无法校验对比度`);
-      continue;
-    }
+  for (const [name, fg, bg] of pairs) {
+    const a = hexFrom(tokens, fg, null);
+    const b = hexFrom(tokens, bg, null);
+    if (!a || !b) { failures.push(`色板缺少 --${fg} 或 --${bg}，无法校验${name}对比度`); continue; }
     const r = contrast(a, b);
-    const ok = r >= 4.5;
-    log(`  ${ok ? "ok  " : "FAIL"} ${name.padEnd(10)} ${r.toFixed(2)}:1`);
-    if (!ok) failures.push(`${name}对比度 ${r.toFixed(2)}:1 低于 AA 4.5:1`);
+    // 3:1 for muted text: it is only ever used at >=14px for labels and
+    // eyebrows, never for prose. Body copy runs at 16px/400 and is asserted at
+    // full AA below.
+    const need = name === "次要文字" ? 3 : 4.5;
+    const ok = r >= need;
+    log(`  ${ok ? "ok  " : "FAIL"} ${name.padEnd(10)} ${r.toFixed(2)}:1 (需要 ${need})`);
+    if (!ok) failures.push(`${name}对比度 ${r.toFixed(2)}:1 低于 ${need}:1`);
   }
+
+  // ---- the nav is fixed ------------------------------------------------
+  const navTexts = T.NAV.map((n) => n.text);
+  if (navTexts.join("|") !== "首页|写作|阅读|爱好|标签|关于") {
+    failures.push(`导航标签变成了 ${navTexts.join(" / ")}`);
+  } else {
+    log(`  ok   导航标签  ${navTexts.join(" · ")}`);
+  }
+  if (navTexts.includes("项目")) failures.push("导航里又出现了「项目」—— 本轮明确要去掉");
 
   return failures;
 }
@@ -300,6 +376,151 @@ function checkIntegrity({ articles, bySlug, backlinks, outgoing, problems, log }
       if (seen.has(key)) problems.warn(`${slug} 重复引用了 ${o.to}${o.anchor ? "#" + o.anchor : ""}`);
       seen.add(key);
     }
+  }
+
+  return failures;
+}
+
+/* ══════════════════════════════════════════════════════════════════════ */
+/* assertions on the rendered output                                     */
+/* ══════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Checks that can only run once the pages exist.
+ *
+ * These read the ARTEFACT. An earlier version of the card check pattern-matched
+ * a variable name inside templates.mjs, so renaming a local variable failed the
+ * build while the output was perfectly correct — an assertion coupled to how the
+ * code is written rather than to what it produces. Everything here inspects the
+ * generated HTML instead.
+ */
+function checkRendered(log) {
+  const failures = [];
+  const homePath = path.join(STAGE, "index.html");
+  if (!exists(homePath)) return failures;
+
+  const home = fs.readFileSync(homePath, "utf8");
+
+  // cards must point inside the site
+  const cardHrefs = [...home.matchAll(/<a class="card__link[^"]*" href="([^"]+)"/g)].map((m) => m[1]);
+  const outward = cardHrefs.filter((h) => /^https?:/i.test(h));
+  if (outward.length) {
+    failures.push(`卡片指向了站外：${[...new Set(outward)].slice(0, 3).join(", ")}`);
+  } else if (cardHrefs.length) {
+    log(`  ok   卡片链接      ${cardHrefs.length} 张全部站内跳转`);
+  } else {
+    failures.push("首页上找不到任何卡片链接");
+  }
+
+  // An anchor inside an anchor is invalid: the parser closes the outer one, the
+  // DOM is restructured, and the card ends up 883px wide in a 390px grid.
+  //
+  // Two boundaries matter here. The grid is sliced out of the page first, so the
+  // scan cannot run on into the footer's links; and each card is split on the
+  // next card, so a window cannot span two siblings. Without both, this reports
+  // nesting that is not there — it did, twice.
+  const grid = /<div class="masonry">([\s\S]*?)<\/div>\s*<p class="home__more"/.exec(home);
+  const cards = grid ? grid[1].split(/(?=<div class="cell )/).slice(1) : [];
+  const nested = cards.filter((b) =>
+    /<a [^>]*class="card__link[^"]*"[^>]*>[\s\S]*?<a\b/.test(b));
+  if (nested.length) {
+    failures.push(`卡片里出现了嵌套的 <a>（${nested.length} 张），会导致浏览器重构 DOM 并破坏版式`);
+  } else {
+    log(`  ok   卡片结构      ${cards.length} 张均无嵌套 <a>`);
+  }
+
+  // the grid must actually be a grid
+  const cells = (home.match(/class="cell cell--(intro|wide|square)"/g) || []);
+  const kinds = new Set(cells.map((c) => /cell--(\w+)/.exec(c)[1]));
+  if (!cells.length) failures.push("首页没有 masonry 网格");
+  else log(`  ok   网格          ${cells.length} 格 (${[...kinds].join(" / ")})`);
+  if (!kinds.has("intro")) failures.push("首页缺少 intro 大卡");
+
+  // exactly one h1 per page, checked on the rendered files
+  let worst = 0;
+  const themed = [];
+  const orphans = [];
+  const selfLinks = [];
+  const nesting = [];
+  for (const f of walk(STAGE).filter((x) => x.endsWith(".html"))) {
+    const body = fs.readFileSync(f, "utf8");
+    const n = (body.match(/<h1\b/g) || []).length;
+    if (n !== 1) {
+      worst++;
+      if (worst <= 3) failures.push(`${relative(STAGE, f)} 有 ${n} 个 h1，应为 1`);
+    }
+    // The redirect stubs hand-rolled their own <head> for two generations and
+    // kept a data-theme="auto" in it long after the theme was retired: the CSS
+    // and JS were clean, so nothing caught it. Every template goes through
+    // head() now, which emits `color-scheme: light` and no attribute at all.
+    if (/data-theme|prefers-color-scheme/.test(body)) themed.push(relative(STAGE, f));
+
+    // A hover preview reads `#pv-<slug>`. When that template is missing the
+    // preview does not break loudly — hovering simply does nothing, which reads
+    // as "this link has no preview" and would never be reported. This check is
+    // the only thing standing between that and a working feature.
+    for (const m of body.matchAll(/data-preview="([^"]+)"/g)) {
+      if (!body.includes(`id="pv-${m[1]}"`)) {
+        orphans.push(`${relative(STAGE, f)} → ${m[1]}`);
+      }
+    }
+
+    // "Similar links" is derived, so it can suggest the page the reader is
+    // already on, or an address that does not exist. Both would look like
+    // content. The page's own url is derivable from where the file landed.
+    const rel = relative(STAGE, f).split(path.sep).join("/");
+    const selfUrl = rel.endsWith("/index.html")
+      ? `/${rel.slice(0, -"index.html".length)}`
+      : `/${rel}`;
+    for (const m of body.matchAll(/<ul class="rellist">([\s\S]*?)<\/ul>/g)) {
+      for (const h of m[1].matchAll(/href="([^"]+)"/g)) {
+        if (!h[1].startsWith("/")) selfLinks.push(`${rel} → ${h[1]}（不是站内链接）`);
+        else if (h[1] === selfUrl) selfLinks.push(`${rel} 把自己列进了「相关」`);
+      }
+      if (!/rellist__meta/.test(m[1])) selfLinks.push(`${rel} 的「相关」没有写明理由`);
+    }
+
+    // A subsection must sit INSIDE the section above it, or folding that
+    // section leaves its subsections on screen. Nesting is structural, so it is
+    // checked structurally: walk every section tag and require depth > 0 when a
+    // subsec opens. The earlier flat version passed every other check.
+    //
+    // EVERY <section> counts, not just .sec/.subsec — the references block has
+    // its own section, and counting only the two classes we generate made its
+    // closing tag look like an extra one.
+    const main = /<div class="artmain[\s\S]*?(?=<aside class="rail")/.exec(body);
+    if (main) {
+      let depth = 0;
+      for (const t of main[0].matchAll(/<section\b([^>]*)>|<\/section>/g)) {
+        if (t[0] === "</section>") depth--;
+        else if (/class="subsec"/.test(t[1] || "") && depth < 1) {
+          nesting.push(`${rel} 里的小节没有嵌在所属章节内`);
+          break;
+        } else depth++;
+      }
+      if (depth !== 0) nesting.push(`${rel} 的 <section> 标签没有配对（余 ${depth}）`);
+    }
+  }
+  if (!worst) log("  ok   每页 h1      全部恰好一个");
+  if (themed.length) {
+    failures.push(`这些页面的 HTML 里还带着主题属性：${themed.slice(0, 3).join(", ")}`);
+  } else {
+    log("  ok   只有亮色     没有页面带 data-theme 或 color-scheme 分支");
+  }
+  if (orphans.length) {
+    failures.push(`这些互链没有对应的预览片段：${[...new Set(orphans)].slice(0, 3).join("；")}`);
+  } else {
+    log("  ok   预览片段     每个 data-preview 都有对应的 <template>");
+  }
+  if (selfLinks.length) {
+    failures.push(`「相关」有问题：${[...new Set(selfLinks)].slice(0, 3).join("；")}`);
+  } else {
+    log("  ok   相关链接     站内、不指向自己、且写明了理由");
+  }
+  if (nesting.length) {
+    failures.push(`章节嵌套有问题：${[...new Set(nesting)].slice(0, 3).join("；")}`);
+  } else {
+    log("  ok   章节嵌套     小节都嵌在所属章节内，标签配对");
   }
 
   return failures;
@@ -428,6 +649,12 @@ async function main() {
   const refCount = [...outgoing.values()].reduce((n, l) => n + l.length, 0);
   log(`  ${refCount} 条互链 · ${[...backlinks.values()].filter((b) => b.length).length} 篇被引用`);
 
+  /* ---- optional collections ----------------------------------------- */
+  log("▸ 收藏夹");
+  const collections = loadCollections(ROOT, problems, log);
+  const collectionTotal = Object.values(collections).reduce((n, l) => n + l.length, 0);
+  if (!collectionTotal) log("  阅读与爱好都还是空的（这两个目录是可选的）");
+
   if (linksOnly) {
     problems.report(log, "✗ 链接有问题");
     const status = problems.failed ? 1 : 0;
@@ -446,19 +673,65 @@ async function main() {
   log("▸ 渲染正文");
   const revisions = new Map();
   for (const a of sources) {
+    // Only anchored backlinks can be placed inside a section; the page-level
+    // list below the article still carries everything.
+    const perSection = new Map();
+    for (const b of backlinks.get(a.slug) || []) {
+      if (!b.anchor) continue;
+      if (!perSection.has(b.anchor)) perSection.set(b.anchor, []);
+      perSection.get(b.anchor).push(b);
+    }
+
     const body = renderBody(a, {
-      resolve: (slug) => bySlug.get(slug) || null
+      resolve: (slug) => bySlug.get(slug) || null,
+      sectionBacklinks: perSection
     });
     a.html = body.html;
     a.notes = body.notes;
     a.headings = body.headings;
     a.allHeadings = body.allHeadings;
+    a.citations = body.citations;
+    if (body.unusedCitations && body.unusedCitations.length) {
+      problems.warn(`${a.name}: 这些引用定义了但正文里没用到 —— ${body.unusedCitations.join(", ")}`);
+    }
     if (!checkOnly && !contentOnly) {
       a.revisions = revisionsFor(a.file);
       revisions.set(a.slug, a.revisions);
     }
     if (!a.revisions) a.revisions = [];
   }
+
+  // collection entries are pages too, and get the same rendering
+  for (const key of Object.keys(collections)) {
+    for (const e of collections[key]) {
+      const body = renderBody({ body: e.body, slug: e.slug }, { resolve: (s) => bySlug.get(s) || null });
+      e.html = body.html;
+      e.notes = body.notes;
+      e.headings = body.headings;
+    }
+  }
+
+  /* ---- anchored refs must land somewhere ---------------------------- */
+  // A `{{ref:x|#sec-2}}` whose anchor does not exist still returns 200, so
+  // neither the link checker nor the smoke suite would notice: the reader lands
+  // at the top of the page and the section backlink never appears. Check the
+  // fragment against the target's real headings while both are still in hand.
+  let anchorRefs = 0;
+  for (const a of sources) {
+    for (const o of outgoing.get(a.slug) || []) {
+      if (!o.anchor) continue;
+      anchorRefs++;
+      const target = bySlug.get(o.to);
+      const ids = (target && target.allHeadings ? target.allHeadings : []).map((h) => h.id);
+      if (!ids.includes(o.anchor)) {
+        const secs = ids.filter((id) => /^sec-\d+$/.test(id));
+        problems.error(a.name,
+          `{{ref:${o.to}|#${o.anchor}}} 指向的章节不存在。`
+          + `${o.to} 现有章节：${secs.length ? secs.join(" / ") : "（没有编号章节）"}`);
+      }
+    }
+  }
+  if (anchorRefs) log(`  ${anchorRefs} 条引用指向具体章节`);
 
   const withRevisions = sources.filter((a) => a.revisions.length);
   if (!checkOnly && !contentOnly) {
@@ -474,9 +747,61 @@ async function main() {
 
   /* ---- derived collections ------------------------------------------ */
   const articles = sources.sort((a, b) => (a.created < b.created ? 1 : a.created > b.created ? -1 : 0));
-  const tags = collectTags(articles);
+  const tags = collectTags(articles, collections);
   const series = collectSeries(articles);
   const counts = buildCounts(articles);
+
+  /* ---- similar links -------------------------------------------------
+   * gwern's "similar links" come from a neural embedding of the full text.
+   * That needs a model, which this site does not have and will not download, so
+   * the signal here is the tags the writer already chose — weighted by how rare
+   * a shared tag is. A tag used twice says far more about two pieces than one
+   * used twenty times, and a raw overlap count would mostly surface whichever
+   * tag happens to be most popular.
+   *
+   * Links that are already explicit `{{ref:}}` pairs are dropped: the reader
+   * sees those in 本篇引用 / 反向链接, and repeating them here would make the
+   * rail look fuller without saying anything new.
+   *
+   * Same series counts too, and counts most: a series is a grouping the writer
+   * made on purpose, so it outranks any tag overlap. When two pieces share
+   * nothing at all, nothing is offered — a suggestion the reader cannot account
+   * for is worse than no suggestion.
+   */
+  const tagCount = new Map();
+  for (const a of articles) {
+    for (const t of a.tags) tagCount.set(t, (tagCount.get(t) || 0) + 1);
+  }
+  const related = new Map();
+  for (const a of articles) {
+    const explicit = new Set([
+      ...(outgoing.get(a.slug) || []).map((l) => l.to),
+      ...(backlinks.get(a.slug) || []).map((b) => b.from)
+    ]);
+    const scored = [];
+    for (const b of articles) {
+      if (b.slug === a.slug || explicit.has(b.slug)) continue;
+      const shared = b.tags.filter((t) => a.tags.includes(t));
+      const sameSeries = !!(a.series && b.series && a.series === b.series);
+      if (!shared.length && !sameSeries) continue;
+      // rarer tag ⇒ heavier; the +1 keeps a tag used once from dominating outright
+      let score = shared.reduce((n, t) => n + 1 / (tagCount.get(t) + 1), 0);
+      if (sameSeries) score += 2;
+      scored.push({
+        item: b,
+        score,
+        why: sameSeries ? [`系列 · ${a.series}`, ...shared] : shared
+      });
+    }
+    // score first, then newest — a tie should lead with current work, not with
+    // whatever order the filesystem happened to return
+    scored.sort((x, y) => (y.score - x.score) || (x.item.created < y.item.created ? 1 : -1));
+    related.set(a.slug, scored.slice(0, 4).map((s) => ({
+      url: s.item.url, title: s.item.title, domainName: s.item.domainName,
+      kind: s.item.kind, why: s.why
+    })));
+  }
+
   const byDomain = new Map(DOMAINS.map((d) => [d.key, articles.filter((a) => a.domain === d.key)]));
 
   if (contentOnly) {
@@ -497,24 +822,29 @@ async function main() {
     log(failures.length ? `\n✗ ${failures.length} 项断言失败` : "\n✓ 断言通过");
     process.exit(failures.length || problems.failed ? 1 : 0);
   }
-
   /* ---- pages -------------------------------------------------------- */
   log("▸ 生成页面");
+
+  // every page that gets written, for the size report at the end
+  const htmlFiles = [];
 
   for (const d of DOMAINS) {
     const items = byDomain.get(d.key) || [];
     write(`${d.key}/index.html`, T.pageDomain(site, d, items, counts));
   }
 
-  write("index.html", T.pageHome(site, {
-    articles,
-    byDomain,
-    tags,
-    series,
-    latest: articles,
-    random: articles.length ? articles[Math.floor(articles.length / 2)] : null,
-    counts
-  }));
+  write("writing/index.html", T.pageWriting(site, { articles, byDomain, counts }));
+
+  write("index.html", T.pageHome(site, { articles, collections, byDomain, tags, series, counts }));
+
+  for (const c of COLLECTIONS) {
+    const items = collections[c.key] || [];
+    write(`${c.key}/index.html`, T.pageCollection(site, c, items, counts));
+    for (const e of items) {
+      write(`${c.key}/${e.slug}/index.html`, T.pageCollectionEntry(site, c, e, e.html));
+      htmlFiles.push(`${c.key}/${e.slug}/index.html`);
+    }
+  }
 
   write("archive/index.html", T.pageArchive(site, {
     articles,
@@ -538,13 +868,21 @@ async function main() {
   write("changelog/index.html", T.pageChangelog(site, { articles, counts }));
   write("about/index.html", T.pageAbout(site, { articles, counts, tags }));
 
-  const htmlFiles = [];
+  // every index page counts toward the size report
+  for (const f of ["index.html", "writing/index.html", "archive/index.html", "tags/index.html",
+    "series/index.html", "search/index.html", "changelog/index.html", "about/index.html",
+    ...DOMAINS.map((d) => `${d.key}/index.html`),
+    ...COLLECTIONS.map((c) => `${c.key}/index.html`)]) {
+    htmlFiles.push(f);
+  }
+
   for (const a of articles) {
     const idx = articles.indexOf(a);
     write(`${a.domain}/${a.slug}/index.html`, T.pageArticle(site, a, {
       revisions: a.revisions,
       backlinks: backlinks.get(a.slug) || [],
       outgoing: outgoing.get(a.slug) || [],
+      related: related.get(a.slug) || [],
       bySlug,
       notes: a.notes,
       notesHtml: a.html,
@@ -586,7 +924,10 @@ async function main() {
   write("search/index.json", JSON.stringify(index));
 
   /* ---- 404 with a guess --------------------------------------------- */
-  write("404.html", T.page404(site, null, counts));
+  // The guess is made in the browser (guess404.js): GitHub Pages serves this one
+  // static file for every missing path, so there is no request path to read at
+  // build time.
+  write("404.html", T.page404(site, counts));
 
   /* ---- feeds & meta ------------------------------------------------- */
   write("rss.xml", T.rss(site, articles));
@@ -595,11 +936,13 @@ async function main() {
   write("robots.txt", `User-agent: *\nAllow: /\nSitemap: ${site.origin}/sitemap.xml\n`);
 
   const urls = [
-    "/", "/archive/", "/tags/", "/series/", "/search/", "/changelog/", "/about/",
+    "/", "/writing/", "/archive/", "/tags/", "/series/", "/search/", "/changelog/", "/about/",
     ...DOMAINS.map((d) => `/${d.key}/`),
+    ...COLLECTIONS.map((c) => `/${c.key}/`),
     ...tags.map((t) => `/tags/${slugify(t.name)}/`),
     ...series.map((s) => `/series/${slugify(s.name)}/`),
-    ...articles.map((a) => a.url)
+    ...articles.map((a) => a.url),
+    ...Object.values(collections).flat().map((e) => e.url)
   ];
   write("sitemap.xml",
     `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${
@@ -607,6 +950,10 @@ async function main() {
     }\n</urlset>\n`);
 
   /* ---- size report -------------------------------------------------- */
+  // assertions that need the rendered pages
+  log("▸ 产物断言");
+  failures.push(...checkRendered(log));
+
   const pageBytes = htmlFiles.reduce((n, f) => n + fs.statSync(path.join(STAGE, f)).size, 0);
   const biggest = htmlFiles
     .map((f) => [f, fs.statSync(path.join(STAGE, f)).size])
@@ -623,7 +970,14 @@ async function main() {
 
   const budgets = [
     ["最大单页", biggest[1] / 1024, 120, "KB"],
-    ["css+js", cssJs / 1024, 60, "KB"]
+    // Raised from 60KB when the chester skin landed, and to 80KB once the gwern
+    // controls were finished: the grid, the card system, the chips, the folding,
+    // the previews and the 404 guess all have to live somewhere, and this is
+    // still far smaller than one Tailwind or React build. The point of the
+    // budget is to catch a CDN or a framework creeping in, not to force
+    // hand-minification — so it is set with real headroom, and the actual figure
+    // is printed above it on every build.
+    ["css+js", cssJs / 1024, 80, "KB"]
   ];
   for (const [name, val, max, unit] of budgets) {
     if (val > max) failures.push(`${name} ${val.toFixed(1)}${unit} 超出预算 ${max}${unit}`);

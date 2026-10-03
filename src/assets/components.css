@@ -242,31 +242,40 @@
    that fetched the linked page would leak the reader's browsing to a third
    party, which this site does not do. */
 
+/* The hover preview of an internal link. chester has no equivalent surface, so
+   it is built from the same three pieces as a card: white ground, one hairline,
+   the lowest shadow — and the card radius, so it reads as the same family. */
 .preview {
   position: absolute;
   z-index: 60;
   width: min(360px, calc(100vw - 2rem));
   max-height: 45vh;
   overflow: auto;
-  padding: 0.7rem 0.9rem;
-  background: var(--paper);
-  border: 1px solid var(--rule-strong);
-  font-size: var(--fs-small);
+  padding: 0.85rem 1rem;
+  background: var(--page);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  font-size: var(--fs-nav);
   line-height: 1.7;
-  color: var(--ink-mute);
+  color: var(--ink-body);
 }
 .preview[hidden] { display: none; }
 .preview .preview__title {
-  font-family: var(--serif);
-  font-size: 0.9375rem;
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: var(--tr-body);
   color: var(--ink);
   margin: 0 0 0.2rem;
 }
 .preview .preview__meta { margin: 0 0 0.4rem; }
 .preview p { margin: 0 0 0.4rem; }
 
+/* The preview carries information, not decoration, so reduced motion drops the
+   fade rather than the preview. It used to do `display: none`, which quietly
+   removed a feature from the readers most likely to need the context. */
 @media (prefers-reduced-motion: reduce) {
-  .preview { display: none !important; }
+  .preview { transition: none; }
 }
 
 /* ---- 404 / prose-ish pages -------------------------------------------- */
@@ -274,3 +283,19 @@
 .prose.narrow { max-width: calc(var(--measure) + var(--measure-shift)); margin: 0 auto; }
 .prose.narrow section { margin-bottom: 2rem; }
 .prose.narrow h2 { margin-top: 1.8em; }
+
+/* The "did you mean" block. It holds a link and a note about how far off the
+   address was, so it reads as an aside rather than as page content — the page's
+   own heading stays the only claim on screen. */
+.guess {
+  margin: 1.5rem 0;
+  padding: 1rem 1.25rem;
+  background: var(--card);
+  border-radius: var(--radius-card);
+}
+.guess[hidden] { display: none; }
+.guess__lead { margin: 0 0 0.35rem; font-size: var(--fs-nav); color: var(--ink-muted); }
+.guess__hit { margin: 0 0 0.35rem; font-size: 1.125rem; font-weight: 500; }
+.guess__hit a { color: var(--ink); text-decoration: none; }
+.guess__hit a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.guess .meta code { font-size: 0.9em; }

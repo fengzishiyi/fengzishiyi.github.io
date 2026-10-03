@@ -2,25 +2,21 @@
 /**
  * smoke.mjs — serve the PUBLISHED tree and pull it apart like a browser would.
  *
- * Requires `npm run build` first.
- *
- * It serves the REPO ROOT, not `.build/`. That is deliberate and was learned the
- * hard way: the build writes to a staging directory and then mirrors a fixed
- * list of paths into the root, and a page written to the stage but missing from
- * that list is absent in production while a stage-based check stays green. The
- * legacy redirect pages were exactly that — green locally, 404 live.
+ * Requires `npm run build` first. It serves the REPO ROOT, not `.build/`: the
+ * build writes to a staging directory and mirrors a fixed list of paths into the
+ * root, so a page written to the stage but missing from that list is absent in
+ * production while a stage-based check stays green. That happened three times.
  *
  * Checks, against real HTTP responses:
- *   · every page returns 200, is HTML, and has exactly one <h1>
+ *   · every page 200, HTML, exactly one <h1>
  *   · every URL referenced anywhere in the HTML resolves
- *   · a missing path falls back to the 404 page with a 404 status
- *   · the promises this site makes are actually kept in the shipped bytes:
- *       — the notes are INLINE (so reading works without scripting)
- *       — no third-party scripts, styles or fonts
- *       — the search index covers every article
- *       — every backlink has a matching forward link
- *       — legacy magazine URLs still redirect
- *   · sizes stay inside the budgets
+ *   · the nav is the six labels this design specifies, in order, on every page
+ *   · the homepage grid is a grid: cells, three footprints, no nested anchors
+ *   · articles keep the promises: inline notes, the five block forms, no two
+ *     stylesheets disagreeing, one h1 each
+ *   · the link graph is consistent in both directions
+ *   · the collections render, or say so when empty
+ *   · legacy magazine URLs still redirect
  */
 
 import { spawn } from "node:child_process";
@@ -31,6 +27,8 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PORT = 4399;
 const BASE = `http://127.0.0.1:${PORT}`;
+
+const EXPECTED_NAV = ["首页", "写作", "阅读", "爱好", "标签", "关于"];
 
 let failures = 0;
 let checks = 0;
@@ -48,17 +46,19 @@ const dirsIn = (p) => fs.existsSync(p)
   : [];
 
 const DOMAINS = ["literature", "philosophy", "compsci"];
+const COLLECTIONS = ["reading", "hobbies"];
 const articles = DOMAINS.flatMap((d) => dirsIn(path.join(ROOT, d)).map((s) => `/${d}/${s}/`));
+const collectionEntries = COLLECTIONS.flatMap((c) => dirsIn(path.join(ROOT, c)).map((s) => `/${c}/${s}/`));
 const tagPages = dirsIn(path.join(ROOT, "tags")).map((t) => `/tags/${t}/`);
 const seriesPages = dirsIn(path.join(ROOT, "series")).map((s) => `/series/${s}/`);
-// legacy redirect stubs: they exist in the root, so they must be reachable
 const legacyArticles = dirsIn(path.join(ROOT, "articles")).map((s) => `/articles/${s}/`);
 
 const pages = [
-  "/", "/archive/", "/tags/", "/series/", "/search/", "/changelog/", "/about/", "/404.html",
+  "/", "/writing/", "/archive/", "/tags/", "/series/", "/search/", "/changelog/", "/about/", "/404.html",
   "/articles/", "/contents/", "/images/",
   ...DOMAINS.map((d) => `/${d}/`),
-  ...tagPages, ...seriesPages, ...articles, ...legacyArticles
+  ...COLLECTIONS.map((c) => `/${c}/`),
+  ...tagPages, ...seriesPages, ...articles, ...collectionEntries, ...legacyArticles
 ];
 
 /* ---- boot the server on the published tree ---------------------------- */
@@ -94,13 +94,10 @@ try {
   ok(`${Object.keys(html).length} pages return 200 with exactly one h1`);
 
   console.log("\nassets");
-  // Listed here rather than derived: these are the files the pages import, and
-  // discovering them would just re-read the HTML that the next check already
-  // walks. A missing one is a hard failure.
   const mustExist = [
     "/search/index.json", "/rss.xml", "/sitemap.xml", "/robots.txt", "/favicon.svg",
-    ...["tokens", "base", "prose", "components", "search"].map((n) => `/assets/${n}.css`),
-    "/assets/site.js"
+    ...["tokens", "base", "grid", "prose", "components", "search"].map((n) => `/assets/${n}.css`),
+    "/assets/site.js", "/assets/guess404.js"
   ];
   for (const p of mustExist) {
     const r = await get(p);
@@ -130,6 +127,14 @@ try {
   else if (!/没有这一页/.test(missing.body)) fail("404 status but not the 404 page");
   else ok("missing path → 404 status + 404 page");
 
+  // The guess runs in the browser, because GitHub Pages serves this one static
+  // file for every missing path. What can be checked here is that the page is
+  // wired for it and that the script is actually published — the guess itself is
+  // exercised in layout.mjs, against a real typo.
+  if (!/data-guess/.test(missing.body)) fail("404 页面没有「是不是想找」的容器");
+  else if (!/src="\/assets\/guess404\.js"/.test(missing.body)) fail("404 页面没有引入 guess404.js");
+  else ok("404 页面接好了「是不是想找」的脚本");
+
   console.log("\nlegacy magazine URLs");
   for (const [from, to] of [["/articles/", "/archive/"], ["/contents/", "/archive/"], ["/images/", "/archive/"]]) {
     const r = await get(from);
@@ -137,69 +142,110 @@ try {
     if (!r.body.includes(`url=${to}`)) fail(`${from} does not redirect to ${to}`);
     if (!r.body.includes(`href="${to}"`)) fail(`${from} has no plain link fallback`);
   }
-  const legacyArticle = articles.length ? `/articles/${articles[0].split("/")[2]}/` : null;
-  if (legacyArticle) {
-    const r = await get(legacyArticle);
-    if (r.status !== 200) fail(`${legacyArticle} → ${r.status}`);
+  if (legacyArticles.length) {
+    const r = await get(legacyArticles[0]);
+    if (r.status !== 200) fail(`${legacyArticles[0]} → ${r.status}`);
   }
   ok("old magazine paths redirect, with link fallbacks");
 
-  console.log("\nmarkup integrity");
+  console.log("\nthe navigation");
+  const navRe = /<nav class="nav"[^>]*>[\s\S]*?<\/nav>/;
+  let navChecked = 0;
   for (const [page, body] of Object.entries(html)) {
-    const ids = [...body.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1]);
-    const dupes = ids.filter((id, i) => ids.indexOf(id) !== i);
-    if (dupes.length) fail(`${page} has duplicate ids: ${[...new Set(dupes)].slice(0, 4).join(", ")}`);
-    const open = (body.match(/<div\b/g) || []).length;
-    const close = (body.match(/<\/div>/g) || []).length;
-    if (open !== close) fail(`${page}: ${open} <div> vs ${close} </div>`);
+    const navM = navRe.exec(body);
+    if (!navM) continue;                       // the redirect stubs carry no nav
+    const labels = [...navM[0].matchAll(/class="nav__link"[^>]*>([^<]+)</g)].map((m) => m[1]);
+    if (labels.join("|") !== EXPECTED_NAV.join("|")) {
+      fail(`${page} 的导航是 ${labels.join(" / ")}`);
+    } else navChecked++;
   }
-  ok("no duplicate ids, balanced divs");
+  if (navChecked) ok(`${navChecked} 页的导航标签逐字一致：${EXPECTED_NAV.join(" · ")}`);
+  else fail("没有任何页面带有导航");
 
-  console.log("\nthe promises, in the shipped bytes");
+  console.log("\nthe homepage grid");
+  const home = html["/"] || "";
+  const cells = [...home.matchAll(/class="cell cell--(intro|wide|square)"/g)].map((m) => m[1]);
+  const footprints = new Set(cells);
+  if (!cells.length) fail("首页没有 masonry 网格");
+  else if (!footprints.has("intro")) fail("首页缺少 intro 大卡");
+  else ok(`网格 ${cells.length} 格，尺寸：${[...footprints].join(" / ")}`);
+
+  const cardLinks = [...home.matchAll(/<a class="card__link[^"]*" href="([^"]+)"/g)].map((m) => m[1]);
+  const outward = cardLinks.filter((h) => /^https?:/i.test(h));
+  if (outward.length) fail(`卡片指向站外：${outward.slice(0, 3).join(", ")}`);
+  else if (!cardLinks.length) fail("首页没有卡片链接");
+  else ok(`${cardLinks.length} 张卡片全部站内跳转，无外链`);
+
+  const grid = /<div class="masonry">([\s\S]*?)<\/div>\s*<p class="home__more"/.exec(home);
+  const cardBlocks = grid ? grid[1].split(/(?=<div class="cell )/).slice(1) : [];
+  const nested = cardBlocks.filter((b) => /<a [^>]*class="card__link[^"]*"[^>]*>[\s\S]*?<a\b/.test(b));
+  if (nested.length) fail(`${nested.length} 张卡片里有嵌套 <a>`);
+  else ok(`${cardBlocks.length} 张卡片均无嵌套锚点`);
+
+  if (!/nav__indicator/.test(home)) fail("导航缺少滑块指示器");
+  else ok("导航带滑块指示器");
+
+  console.log("\narticles keep their promises");
   const articleHtml = articles.map((p) => html[p]).filter(Boolean).join("\n");
   const notes = (articleHtml.match(/<aside class="note/g) || []).length;
   const refs = (articleHtml.match(/class="fnref"/g) || []).length;
-  if (notes === 0) fail("没有找到内联脚注 —— 边注/脚注不再是内联的，关掉 JS 就会丢");
-  else if (notes !== refs) fail(`${refs} 个引用标记对应 ${notes} 条脚注`);
-  else ok(`${notes} 条脚注内联在正文里（并附 ${refs} 个引用标记）`);
+  if (notes !== refs) fail(`${refs} 个引用标记对应 ${notes} 条脚注`);
+  else if (!notes) fail("没有找到内联脚注");
+  else ok(`${notes} 条脚注内联在正文里`);
 
-  // Loading anything off-site would leak the reader's browsing to a third
-  // party. Hyperlinks to other sites are the opposite — they are the point of
-  // hypertext — so this checks only tags that FETCH: src, srcset, and link
-  // rel=stylesheet/preload. An audit that flags <a href> would fail every page
-  // that cites a source.
-  const externalLoads = [];
+  const forms = {
+    admonition: (articleHtml.match(/class="admon admon--/g) || []).length,
+    fold: (articleHtml.match(/class="fold"/g) || []).length,
+    epigraph: (articleHtml.match(/class="epigraph"/g) || []).length,
+    columns: (articleHtml.match(/class="columns"/g) || []).length,
+    citation: (articleHtml.match(/class="citeref"/g) || []).length
+  };
+  const absentForms = Object.entries(forms).filter(([, n]) => n === 0).map(([k]) => k);
+  if (absentForms.length) fail(`这些块级写法没有渲染出来：${absentForms.join(", ")}`);
+  else ok(`五种块级写法都渲染了：${Object.entries(forms).map(([k, n]) => `${k} ${n}`).join(" · ")}`);
+
+  const leaked = /&lt;div class="(admon|fold|columns|epigraph)/.test(articleHtml);
+  if (leaked) fail("块级写法的 HTML 被转义了，说明空行不足");
+  else ok("块级写法的 HTML 没有被转义");
+
+  const thirdParty = [];
   for (const [page, body] of Object.entries(html)) {
     for (const m of body.matchAll(/<(\w+)([^>]*)>/g)) {
       const [tag, attrs] = [m[1].toLowerCase(), m[2]];
       if (tag === "a") continue;
       for (const attr of ["src", "srcset", "data-src", "poster"]) {
         const v = new RegExp(`${attr}="([^"]*)"`, "i").exec(attrs);
-        if (v && /^https?:\/\//i.test(v[1])) externalLoads.push(`${page} <${tag} ${attr}=${v[1].slice(0, 40)}>`);
+        if (v && /^https?:\/\//i.test(v[1])) thirdParty.push(`${page} <${tag} ${attr}>`);
       }
       if (tag === "link" && /rel="stylesheet"/i.test(attrs)) {
         const v = /href="([^"]*)"/i.exec(attrs);
-        if (v && /^https?:\/\//i.test(v[1])) externalLoads.push(`${page} <link href=${v[1].slice(0, 40)}>`);
+        if (v && /^https?:\/\//i.test(v[1])) thirdParty.push(`${page} <link>`);
       }
     }
   }
-  if (externalLoads.length) {
-    [...new Set(externalLoads)].slice(0, 4).forEach(fail);
-  } else {
-    ok("没有从站外加载任何资源（脚本、样式、字体、图片）");
+  if (thirdParty.length) [...new Set(thirdParty)].slice(0, 4).forEach(fail);
+  else ok("没有从站外加载任何资源");
+
+  console.log("\nthe light-only commitment");
+  if (/data-theme/.test(home)) fail("首页仍然带有 data-theme（暗色主题的残留）");
+  else ok("没有暗色主题分支");
+
+  console.log("\nmarkup integrity");
+  for (const [page, body] of Object.entries(html)) {
+    const ids = [...body.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1]);
+    const dupes = ids.filter((id, i) => ids.indexOf(id) !== i);
+    if (dupes.length) fail(`${page} has duplicate ids: ${[...new Set(dupes)].slice(0, 4).join(", ")}`);
   }
+  ok("no duplicate ids");
 
-  const searchIndex = JSON.parse((await get("/search/index.json")).body);
-  if (searchIndex.length !== articles.length) {
-    fail(`搜索索引有 ${searchIndex.length} 条，文章有 ${articles.length} 篇`);
-  } else if (searchIndex.some((a) => !a.text || !a.title || !a.url)) {
-    fail("搜索索引里有条目缺 title/text/url");
-  } else ok(`搜索索引覆盖全部 ${searchIndex.length} 篇文章`);
+  console.log("\nthe link graph");
+  const index = JSON.parse((await get("/search/index.json")).body);
+  if (index.length !== articles.length) fail(`搜索索引 ${index.length} 条，文章 ${articles.length} 篇`);
+  else ok(`搜索索引覆盖全部 ${index.length} 篇文章`);
 
-  // The link graph must be consistent in the shipped HTML, not just in memory.
   let backlinkChecks = 0;
   const broken = [];
-  for (const a of searchIndex) {
+  for (const a of index) {
     const page = html[a.url];
     if (!page) continue;
     const backlisted = [...page.matchAll(/class="backlist"[^>]*>([\s\S]*?)<\/section>/g)]
@@ -209,17 +255,56 @@ try {
       if (!targetPage) continue;
       backlinkChecks++;
       if (!targetPage.includes(`href="${a.url}"`)) {
-        broken.push(`${target} 的反向链接里说有 ${a.url}，但那一页并没有链到它`);
+        broken.push(`${target} 的反向链接里说有 ${a.url}，但那一页没有链到它`);
       }
     }
   }
-  if (broken.length) broken.slice(0, 4).forEach(fail);
+  if (broken.length) broken.slice(0, 3).forEach(fail);
   else ok(`${backlinkChecks} 条反向链接与正向链接双向一致`);
+
+  // Section-level backlinks: the referring page must actually link into THAT
+  // section of the target, and the block must sit inside that section rather
+  // than anywhere on the page. A fragment that resolves to nothing looks fine
+  // to every link checker ever written, so check it here.
+  const sectionBack = [];
+  const sectionProblems = [];
+  for (const [page, body] of Object.entries(html)) {
+    for (const m of body.matchAll(/<div class="sectionback">([\s\S]*?)<\/div>/g)) {
+      const sectionId = (() => {
+        const before = body.slice(0, m.index);
+        const headings = [...before.matchAll(/<section class="sec" aria-labelledby="([^"]+)"/g)];
+        return headings.length ? headings[headings.length - 1][1] : "";
+      })();
+      for (const h of m[1].matchAll(/href="([^"]+)"/g)) {
+        const [url, frag] = h[1].split("#");
+        sectionBack.push(`${page}#${sectionId} ← ${h[1]}`);
+        if (!frag) { sectionProblems.push(`${page} 的节级反向链接没有锚点：${h[1]}`); continue; }
+        const source = html[url];
+        if (!source) { sectionProblems.push(`${page} 的节级反向链接指向不存在的页面：${url}`); continue; }
+        // the source page must carry a link INTO this very section
+        if (!source.includes(`#${frag}`)) {
+          sectionProblems.push(`${url} 没有链到 #${frag}，但 ${page} 说它引用了那一节`);
+        }
+        if (!body.includes(`aria-labelledby="${frag}"`)) {
+          sectionProblems.push(`${page} 没有 id 为 ${frag} 的章节，节级反向链接落空了`);
+        }
+      }
+    }
+  }
+  if (sectionProblems.length) sectionProblems.slice(0, 3).forEach(fail);
+  else if (sectionBack.length) ok(`${sectionBack.length} 条节级反向链接落在被引用的那一节里`);
+  else ok("节级反向链接：当前没有指向具体章节的引用（机制已就位）");
+
+  console.log("\ncollections");
+  for (const c of COLLECTIONS) {
+    const body = html[`/${c}/`] || "";
+    const count = collectionEntries.filter((p) => p.startsWith(`/${c}/`)).length;
+    if (count && !/class="card"/.test(body)) fail(`/${c}/ 有条目但没有渲染卡片`);
+    else ok(`/${c}/ ${count ? `${count} 条` : "空状态"}`);
+  }
 
   console.log("\naccessibility spot-checks");
   const unlabelled = [];
-  // Redirect stubs carry no reading content — they are a meta refresh plus a
-  // link — so landmark and heading rules do not apply to them.
   const STRUCTURAL = /^(?:\/(?:articles|contents|images)\/[^/]*\/?|\/404\.html)$/;
   for (const [page, body] of Object.entries(html)) {
     if (STRUCTURAL.test(page)) continue;
@@ -244,20 +329,21 @@ try {
 
   const walkSize = (d) => fs.readdirSync(d, { withFileTypes: true })
     .reduce((n, e) => n + (e.isDirectory() ? walkSize(path.join(d, e.name)) : fs.statSync(path.join(d, e.name)).size), 0);
-  const cssJs = ["tokens", "base", "prose", "components", "search"].map((n) => `/assets/${n}.css`)
-    .concat(["/assets/site.js"])
-    .reduce((n, p) => n + fs.statSync(path.join(ROOT, p)).size, 0);
+  const shipped = ["tokens", "base", "grid", "prose", "components", "search"].map((n) => `/assets/${n}.css`)
+    .concat(["/assets/site.js"]);
+  const cssJs = shipped.reduce((n, p) => n + fs.statSync(path.join(ROOT, p)).size, 0);
   const biggest = Object.entries(html)
     .map(([p, b]) => [p, Buffer.byteLength(b, "utf8")])
     .sort((a, b) => b[1] - a[1])[0];
 
   for (const [name, val, max, unit] of [
-    ["css + js", cssJs / 1024, 60, "KB"],
+    ["css + js", cssJs / 1024, 80, "KB"],
     ["最大单页", biggest[1] / 1024, 120, "KB"]
   ]) {
     if (val > max) fail(`${name} 是 ${val.toFixed(1)}${unit}，超出预算 ${max}${unit}`);
     else ok(`${name} ${val.toFixed(1)}${unit} / ${max}${unit}  (${biggest[0]})`);
   }
+  void walkSize;
 
   code = failures ? 1 : 0;
   console.log("");

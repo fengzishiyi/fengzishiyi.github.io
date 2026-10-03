@@ -234,21 +234,61 @@ export const MEASURE_EXPR = `(() => {
   });
 
   // The measure, measured rather than assumed: one em is one 汉字 at body size,
-  // so width ÷ font-size is characters per line. This is the number the design
-  // promises (30–34) and the number a screenshot cannot tell you.
-  var para = document.querySelector(".prose p");
+  // so width ÷ font-size is characters per line.
+  //
+  // The sample must be a BODY paragraph. document.querySelector(".prose p")
+  // returns the first <p> in source order, which is inside the opening epigraph
+  // when there is one — styled at 1.25rem, so the probe reported 25 字/line and
+  // looked like a layout regression that did not exist. Skip the block forms.
+  var para = null;
+  var candidates = document.querySelectorAll(".prose p");
+  for (var pi = 0; pi < candidates.length; pi++) {
+    var cand = candidates[pi];
+    if (cand.closest(".epigraph, .note, .admon, .marginnote, .fold, .references, .sectionback")) continue;
+    if (!cand.textContent || cand.textContent.trim().length < 20) continue;
+    para = cand;
+    break;
+  }
   if (para) {
     var pcs = getComputedStyle(para);
     out.bodyPx = parseFloat(pcs.fontSize);
     out.charsPerLine = +(para.getBoundingClientRect().width / parseFloat(pcs.fontSize)).toFixed(1);
   }
 
-  // Progressive enhancement: are the notes and sections present in the MARKUP,
-  // independent of whether the script has run?
+  // Progressive enhancement: what must be present in the MARKUP, independent of
+  // whether the script has run.
   out.noteCount = document.querySelectorAll(".note").length;
   out.fnrefCount = document.querySelectorAll(".fnref").length;
   out.secCount = document.querySelectorAll("article section[id], main section[id]").length;
   out.scriptRan = !!document.querySelector(".sec__toggle");
+  // the five block forms: admonitions, folds, epigraphs, columns, citations
+  out.blockForms =
+    document.querySelectorAll(".admon").length +
+    document.querySelectorAll(".fold").length +
+    document.querySelectorAll(".epigraph").length +
+    document.querySelectorAll(".columns").length +
+    document.querySelectorAll(".citeref").length;
+  // script-only decoration: its absence with JS off is correct, not a failure
+  var ind = document.querySelector("[data-nav-indicator]");
+  out.navIndicator = !!(ind && ind.getAttribute("data-on") === "true");
+
+  // ---- the masonry ------------------------------------------------------
+  out.cards = document.querySelectorAll(".card").length;
+  var grid = document.querySelector(".masonry");
+  out.gridCols = 0;
+  if (grid) {
+    var tracks = getComputedStyle(grid).gridTemplateColumns;
+    out.gridCols = tracks && tracks !== "none" ? tracks.split(" ").filter(Boolean).length : 1;
+  }
+
+  // Clipped card text is the failure mode of a fixed aspect ratio, and it is
+  // invisible in the markup: overflow:hidden hides the evidence.
+  out.clipped = 0;
+  var clipProbe = document.querySelectorAll(".card__title, .card__body, .card__sub, .card__intro");
+  for (var ci = 0; ci < clipProbe.length; ci++) {
+    var el = clipProbe[ci];
+    if (el.scrollHeight > el.clientHeight + 1 && el.clientHeight > 0) out.clipped++;
+  }
 
   // Overlap test for the sidenote margin.
   //

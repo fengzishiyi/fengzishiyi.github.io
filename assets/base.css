@@ -1,19 +1,17 @@
 /* ==========================================================================
-   base.css — reset, page furniture, the reading grid
+   base.css — reset, page shell, the frosted sticky nav, the footer
 
-   The article layout is one grid with named columns. Sidenotes are emitted
-   INSIDE the prose (see content.mjs) and floated into the notes column from
-   there, so the note text is always in the document and readable with no
-   JavaScript and no margin: below the breakpoint the same element renders as an
-   inline block under the paragraph it annotates. Nothing is moved by script;
-   only the destination changes.
+   The nav is chester.how's: a centred pill of links with a translucent white
+   ground, a hairline border, a small shadow and a backdrop blur, plus a
+   neutral pill that slides behind the current link. That pill is the only
+   animation on the site, and it is `transform`-only so it composites.
    ========================================================================== */
 
 *, *::before, *::after { box-sizing: border-box; }
 
 html {
   -webkit-text-size-adjust: 100%;
-  background: var(--paper);
+  background: var(--page);
   color: var(--ink);
   scroll-behavior: smooth;
   overflow-x: hidden;
@@ -24,7 +22,8 @@ body {
   font-family: var(--sans);
   font-size: var(--fs-body);
   line-height: var(--lh-body);
-  background: var(--paper);
+  letter-spacing: var(--tr-body);
+  background: var(--page);
   color: var(--ink);
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
@@ -36,45 +35,41 @@ figure { margin: 0; }
 
 h1, h2, h3, h4 {
   font-family: var(--serif);
-  font-weight: 400;
-  line-height: 1.25;
-  margin: 0 0 0.6em;
+  font-weight: 300;                /* 300 is the aesthetic — see DESIGN-NOTES */
+  line-height: var(--lh-h1);
+  letter-spacing: var(--tr-h1);
   color: var(--ink);
-  text-wrap: balance;
+  margin: 0 0 0.5em;
 }
 
-p { margin: 0 0 1.2em; }
+p { margin: 0 0 1.1em; }
 p:last-child { margin-bottom: 0; }
 
-a { color: var(--link); text-decoration-thickness: 1px; text-underline-offset: 2px; }
-a:visited { color: var(--link-visited); }
-a:hover { text-decoration-thickness: 2px; }
+a { color: var(--ink-strong); text-decoration-thickness: 1px; text-underline-offset: 4px; }
 
-code, pre { font-family: var(--mono); }
-code { font-size: 0.9em; }
-
-hr { border: 0; border-top: 1px solid var(--rule); margin: 2rem 0; }
-
-:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
-:focus:not(:focus-visible) { outline: none; }
+:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--focus-ring); border-radius: var(--radius-chip); }
+:focus:not(:focus-visible) { box-shadow: none; }
 
 /* ---- primitives ------------------------------------------------------- */
 
 .wrap {
-  max-width: var(--wrap);
+  width: 100%;
+  max-width: 1536px;               /* the xl: breakpoint of chester's set */
   margin: 0 auto;
-  padding-left: 1.5rem;
-  padding-right: 1.5rem;
-}
-@media (min-width: 900px) {
-  .wrap { padding-left: 2.5rem; padding-right: 2.5rem; }
+  padding-left: var(--pad-x);
+  padding-right: var(--pad-x);
 }
 
+/* chester's own page width is narrower than its grid's maximum */
+.wrap--reading { max-width: 1024px; }
+.wrap--narrow { max-width: 720px; }
+
+.tracking-tight { letter-spacing: var(--tr-body); }
+
 .meta {
-  font-family: var(--mono);
-  font-size: var(--fs-tiny);
-  color: var(--ink-mute);
-  font-variant-numeric: tabular-nums;
+  font-size: var(--fs-nav);
+  letter-spacing: var(--tr-nav);
+  color: var(--ink-muted);
 }
 
 .visually-hidden {
@@ -91,198 +86,247 @@ hr { border: 0; border-top: 1px solid var(--rule); margin: 2rem 0; }
 .skip {
   position: absolute;
   left: -9999px; top: 0;
-  padding: 0.6rem 0.9rem;
-  background: var(--ink);
-  color: var(--paper);
-  font-size: var(--fs-small);
+  padding: 0.5rem 0.8rem;
+  background: var(--ink-strong);
+  color: var(--page);
+  font-size: var(--fs-nav);
+  border-radius: var(--radius-chip);
   z-index: 100;
 }
 .skip:focus { left: 1rem; top: 0.5rem; }
 
 .empty {
-  color: var(--ink-mute);
-  font-style: italic;
-  padding: 1.5rem 0;
+  color: var(--ink-muted);
+  padding: 2rem 0;
 }
 
-/* ---- masthead: small, and it scrolls away ---------------------------- */
+/* ---- sticky frosted nav ----------------------------------------------- */
 
-.mast { border-bottom: 1px solid var(--rule); }
-.mast__in {
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  isolation: isolate;
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.4rem 1.4rem;
-  padding-top: 0.9rem;
-  padding-bottom: 0.9rem;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 0.25rem;
+  pointer-events: none;            /* only the pill and links are interactive */
 }
-.mast__home {
-  font-family: var(--serif);
-  font-size: 1.0625rem;
-  letter-spacing: 0.02em;
-  color: var(--ink);
-  text-decoration: none;
+@media (min-width: 768px) {
+  .nav { justify-content: space-between; }
 }
-.mast__nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.15rem 1rem;
-}
-.mast__nav a {
-  font-size: var(--fs-small);
-  color: var(--ink-mute);
-  text-decoration: none;
-  padding: 0.15rem 0;
+
+.nav__pill {
+  pointer-events: auto;
   position: relative;
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--nav-glass);
+  padding: 0.25rem;
+  box-shadow: var(--shadow-nav);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+/* The sliding indicator. Width and offset come from JS measuring the current
+   link; with scripting off it simply never appears, and the current link is
+   still marked by colour and aria-current. */
+.nav__indicator {
+  position: absolute;
+  left: 0;
+  top: 0.25rem;
+  height: 1.75rem;
+  border-radius: var(--radius-chip);
+  background: var(--inactive-area);
+  opacity: 0;
+  z-index: -1;
+  transition: width var(--dur) var(--ease), transform var(--dur) var(--ease), opacity var(--dur) var(--ease);
+}
+.nav__indicator[data-on="true"] { opacity: 1; }
+
+.nav__link {
+  position: relative;
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-chip);
+  font-size: var(--fs-nav);
+  letter-spacing: var(--tr-nav);
+  color: var(--ink-muted);
+  text-decoration: none;
+  white-space: nowrap;
   transition: color var(--dur) var(--ease);
 }
-.mast__nav a::after {
-  content: "";
-  position: absolute;
-  left: 0; right: 0; bottom: 0;
-  height: 1px;
-  background: currentColor;
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform var(--dur) var(--ease);
-}
-.mast__nav a:hover, .mast__nav a:focus-visible { color: var(--ink); }
-.mast__nav a:hover::after, .mast__nav a:focus-visible::after { transform: scaleX(1); }
-.mast__nav a[aria-current="page"] { color: var(--ink); }
-.mast__nav a[aria-current="page"]::after { transform: scaleX(1); }
-.mast__n {
-  font-family: var(--mono);
+.nav__link:hover,
+.nav__link:focus-visible,
+.nav__link[aria-current="page"] { color: var(--ink-strong); }
+
+/* the count badge some nav items carry, in chester's muted grey */
+.nav__n {
   font-size: 0.6875rem;
-  color: var(--ink-faint);
-  margin-left: 0.3em;
+  color: var(--ink-muted);
+  margin-left: 0.25em;
 }
 
-/* ---- footer ----------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .nav__indicator { transition: none; }
+}
+
+/* ---- footer ------------------------------------------------------------ */
+/* 144px top, 80px bottom, centred — chester's footer acts as a resting point. */
 
 .foot {
-  margin-top: 4rem;
-  border-top: 1px solid var(--rule);
-  padding: 1.6rem 0 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 9rem 0 5rem;
+  text-align: center;
 }
 .foot__nav {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.2rem 1.1rem;
-  margin-bottom: 1rem;
+  justify-content: center;
+  gap: 0.1rem 0.9rem;
+  margin-bottom: 0.5rem;
 }
-.foot__nav a { font-size: var(--fs-small); color: var(--ink-mute); text-decoration: none; }
-.foot__nav a:hover { color: var(--ink); text-decoration: underline; }
+.foot__nav a {
+  font-size: var(--fs-nav);
+  letter-spacing: var(--tr-nav);
+  color: var(--ink-muted);
+  text-decoration: none;
+  border-radius: var(--radius-chip);
+  transition: color var(--dur) var(--ease);
+}
+.foot__nav a:hover, .foot__nav a:focus-visible { color: var(--ink-strong); }
 .foot__note {
-  font-size: var(--fs-small);
-  color: var(--ink-mute);
-  margin: 0 0 0.4rem;
+  font-size: var(--fs-nav);
+  letter-spacing: var(--tr-nav);
+  color: var(--ink-muted);
+  margin: 0;
   max-width: 60ch;
 }
 .foot__chrono {
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 0.6rem 2rem;
-  margin-top: 1.4rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--rule);
+  justify-content: center;
+  gap: 0.5rem 2rem;
+  margin-top: 1rem;
   font-family: var(--serif);
+  font-size: 1.0625rem;
 }
 .foot__chrono a { text-decoration: none; }
 .foot__chrono a:hover { text-decoration: underline; }
 
-/* ---- reading toolbar: hidden until you scroll ------------------------- */
-/* The controls exist for reading, so they are only on article pages, and the
-   markup ships them with `hidden` — with scripting off they never appear and
-   nothing is missing, because each control is an enhancement of a default that
-   already works. */
+/* ---- page heads & lists ------------------------------------------------ */
 
-.toolbar {
-  position: sticky;
-  top: 0;
-  z-index: 40;
-  background: color-mix(in srgb, var(--paper) 92%, transparent);
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
-  border-bottom: 1px solid var(--rule);
+.pagehead { padding: 2rem 0 2.5rem; }
+.pagehead h1 { font-size: var(--fs-h1); margin: 0 0 0.5rem; }
+.pagehead__desc {
+  color: var(--ink-muted);
+  letter-spacing: var(--tr-body);
+  margin: 0;
+  max-width: 62ch;
 }
-.toolbar[hidden] { display: none; }
-.toolbar__in {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding-top: 0.35rem;
-  padding-bottom: 0.35rem;
+
+.entries { list-style: none; margin: 0; padding: 0; }
+
+.entry {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.15rem 2rem;
+  padding: 1.1rem 0;
+  border-top: 1px solid var(--border);
 }
-.toolbar__title {
-  font-size: var(--fs-small);
-  color: var(--ink-mute);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
-}
-.toolbar__group {
-  display: flex;
-  align-items: center;
-  gap: 0.15rem;
-  flex: 0 0 auto;
-}
-.toolbar__group button,
-.toolbar__top {
-  font-family: var(--sans);
-  font-size: var(--fs-tiny);
-  color: var(--ink-mute);
-  background: transparent;
-  border: 1px solid transparent;
-  padding: 0.2rem 0.45rem;
-  cursor: pointer;
+.entry:last-child { border-bottom: 1px solid var(--border); }
+.entry__title {
+  grid-column: 1;
+  font-family: var(--serif);
+  font-size: 1.5rem;
+  font-weight: 300;
+  letter-spacing: var(--tr-h3);
+  color: var(--ink);
   text-decoration: none;
-  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
-.toolbar__group button:hover,
-.toolbar__group button:focus-visible,
-.toolbar__top:hover { color: var(--ink); border-color: var(--rule-strong); }
-.toolbar__group button[aria-pressed="true"] { color: var(--ink); }
+.entry__title:hover { text-decoration: underline; text-underline-offset: 4px; }
+.entry__meta {
+  grid-column: 2;
+  text-align: right;
+  font-size: var(--fs-nav);
+  letter-spacing: var(--tr-nav);
+  color: var(--ink-muted);
+  white-space: nowrap;
+}
+.entry__meta a { color: var(--ink-muted); text-decoration: none; }
+.entry__meta a:hover { color: var(--ink-strong); }
+.entry__desc {
+  grid-column: 1 / -1;
+  font-size: var(--fs-nav);
+  letter-spacing: var(--tr-body);
+  color: var(--ink-body);
+  margin: 0;
+  max-width: 68ch;
+}
+.entry__ctx {
+  grid-column: 1 / -1;
+  font-size: var(--fs-nav);
+  color: var(--ink-muted);
+  margin: 0.2rem 0 0;
+}
 
-.progress {
-  height: 2px;
-  background: var(--ink);
-  transform-origin: left;
-  transform: scaleX(var(--progress, 0));
-  transition: transform 120ms linear;
-}
-@media (max-width: 640px) {
-  /* the title is the first thing to go when there is no room */
-  .toolbar__title { display: none; }
+.more { margin-top: 1.2rem; font-size: var(--fs-nav); }
+.linkbtn {
+  font: inherit;
+  font-size: var(--fs-nav);
+  letter-spacing: var(--tr-nav);
+  color: var(--ink-strong);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
 
-/* ---- reveal (cosmos-derived motion, navigation only) ------------------ */
-/* Applied to index lists, never to article prose: an animation that fires
-   while someone is reading a sentence is an interruption, not a flourish. */
+/* ---- tags -------------------------------------------------------------- */
 
-.reveal > * {
-  opacity: 0;
-  transform: translateY(6px);
+.taglist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.4rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
-.reveal.is-shown > * {
-  opacity: 1;
-  transform: none;
-  transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
+.taglist a { text-decoration: none; }
+
+/* the chip: 40%-opacity tint, dark same-hue text, monospace, inset hairline */
+.chip {
+  display: inline-block;
+  padding: 0.125rem 0.375rem 0.25rem;
+  border-radius: var(--radius-chip);
+  font-family: var(--mono);
+  font-size: var(--fs-nav);
+  letter-spacing: var(--tr-nav);
+  background: var(--chip-neutral-bg);
+  color: var(--chip-neutral-fg);
+  box-shadow: var(--shadow-inset);
 }
-/* stagger, capped so a long list does not take a second to arrive */
-.reveal.is-shown > *:nth-child(1) { transition-delay: 0ms; }
-.reveal.is-shown > *:nth-child(2) { transition-delay: 40ms; }
-.reveal.is-shown > *:nth-child(3) { transition-delay: 80ms; }
-.reveal.is-shown > *:nth-child(4) { transition-delay: 120ms; }
-.reveal.is-shown > *:nth-child(5) { transition-delay: 160ms; }
-.reveal.is-shown > *:nth-child(n+6) { transition-delay: 180ms; }
+.chip--amber  { background: var(--chip-amber-bg);  color: var(--chip-amber-fg); }
+.chip--lime   { background: var(--chip-lime-bg);   color: var(--chip-lime-fg); }
+.chip--orange { background: var(--chip-orange-bg); color: var(--chip-orange-fg); }
+.chip--green  { background: var(--chip-green-bg);  color: var(--chip-green-fg); }
+.chip--purple { background: var(--chip-purple-bg); color: var(--chip-purple-fg); }
+.chip--sky    { background: var(--chip-sky-bg);    color: var(--chip-sky-fg); }
+.chip--rose   { background: var(--chip-rose-bg);   color: var(--chip-rose-fg); }
+.chip--teal   { background: var(--chip-teal-bg);   color: var(--chip-teal-fg); }
+
+/* ---- reduced motion ---------------------------------------------------- */
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .reveal > * { opacity: 1; transform: none; }
   *, *::before, *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
@@ -290,17 +334,12 @@ hr { border: 0; border-top: 1px solid var(--rule); margin: 2rem 0; }
   }
 }
 
-/* ---- print: everything open, nothing interactive --------------------- */
+/* ---- print ------------------------------------------------------------- */
 
 @media print {
-  .mast, .toolbar, .foot__nav, .searchbox, .searchfilters,
-  .rail[aria-label="页面工具"] { display: none !important; }
-  .sec[hidden], .sec__rest[hidden] { display: block !important; }
-  .sec--folded > .sec__rest { display: block !important; }
-  /* notes go back to being ordinary footnotes on paper */
+  .nav, .foot__nav, .searchbox, .searchfilters { display: none !important; }
+  .foot { padding: 2rem 0; }
+  .fold__body[hidden] { display: block !important; }
   .note { position: static !important; width: auto !important; max-width: none !important; }
-  .note::before { display: none !important; }
-  .foot__chrono { border-top: 1px solid var(--rule); }
-  a[href^="http"]::after { content: " (" attr(href) ")"; font-size: 0.7em; color: var(--ink-mute); }
-  .prose, .arthead, .rail { max-width: none !important; }
+  .card, .card:hover { background: none; box-shadow: none; }
 }

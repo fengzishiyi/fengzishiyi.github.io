@@ -1,117 +1,141 @@
 /* ==========================================================================
-   tokens.css — the only place a colour is defined.
+   tokens.css — chester.how's design system, extracted from its live CSS as
+   measured by an independent analysis, plus the type ramp read off the real
+   markup.
 
-   Deliberately a two-value system: ink and paper. Everything else is a tint or
-   shade of ink. That constraint is gwern's experiment (a grayscale palette as a
-   test of whether it permits a readable, pleasant site) and it is also the best
-   defence against a personal site slowly growing a second, accidental palette.
+   What is NOT here: a dark palette. chester.how is a light-only design and
+   deliberately so — "no dark surfaces or backgrounds" is one of its stated
+   rules. An earlier revision of this site had a two-theme system; it is gone,
+   and this file is the reason it should stay gone.
 
-   Every pair below is asserted at build time against WCAG AA in BOTH themes —
-   see checkDesign() in src/build.mjs. Dark mode is not an afterthought here;
-   it is measured exactly like light mode.
+   The one substitution is the typeface. chester.how pairs Fraunces (headings)
+   with Inter (body), both from Google Fonts. This site loads no third-party
+   fonts, so the stacks below are system ones — the SIZES, WEIGHTS, TRACKING and
+   LINE HEIGHTS are copied exactly, the letterforms are not. See DESIGN-NOTES.
    ========================================================================== */
 
 :root {
-  /* ---- light ---------------------------------------------------------- */
-  --paper: #FBFAF9;
-  --paper-sunk: #F4F3F1;          /* inset fields, verbatim blocks */
-  --paper-raised: #FFFFFF;        /* only ever the active search result */
-  --ink: #1C1C1C;
-  --ink-mute: #5C5B59;
-  --ink-faint: #8A8987;
-  --rule: #E0DFDC;
-  --rule-strong: #C4C3C0;
-  --link: #2E4A6B;
-  --link-visited: #5B4A6B;
-  --mark: #EDE7D2;                /* search highlight */
+  /* ---- surfaces --------------------------------------------------------- */
+  --page: #FFFFFF;                 /* the canvas is white */
+  --card: #FAFAFA;                 /* neutral-50 — barely off-white */
+  --card-hover: #F5F5F5;           /* neutral-100 */
+  --nav-glass: rgba(255, 255, 255, 0.7);
+  --inactive-area: #E5E5E5;        /* neutral-200, the nav indicator pill */
 
-  --measure: 33em;                /* 30–34 汉字 per line — asserted */
-  --fs-body: 1.0625rem;           /* 17px */
-  --fs-small: 0.8125rem;
-  --fs-tiny: 0.75rem;
-  --lh-body: 1.85;
-  --fs-h1: clamp(1.65rem, 3vw + 1rem, 2.4rem);
-  --fs-h2: clamp(1.25rem, 1.4vw + 1rem, 1.55rem);
-  --fs-h3: 1.125rem;
+  /* ---- text ------------------------------------------------------------- */
+  --ink: #000000;                  /* body: pure black */
+  --ink-strong: #171717;           /* neutral-900 — links and primary text */
+  --ink-body: #404040;             /* neutral-700 — card copy */
+  /* chester.how uses rgb(163,163,163) here. On white that measures 2.52:1,
+     which fails even the 3:1 large-text floor, so it is darkened one step to
+     the lightest grey that passes. It only ever sets labels and eyebrows at
+     14px, never prose — body copy is asserted at full AA separately. */
+  --ink-muted: #7A7A7A;
+  --ink-faint: #8A8A8A;
 
-  --gap: 1.4rem;
-  --wrap: 72rem;
-  --measure-shift: 0em;           /* reader-adjustable line width */
-  --size-shift: 0em;              /* reader-adjustable font size */
+  /* ---- lines ------------------------------------------------------------ */
+  --border: #E5E7EB;               /* rgb(229,231,235) — neutral-200 */
+  --focus-ring: #BFDBFE;           /* blue-200, 4px spread */
 
-  --sans: "Helvetica Neue", Helvetica, Arial, "PingFang SC", "Hiragino Sans GB",
-    "Microsoft YaHei", "Segoe UI", sans-serif;
-  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia,
+  /* ---- type ramp (measured, not eyeballed) ------------------------------ */
+  /* Fraunces replaced by a system serif stack; weights and tracking are exact. */
+  --serif: Georgia, "Iowan Old Style", "Times New Roman", Times,
     "Songti SC", "Noto Serif SC", "Source Han Serif SC", "SimSun", serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Helvetica, Arial,
+    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
   --mono: ui-monospace, "SFMono-Regular", "Cascadia Mono", Consolas, "Liberation Mono", monospace;
 
-  --dur: 240ms;
-  --ease: cubic-bezier(0.2, 0.6, 0.2, 1);
+  --fs-h1: 2.25rem;        /* 36px */
+  --lh-h1: 1.25;           /* 45px */
+  --tr-h1: -1.08px;
+  --fs-h2: 1.875rem;       /* 30px — chester's second heading size */
+  --tr-h2: -0.90px;
+  --fs-h3: 1.5rem;         /* 24px — one step below, derived, not from chester */
+  --tr-h3: -0.75px;
+  --fs-body: 1rem;         /* 16px */
+  --lh-body: 1.625;        /* 26px */
+  --tr-body: -0.40px;
+  --fs-nav: 0.875rem;      /* 14px */
+  --tr-nav: -0.35px;
+  --fs-tiny: 0.75rem;
 
-  color-scheme: light dark;
+  /* The reading measure. chester.how has no such rule; this site keeps one so
+     Chinese prose does not run 80 characters wide. Set in em because one em is
+     one 汉字 — `ch` measures the "0" glyph and says nothing about CJK. */
+  --measure: 33em;
+  --read-mode: 0;          /* flips to 1 when the reader mode is on */
+
+  /* ---- metrics ----------------------------------------------------------- */
+  --radius-card: 8px;
+  --radius-chip: 4px;
+  --radius-pill: 9999px;
+  --pad-x: 2rem;           /* main padding: 0 32px */
+
+  /* three shadow levels, verbatim from the analysis */
+  --shadow-card: rgba(0, 0, 0, 0.1) 0px 4px 6px -1px, rgba(0, 0, 0, 0.1) 0px 2px 4px -2px;
+  --shadow-lift: rgba(0, 0, 0, 0.1) 0px 10px 15px -3px;
+  --shadow-inset: rgba(0, 0, 0, 0.1) 0px 0px 0px 1px inset;
+  --shadow-nav: rgba(0, 0, 0, 0.1) 0px 4px 6px -1px, rgba(0, 0, 0, 0.1) 0px 2px 4px -2px;
+
+  --dur: 200ms;
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ---- compatibility aliases -------------------------------------------
+     prose.css and components.css were written against the previous revision's
+     token names. Rather than rewrite ~500 lines of rules that are otherwise
+     unchanged, the old names are mapped onto the new palette here.
+
+     This is a deliberate shim and it is load-bearing: without it every one of
+     those references would resolve to nothing, and the text would silently
+     inherit its parent's colour instead of failing loudly. Delete only after
+     the two stylesheets have been migrated. */
+  --paper: var(--page);
+  --paper-sunk: var(--inactive-area);
+  --paper-raised: var(--page);
+  --ink-80: var(--ink-body);
+  --ink-60: var(--ink-muted);
+  --ink-40: #D4D4D4;               /* decorative numerals only — neutral-300 */
+  --ink-mute: var(--ink-muted);
+  --ink-faint: #8A8A8A;
+  --rule: var(--border);
+  --rule-strong: #D4D4D4;
+  --link: var(--ink-strong);
+  --link-visited: var(--ink-strong);
+  --mark: var(--chip-amber-bg);
+  --fs-small: var(--fs-nav);
+  --measure-shift: 0em;
+
+  /* chester.how keeps the full Tailwind breakpoint set */
+  color-scheme: light;
 }
 
-/* ---- dark ------------------------------------------------------------- */
-/* Warm-neutral, not pure black: the same reasoning that keeps light mode off
-   pure white. #141413 on #DEDCD9 measures 13.0:1. */
-:root[data-theme="dark"] {
-  --paper: #141413;
-  --paper-sunk: #1E1E1C;
-  --paper-raised: #2A2A28;
-  --ink: #DEDCD9;
-  --ink-mute: #A5A3A0;
-  --ink-faint: #7A7875;
-  --rule: #33322F;
-  --rule-strong: #4A4946;
-  --link: #93B4D4;
-  --link-visited: #B49FCC;
-  --mark: #4A4530;
-  color-scheme: dark;
+/* ---- chip accents ---------------------------------------------------------
+   The only chromatic colour in the design. All at 40% opacity, which is what
+   keeps them reading as markers rather than as fills. */
+:root {
+  --chip-amber-bg: rgba(251, 191, 36, 0.4);   --chip-amber-fg: #78350F;
+  --chip-lime-bg: rgba(163, 230, 53, 0.4);    --chip-lime-fg: #365314;
+  --chip-orange-bg: rgba(251, 146, 60, 0.4);  --chip-orange-fg: #7C2D12;
+  --chip-green-bg: rgba(74, 222, 128, 0.4);   --chip-green-fg: #14532D;
+  --chip-purple-bg: rgba(192, 132, 252, 0.4); --chip-purple-fg: #581C87;
+  --chip-sky-bg: rgba(56, 189, 248, 0.4);     --chip-sky-fg: #0C4A6E;
+  --chip-rose-bg: rgba(251, 113, 133, 0.4);   --chip-rose-fg: #881337;
+  --chip-teal-bg: rgba(45, 212, 191, 0.4);    --chip-teal-fg: #134E4A;
+  --chip-neutral-bg: rgba(163, 163, 163, 0.28); --chip-neutral-fg: #404040;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root[data-theme="auto"] {
-    --paper: #141413;
-    --paper-sunk: #1E1E1C;
-    --paper-raised: #2A2A28;
-    --ink: #DEDCD9;
-    --ink-mute: #A5A3A0;
-    --ink-faint: #7A7875;
-    --rule: #33322F;
-    --rule-strong: #4A4946;
-    --link: #93B4D4;
-    --link-visited: #B49FCC;
-    --mark: #4A4530;
-    color-scheme: dark;
-  }
-}
+@media (min-width: 768px) { :root { --pad-x: 2rem; } }
 
-/* ---- print ------------------------------------------------------------
-   The one place pure black on white is correct: there is no backlight on
-   paper, and it saves ink. Screen palettes stay off pure black and pure white
-   because the glare is real; paper has no glare. */
+/* ---- print ---------------------------------------------------------------
+   The one place pure black on white is already correct — which is the whole
+   palette here, so print mostly just needs the chrome to disappear. */
 @media print {
-  :root, :root[data-theme="dark"] {
-    --paper: #FFFFFF;
-    --paper-sunk: #FFFFFF;
-    --paper-raised: #FFFFFF;
-    --ink: #000000;
-    --ink-mute: #333333;
-    --ink-faint: #666666;
-    --rule: #CCCCCC;
-    --rule-strong: #999999;
-    --link: #000000;
-    --link-visited: #000000;
-    --mark: transparent;
-    color-scheme: light;
+  :root {
+    --card: #FFFFFF;
+    --card-hover: #FFFFFF;
+    --nav-glass: #FFFFFF;
+    --ink-body: #000000;
+    --ink-muted: #333333;
+    --border: #CCCCCC;
   }
-}
-
-/* ---- reader-adjusted sizes ------------------------------------------- */
-/* Applied as a multiplier on the root so every rem-based size follows the
-   reader's choice without any component needing to know about it. */
-:root { font-size: calc(100% + var(--size-shift)); }
-
-@media (max-width: 560px) {
-  :root { --fs-body: 1.0625rem; --gap: 1.1rem; }
 }

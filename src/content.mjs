@@ -18,7 +18,8 @@ import {
 } from "./lib.mjs";
 import {
   DOMAINS, STATUSES, CONFIDENCES, domainByKey, domainKeys, kindsFor,
-  statusByKey, confidenceByKey, DEFAULT_STATUS
+  statusByKey, confidenceByKey, DEFAULT_STATUS,
+  CARD_SIZES, COLLECTIONS, collectionByKey, statusOf
 } from "./taxonomy.mjs";
 
 /* ══════════════════════════════════════════════════════════════════════ */
@@ -181,16 +182,52 @@ export function replaceMarginNotes(src) {
 /* internal references                                                   */
 /* ══════════════════════════════════════════════════════════════════════ */
 
-export const REF_RE = /\{\{ref:([^}|]+)(?:\|([^}]*))?\}\}/g;
+export const REF_RE = /\{\{ref:([^}|]+)(?:\|([^}|]*))?(?:\|([^}]*))?\}\}/g;
+
+/**
+ * A fresh matcher for `{{ref:}}`.
+ *
+ * Never reuse the module-level regex across nested calls. A global regex carries
+ * `lastIndex`, and `String.replace` resets it to 0 when it finishes — so a
+ * `replace` performed inside an `exec` loop silently restarts that loop from the
+ * top. That is not a wrong answer, it is an infinite one: the build fills memory
+ * and dies with a V8 stack dump. Every call site gets its own matcher instead.
+ */
+export const refRe = () => new RegExp(REF_RE.source, "g");
+
+/** The only anchors a `{{ref:}}` may point at. Heading ids are positional by
+ *  design, so this shape is stable across rewordings — see render.mjs. */
+export const REF_ANCHOR_RE = /^sec-\d+$/;
+
+/**
+ * Parse one `{{ref:…}}` occurrence.
+ *
+ * Four forms, told apart by whether the second field starts with `#`:
+ *
+ *   {{ref:slug}}                 link text is the target's title
+ *   {{ref:slug|显示文字}}         explicit link text
+ *   {{ref:slug|#sec-2}}          a section of the target; text is its title
+ *   {{ref:slug|#sec-2|显示文字}}  a section, with explicit link text
+ *
+ * The anchored forms are what make section-level backlinks possible: the target
+ * page can then show "cited here" inside the very section being cited instead of
+ * only listing the page at the bottom. Both the renderer and the link graph go
+ * through this one function so the two can never disagree about what a link is.
+ */
+export function parseRef(rawSlug, second, third) {
+  const target = slugify(rawSlug.trim()) || rawSlug.trim();
+  const isAnchor = /^#/.test((second || "").trim());
+  const anchor = isAnchor ? second.trim().slice(1) : "";
+  const label = (isAnchor ? third : second) || "";
+  return { target, anchor, label: label.trim(), anchored: isAnchor };
+}
 
 /** Parse `{{ref:slug|label}}` into placeholders, recording each link so the
  *  reverse index can be built. Resolution happens in pass two. */
 export function extractRefs(src, articleSlug) {
   const links = [];
-  const text = src.replace(REF_RE, (_, rawSlug, label) => {
-    const target = slugify(rawSlug.trim()) || rawSlug.trim();
-    const anchor = label && /^#/.test(label.trim()) ? label.trim().slice(1) : "";
-    links.push({ target, anchor, label: (label || "").replace(/^#/, "").trim(), from: articleSlug });
+  const text = src.replace(refRe(), (_, rawSlug, second, third) => {
+    links.push({ ...parseRef(rawSlug, second, third), from: articleSlug });
     return `\u0000REF${links.length - 1}\u0000`;
   });
   return { text, links };
@@ -226,10 +263,16 @@ const ARTICLE_EXT = /\.(md|markdown)$/i;
  *
  *  `{{ref:slug|label}}` collapses to its LABEL, not to nothing: dropping it
  *  leaves the sentence without its subject. With no explicit label the target's
- *  own title reads as the natural stand-in, which is why the caller passes it. */
+ *  own title reads as the natural stand-in, which is why the caller passes it.
+ *  It goes through the same parser as everything else, so every form of the
+ *  marker — plain, labelled, anchored, anchored-and-labelled — collapses the
+ *  same way instead of leaking `#sec-1|…` into the quoted sentence. */
 function contextForLine(text, label) {
   const cleaned = plain(String(text)
-    .replace(/\{\{ref:[^}|]*(?:\|([^}]*))?\}\}/g, (_, cap) => (cap || label || ""))
+    .replace(refRe(), (whole, rawSlug, second, third) => {
+      const ref = parseRef(rawSlug, second, third);
+      return ref.label || label || "";
+    })
     .replace(/!{3}\s*/g, "")               // margin-note marker
     .replace(/\^\^?\[[^\]]*\]/g, "")       // footnote bodies are not context
     .replace(/[*_`>#]/g, ""))
@@ -357,6 +400,21 @@ export function loadSources(root, problems, log) {
 
     const url = `/${domain}/${slug}/`;
 
+    // ---- card presentation, for the homepage grid ----
+    const card = String(data.card || "").trim().toLowerCase();
+    if (card && !Object.prototype.hasOwnProperty.call(CARD_SIZES, card)) {
+      problems.error(name,
+        `card "${card}" 不认识。可选：${Object.keys(CARD_SIZES).join(" / ")}（留空则由内容自动决定）`);
+    }
+    let pin = 0;
+    if (String(data.pin || "").trim() !== "") {
+      pin = Number(data.pin);
+      if (!Number.isFinite(pin)) {
+        problems.error(name, `pin 必须是数字，现在是 "${data.pin}"`);
+        pin = 0;
+      }
+    }
+
     records.push({
       slug,
       url,
@@ -376,6 +434,8 @@ export function loadSources(root, problems, log) {
       series: String(data.series || "").trim(),
       license: String(data.license || "").trim(),
       source: String(data.source || "").trim(),     // 「写作地点」/「献给」等自由字段
+      card,
+      pin,
       body,
       chars: body.replace(/\s+/g, "").length
     });
@@ -383,6 +443,103 @@ export function loadSources(root, problems, log) {
 
   log(`  ${records.length} 篇`);
   return records;
+}
+
+/* ══════════════════════════════════════════════════════════════════════ */
+/* collections: reading, hobbies                                         */
+/* ══════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Load the non-writing collections.
+ *
+ * Both directories are OPTIONAL. A personal site grows its sections at
+ * different speeds, so a missing `_reading/` must not be an error — it simply
+ * means the homepage carries no book cards yet. That is why this returns empty
+ * rather than throwing.
+ *
+ * Entries are full pages, not just cards: each gets a URL under its collection
+ * so a card can link somewhere real and the entry can carry notes of its own.
+ */
+export function loadCollections(root, problems, log) {
+  const out = {};
+  const seen = new Map();
+
+  for (const c of COLLECTIONS) {
+    const dir = path.join(root, c.dir);
+    const files = walk(dir).filter((f) => ARTICLE_EXT.test(f));
+    const items = [];
+
+    for (const file of files) {
+      const name = relative(root, file);
+      const { text, hadBom } = readText(file);
+      if (hadBom) problems.warn(`${name}: 文件带 UTF-8 BOM，已自动忽略`);
+
+      const { data, body, hasBlock } = parseFrontMatter(text);
+      if (!hasBlock) {
+        problems.error(name, "没有 front matter。至少要写 title 与 date。");
+        continue;
+      }
+
+      const title = String(data.title || "").trim();
+      if (!title) problems.error(name, "缺 title。");
+
+      const base = path.basename(file).replace(ARTICLE_EXT, "");
+      const slug = slugify(String(data.slug || "").trim() || base.replace(/^\d{4}-\d{2}-\d{2}[-_]/, "") || base);
+      if (!slug) { problems.error(name, "无法生成 slug，请显式写 slug:。"); continue; }
+      if (seen.has(slug)) {
+        problems.error(name, `slug "${slug}" 与 ${seen.get(slug)} 冲突。`);
+        continue;
+      }
+      seen.set(slug, name);
+
+      const created = String(data.created || "").trim()
+        || fs.statSync(file).mtime.toISOString().slice(0, 10);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(created)) {
+        problems.error(name, `created 必须是 YYYY-MM-DD，现在是 "${created}"`);
+      }
+
+      const statusKey = String(data.status || "").trim();
+      const status = statusOf(c.key, statusKey);
+      if (!status) {
+        problems.error(name,
+          `status "${statusKey}" 不属于${c.name}。可选：${c.statuses.map((s) => s.key).join(" / ")}`);
+      }
+
+      // The chip carries the collection's own colour unless the status overrides
+      // it — chester uses amber for READING and green for READ, and that
+      // distinction is most of what the chip communicates.
+      const chip = (status && status.chip) || c.chip;
+
+      items.push({
+        collection: c.key,
+        collectionName: c.name,
+        slug,
+        url: `/${c.key}/${slug}/`,
+        file,
+        name,
+        title,
+        // a book has an author; a hobby has a one-line note instead
+        author: String(data.author || "").trim(),
+        note: String(data.note || "").trim(),
+        description: String(data.description || "").trim() || String(data.note || "").trim(),
+        created,
+        status: status ? status.key : "",
+        statusName: status ? status.name : "",
+        chip,
+        tags: (Array.isArray(data.tags) ? data.tags : []).filter(Boolean),
+        card: String(data.card || "").trim().toLowerCase(),
+        pin: Number.isFinite(Number(data.pin)) && String(data.pin || "").trim() !== "" ? Number(data.pin) : 0,
+        body,
+        chars: body.replace(/\s+/g, "").length
+      });
+    }
+
+    items.sort((a, b) => (a.created < b.created ? 1 : a.created > b.created ? -1 : 0));
+    out[c.key] = items;
+    if (files.length) log(`  ${c.name} ${items.length} 条`);
+  }
+
+  return out;
 }
 
 /* ══════════════════════════════════════════════════════════════════════ */
@@ -415,12 +572,11 @@ export function buildLinkGraph(records, problems) {
     const lines = r.body.split(/\r?\n/);
 
     for (const [index, line] of lines.entries()) {
-      REF_RE.lastIndex = 0;
+      const re = refRe();
       let m;
-      while ((m = REF_RE.exec(line))) {
-        const target = slugify(m[1].trim()) || m[1].trim();
-        const label = (m[2] || "").replace(/^#/, "").trim();
-        const anchor = m[2] && /^#/.test(m[2].trim()) ? m[2].trim().slice(1) : "";
+      while ((m = re.exec(line))) {
+        const ref = parseRef(m[1], m[2], m[3]);
+        const { target, anchor, label } = ref;
 
         const hit = bySlug.get(target);
         if (!hit) {
@@ -434,8 +590,13 @@ export function buildLinkGraph(records, problems) {
           problems.warn(`${r.name}: {{ref:${target}}} 指向自己，已忽略`);
           continue;
         }
-        if (/^#/.test(m[2] || "")) {
-          problems.warn(`${r.name}: {{ref:${target}}} 用了 # 前缀写法，现在直接写 {{ref:${target}}} 即可`);
+        // A malformed anchor still links, but it silently drops the reader at
+        // the top of the page and never produces a section backlink — exactly
+        // the kind of quiet failure the render-time check also guards against.
+        if (ref.anchored && !REF_ANCHOR_RE.test(anchor)) {
+          problems.error(r.name,
+            `{{ref:${target}|#${anchor}}} 的锚点应该是 sec-数字，例如 {{ref:${target}|#sec-2}}。`);
+          continue;
         }
 
         outgoing.get(r.slug).push({
