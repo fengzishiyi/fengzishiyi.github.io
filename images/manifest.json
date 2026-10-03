@@ -2,9 +2,11 @@
   "site": {
     "origin": "https://fengzishiyi.github.io",
     "title": "枫子十一",
-    "desc": "一个私人文章与图片档案：杂志式排版的长文，和一面一直在流动的图墙。",
+    "subtitle": "一个人的杂志",
+    "tagline": "文章、图画与一些想不清楚的事。界面是单色的，颜色全部来自图片。",
     "lang": "zh-Hans",
-    "author": "fengzishiyi"
+    "author": "fengzishiyi",
+    "volumeStartYear": 2026
   },
   "order": [
     "135294721-p0",
@@ -22,34 +24,38 @@
     "99424534-p0",
     "img-1101"
   ],
-  "rows": [
+  "issues": [
     {
-      "index": 0,
-      "direction": "normal",
-      "slugs": [
-        "99424534-p0",
-        "147279021-p1",
-        "148652264-p0",
-        "148851416-p0",
-        "139633662-p0",
-        "148784007-p0",
-        "135294721-p0"
-      ],
-      "dur": null
+      "id": "2026-02",
+      "title": "第 1 卷 · 第 02 期",
+      "label": "2026 年 2 月",
+      "count": 1
     },
     {
-      "index": 1,
-      "direction": "reverse",
-      "slugs": [
-        "147279021-p0",
-        "147279021-p2",
-        "148652280-p0",
-        "137990670-p0",
-        "146578903-p0",
-        "img-1101",
-        "147476966-p0"
-      ],
-      "dur": null
+      "id": "2026-01",
+      "title": "第 1 卷 · 第 01 期",
+      "label": "2026 年 1 月",
+      "count": 1
+    }
+  ],
+  "articles": [
+    {
+      "slug": "why-the-wall-moves",
+      "title": "为什么这面墙一直在动",
+      "section": "专题",
+      "date": "2026-02-18",
+      "cover": "99424534-p0",
+      "coverLqip": "/images/derived/99424534-p0-lqip.webp",
+      "coverAlt": ""
+    },
+    {
+      "slug": "monochrome-shell",
+      "title": "单色的界面，彩色的画面",
+      "section": "随笔",
+      "date": "2026-01-07",
+      "cover": "135294721-p0",
+      "coverLqip": "/images/derived/135294721-p0-lqip.webp",
+      "coverAlt": ""
     }
   ],
   "pages": {
@@ -65,7 +71,7 @@
       "width": 9377,
       "height": 4199,
       "ratio": 2.2332,
-      "class": "sm",
+      "class": "pano",
       "title": "",
       "creator": "",
       "year": "",
@@ -78,12 +84,11 @@
       "d1xJpg": "/images/derived/135294721-p0-1x.jpg",
       "d2x": "/images/derived/135294721-p0-2x.webp",
       "d2xJpg": "/images/derived/135294721-p0-2x.jpg",
-      "bytes": [
-        19668,
-        19644,
-        54494,
-        57070
-      ]
+      "derivW": 1100,
+      "derivH": 492,
+      "width2x": 1600,
+      "height2x": 716,
+      "bytes": 232162
     },
     "137990670-p0": {
       "slug": "137990670-p0",
@@ -97,7 +102,7 @@
       "width": 2718,
       "height": 2901,
       "ratio": 0.9369,
-      "class": "lg",
+      "class": "square",
       "title": "",
       "creator": "",
       "year": "",
@@ -110,12 +115,11 @@
       "d1xJpg": "/images/derived/137990670-p0-1x.jpg",
       "d2x": "/images/derived/137990670-p0-2x.webp",
       "d2xJpg": "/images/derived/137990670-p0-2x.jpg",
-      "bytes": [
-        21216,
-        22194,
-        60518,
-        66336
-      ]
+      "derivW": 1031,
+      "derivH": 1100,
+      "width2x": 1499,
+      "height2x": 1600,
+      "bytes": 418714
     },
     "139633662-p0": {
       "slug": "139633662-p0",
@@ -129,7 +133,7 @@
       "width": 2209,
       "height": 1280,
       "ratio": 1.7258,
-      "class": "md",
+      "class": "wide",
       "title": "",
       "creator": "",
       "year": "",
@@ -142,12 +146,11 @@
       "d1xJpg": "/images/derived/139633662-p0-1x.jpg",
       "d2x": "/images/derived/139633662-p0-2x.webp",
       "d2xJpg": "/images/derived/139633662-p0-2x.jpg",
-      "bytes": [
-        26588,
-        26820,
-        77520,
-        86225
-      ]
+      "derivW": 1100,
+      "derivH": 637,
+      "width2x": 1370,
+      "height2x": 794,
+      "bytes": 235958
     },
     "146578903-p0": {
       "slug": "146578903-p0",
@@ -161,7 +164,7 @@
       "width": 2762,
       "height": 2000,
       "ratio": 1.381,
-      "class": "md",
+      "class": "wide",
       "title": "",
       "creator": "",
       "year": "",
@@ -174,12 +177,11 @@
       "d1xJpg": "/images/derived/146578903-p0-1x.jpg",
       "d2x": "/images/derived/146578903-p0-2x.webp",
       "d2xJpg": "/images/derived/146578903-p0-2x.jpg",
-      "bytes": [
-        14426,
-        18243,
-        31302,
-        43032
-      ]
+      "derivW": 1100,
+      "derivH": 797,
+      "width2x": 1600,
+      "height2x": 1159,
+      "bytes": 142178
     },
     "147279021-p0": {
       "slug": "147279021-p0",
@@ -193,7 +195,7 @@
       "width": 5333,
       "height": 8000,
       "ratio": 0.6666,
-      "class": "xl",
+      "class": "tall",
       "title": "",
       "creator": "",
       "year": "",
@@ -206,12 +208,11 @@
       "d1xJpg": "/images/derived/147279021-p0-1x.jpg",
       "d2x": "/images/derived/147279021-p0-2x.webp",
       "d2xJpg": "/images/derived/147279021-p0-2x.jpg",
-      "bytes": [
-        21302,
-        21885,
-        65786,
-        71495
-      ]
+      "derivW": 733,
+      "derivH": 1100,
+      "width2x": 1066,
+      "height2x": 1600,
+      "bytes": 366970
     },
     "147279021-p1": {
       "slug": "147279021-p1",
@@ -225,7 +226,7 @@
       "width": 5333,
       "height": 8000,
       "ratio": 0.6666,
-      "class": "xl",
+      "class": "tall",
       "title": "",
       "creator": "",
       "year": "",
@@ -238,12 +239,11 @@
       "d1xJpg": "/images/derived/147279021-p1-1x.jpg",
       "d2x": "/images/derived/147279021-p1-2x.webp",
       "d2xJpg": "/images/derived/147279021-p1-2x.jpg",
-      "bytes": [
-        20744,
-        21179,
-        62268,
-        68297
-      ]
+      "derivW": 733,
+      "derivH": 1100,
+      "width2x": 1066,
+      "height2x": 1600,
+      "bytes": 326096
     },
     "147279021-p2": {
       "slug": "147279021-p2",
@@ -257,7 +257,7 @@
       "width": 5333,
       "height": 8000,
       "ratio": 0.6666,
-      "class": "xl",
+      "class": "tall",
       "title": "",
       "creator": "",
       "year": "",
@@ -270,12 +270,11 @@
       "d1xJpg": "/images/derived/147279021-p2-1x.jpg",
       "d2x": "/images/derived/147279021-p2-2x.webp",
       "d2xJpg": "/images/derived/147279021-p2-2x.jpg",
-      "bytes": [
-        20662,
-        21188,
-        63762,
-        68839
-      ]
+      "derivW": 733,
+      "derivH": 1100,
+      "width2x": 1066,
+      "height2x": 1600,
+      "bytes": 335270
     },
     "147476966-p0": {
       "slug": "147476966-p0",
@@ -289,7 +288,7 @@
       "width": 3000,
       "height": 1500,
       "ratio": 2,
-      "class": "sm",
+      "class": "pano",
       "title": "",
       "creator": "",
       "year": "",
@@ -302,12 +301,11 @@
       "d1xJpg": "/images/derived/147476966-p0-1x.jpg",
       "d2x": "/images/derived/147476966-p0-2x.webp",
       "d2xJpg": "/images/derived/147476966-p0-2x.jpg",
-      "bytes": [
-        10208,
-        13504,
-        30960,
-        38677
-      ]
+      "derivW": 1100,
+      "derivH": 550,
+      "width2x": 1600,
+      "height2x": 800,
+      "bytes": 157934
     },
     "148652264-p0": {
       "slug": "148652264-p0",
@@ -321,7 +319,7 @@
       "width": 2303,
       "height": 2741,
       "ratio": 0.8402,
-      "class": "xl",
+      "class": "square",
       "title": "",
       "creator": "",
       "year": "",
@@ -334,12 +332,11 @@
       "d1xJpg": "/images/derived/148652264-p0-1x.jpg",
       "d2x": "/images/derived/148652264-p0-2x.webp",
       "d2xJpg": "/images/derived/148652264-p0-2x.jpg",
-      "bytes": [
-        15180,
-        17729,
-        42008,
-        54274
-      ]
+      "derivW": 924,
+      "derivH": 1100,
+      "width2x": 1344,
+      "height2x": 1600,
+      "bytes": 226158
     },
     "148652280-p0": {
       "slug": "148652280-p0",
@@ -353,7 +350,7 @@
       "width": 1125,
       "height": 1500,
       "ratio": 0.75,
-      "class": "xl",
+      "class": "square",
       "title": "",
       "creator": "",
       "year": "",
@@ -366,12 +363,11 @@
       "d1xJpg": "/images/derived/148652280-p0-1x.jpg",
       "d2x": "/images/derived/148652280-p0-2x.webp",
       "d2xJpg": "/images/derived/148652280-p0-2x.jpg",
-      "bytes": [
-        24708,
-        26114,
-        72418,
-        82250
-      ]
+      "derivW": 825,
+      "derivH": 1100,
+      "width2x": 855,
+      "height2x": 1140,
+      "bytes": 287206
     },
     "148784007-p0": {
       "slug": "148784007-p0",
@@ -385,7 +381,7 @@
       "width": 4096,
       "height": 2963,
       "ratio": 1.3824,
-      "class": "md",
+      "class": "wide",
       "title": "",
       "creator": "",
       "year": "",
@@ -398,12 +394,11 @@
       "d1xJpg": "/images/derived/148784007-p0-1x.jpg",
       "d2x": "/images/derived/148784007-p0-2x.webp",
       "d2xJpg": "/images/derived/148784007-p0-2x.jpg",
-      "bytes": [
-        20748,
-        23922,
-        47666,
-        59276
-      ]
+      "derivW": 1100,
+      "derivH": 795,
+      "width2x": 1600,
+      "height2x": 1157,
+      "bytes": 225778
     },
     "148851416-p0": {
       "slug": "148851416-p0",
@@ -417,7 +412,7 @@
       "width": 2024,
       "height": 2530,
       "ratio": 0.8,
-      "class": "xl",
+      "class": "square",
       "title": "",
       "creator": "",
       "year": "",
@@ -430,12 +425,11 @@
       "d1xJpg": "/images/derived/148851416-p0-1x.jpg",
       "d2x": "/images/derived/148851416-p0-2x.webp",
       "d2xJpg": "/images/derived/148851416-p0-2x.jpg",
-      "bytes": [
-        25374,
-        24583,
-        78458,
-        79832
-      ]
+      "derivW": 880,
+      "derivH": 1100,
+      "width2x": 1255,
+      "height2x": 1569,
+      "bytes": 451120
     },
     "99424534-p0": {
       "slug": "99424534-p0",
@@ -449,7 +443,7 @@
       "width": 3358,
       "height": 6859,
       "ratio": 0.4896,
-      "class": "xxl",
+      "class": "tall",
       "title": "",
       "creator": "",
       "year": "",
@@ -462,12 +456,11 @@
       "d1xJpg": "/images/derived/99424534-p0-1x.jpg",
       "d2x": "/images/derived/99424534-p0-2x.webp",
       "d2xJpg": "/images/derived/99424534-p0-2x.jpg",
-      "bytes": [
-        19330,
-        21100,
-        50534,
-        60182
-      ]
+      "derivW": 538,
+      "derivH": 1100,
+      "width2x": 783,
+      "height2x": 1600,
+      "bytes": 179768
     },
     "img-1101": {
       "slug": "img-1101",
@@ -481,7 +474,7 @@
       "width": 1680,
       "height": 944,
       "ratio": 1.7797,
-      "class": "md",
+      "class": "wide",
       "title": "",
       "creator": "",
       "year": "",
@@ -494,12 +487,11 @@
       "d1xJpg": "/images/derived/img-1101-1x.jpg",
       "d2x": "/images/derived/img-1101-2x.webp",
       "d2xJpg": "/images/derived/img-1101-2x.jpg",
-      "bytes": [
-        21256,
-        22917,
-        55358,
-        66911
-      ]
+      "derivW": 1100,
+      "derivH": 618,
+      "width2x": 1140,
+      "height2x": 641,
+      "bytes": 146076
     }
   }
 }

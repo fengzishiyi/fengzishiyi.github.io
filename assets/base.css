@@ -1,5 +1,7 @@
 /* ==========================================================================
-   base.css — reset, typography, nav, footer, shared primitives
+   base.css — reset, typography, masthead, colophon, shared primitives
+
+   The site is a magazine: a cover, a contents page, and article spreads.
    ========================================================================== */
 
 *,
@@ -11,15 +13,14 @@ html {
   background: var(--paper);
   color: var(--ink);
   scroll-behavior: smooth;
-  /* the wall track is anchored with a negative margin; never scroll sideways */
   overflow-x: hidden;
 }
 
 body {
   margin: 0;
   font-family: var(--sans);
-  font-size: 16px;
-  line-height: 1.8;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
   letter-spacing: var(--tracking-cjk);
   background: var(--paper);
   color: var(--ink-80);
@@ -31,16 +32,26 @@ body {
 body[data-lightbox="open"] { overflow: hidden; }
 
 img { max-width: 100%; height: auto; display: block; border-style: none; }
+figure { margin: 0; }
 
 /* --- headings: serif, weight 400, never bold --------------------------- */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--serif);
   font-weight: 400;
   color: var(--ink);
-  line-height: 1.22;
+  line-height: 1.24;
   margin: 0 0 0.6em;
   text-wrap: balance;
 }
+
+/* Display sizes get tight tracking in LATIN only — never on 汉字. */
+.display {
+  font-family: var(--serif);
+  font-weight: 400;
+  line-height: var(--lh-display);
+  letter-spacing: var(--tracking-cjk);
+}
+.display:lang(en) { letter-spacing: var(--tracking-tight); }
 
 p { margin: 0 0 1.6em; }
 p:last-child { margin-bottom: 0; }
@@ -49,27 +60,23 @@ a { color: inherit; text-decoration: none; }
 
 hr { border: 0; border-top: 1px solid var(--rule); margin: 3rem 0; }
 
-/* --- focus: a hairline, never a glow ---------------------------------- */
-:focus-visible {
-  outline: 1px solid var(--ink);
-  outline-offset: 3px;
-}
+:focus-visible { outline: 1px solid var(--ink); outline-offset: 3px; }
 :focus:not(:focus-visible) { outline: none; }
 
 /* --- primitives ------------------------------------------------------- */
 
-/* label: small, uppercase, wide-tracked. The kit's one durable "chrome" motif. */
 .label {
   font-family: var(--sans);
-  font-size: 0.6875rem;
+  font-size: var(--fs-label);
   line-height: 1.5;
   letter-spacing: var(--tracking-label);
   text-transform: uppercase;
   color: var(--ink-60);
 }
 .label--plain { text-transform: none; letter-spacing: 0.12em; }
+.label--ink { color: var(--ink); }
 
-/* numeral: decorative, so /40. aria-hidden in markup — never the only carrier. */
+/* decorative numeral — /40 is allowed here and nowhere that carries meaning */
 .numeral {
   font-family: var(--serif);
   font-size: 1.5rem;
@@ -111,11 +118,13 @@ hr { border: 0; border-top: 1px solid var(--rule); margin: 3rem 0; }
 .ulink:focus-visible::after { transform: scaleX(1); }
 
 .shell {
-  max-width: 1360px;
+  max-width: 1440px;
   margin: 0 auto;
   padding-left: var(--pad-x);
   padding-right: var(--pad-x);
 }
+
+.shell--tight { max-width: 1100px; }
 
 .section { padding-top: var(--sec-y); padding-bottom: var(--sec-y); }
 
@@ -126,7 +135,7 @@ hr { border: 0; border-top: 1px solid var(--rule); margin: 3rem 0; }
   padding: 0.75rem 1rem;
   background: var(--ink);
   color: var(--paper);
-  font-size: 0.75rem;
+  font-size: var(--fs-label);
   letter-spacing: var(--tracking-label);
   text-transform: uppercase;
   z-index: 100;
@@ -146,13 +155,27 @@ hr { border: 0; border-top: 1px solid var(--rule); margin: 3rem 0; }
   border: 0;
 }
 
-/* --- masthead --------------------------------------------------------- */
+/* ==========================================================================
+   full-bleed
+   Reaches the viewport edge from inside a centred container without the
+   100vw scrollbar trap. `width: 100vw` would overflow whenever a scrollbar is
+   present, so the element is made 100vw wide and then shifted left by exactly
+   the space between the viewport and its own container: (100vw − 100%)/2.
+   Clipped by `overflow-x: hidden` on the root.
+   ========================================================================== */
+.bleed {
+  width: 100vw;
+  margin-left: calc((100vw - 100%) / -2);
+  margin-right: calc((100vw - 100%) / -2);
+}
+
+/* --- masthead: a magazine masthead, not a navbar ---------------------- */
 .masthead {
   position: fixed;
   inset: 0 0 auto 0;
   z-index: 50;
   height: var(--nav-h);
-  background: rgba(249, 248, 246, 0.9);
+  background: rgba(249, 248, 246, 0.92);
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
   border-bottom: 1px solid var(--rule);
@@ -175,7 +198,7 @@ hr { border: 0; border-top: 1px solid var(--rule); margin: 3rem 0; }
   white-space: nowrap;
 }
 @media (max-width: 420px) {
-  .wordmark { font-size: 0.8125rem; letter-spacing: 0.18em; }
+  .wordmark { font-size: 0.8125rem; letter-spacing: 0.16em; }
 }
 
 .masthead__nav {
@@ -185,9 +208,18 @@ hr { border: 0; border-top: 1px solid var(--rule); margin: 3rem 0; }
 }
 @media (min-width: 640px) { .masthead__nav { gap: 28px; } }
 
+/* the running issue line sits centred in the masthead on wide screens */
+.masthead__issue {
+  display: none;
+  white-space: nowrap;
+}
+@media (min-width: 900px) {
+  .masthead__issue { display: block; position: absolute; left: 50%; transform: translateX(-50%); }
+}
+
 .navlink {
   font-family: var(--sans);
-  font-size: 0.6875rem;
+  font-size: var(--fs-label);
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--ink-60);
@@ -215,51 +247,72 @@ hr { border: 0; border-top: 1px solid var(--rule); margin: 3rem 0; }
 .navlink[aria-current="page"] { color: var(--ink); }
 .navlink[aria-current="page"]::after { transform: scaleX(1); }
 
-/* motion toggle: hairline chip, label flips between 流动 / 静止 */
-.motion {
-  font-family: var(--sans);
-  font-size: 0.625rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--ink-60);
-  background: transparent;
-  border: 1px solid var(--rule);
-  padding: 5px 9px;
-  cursor: pointer;
-  transition: border-color 0.5s ease, color 0.5s ease;
-  white-space: nowrap;
-}
-.motion:hover { border-color: var(--rule-strong); color: var(--ink); }
-.motion[aria-pressed="true"] { border-color: var(--rule-strong); color: var(--ink); }
-@media (min-width: 640px) {
-  .motion { font-size: 0.6875rem; letter-spacing: 0.18em; padding: 6px 12px; }
-}
-
-/* --- footer ----------------------------------------------------------- */
+/* --- colophon / 版权页 ------------------------------------------------- */
 .colophon {
   border-top: 1px solid var(--rule);
-  padding: 56px 0 40px;
+  padding: 64px 0 48px;
   margin-top: var(--sec-y);
 }
 .colophon__grid {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
-  gap: 20px 40px;
+  gap: 24px 48px;
   align-items: baseline;
 }
 .colophon__note {
   font-family: var(--sans);
-  font-size: 0.6875rem;
+  font-size: var(--fs-label);
   letter-spacing: 0.1em;
   color: var(--ink-60);
   margin: 0;
-  max-width: 42ch;
+  max-width: 44ch;
   line-height: 1.9;
 }
 
+/* --- rules & running heads -------------------------------------------- */
+
+/* a full-width hairline used as a section divider */
+.rule { border: 0; border-top: 1px solid var(--rule); margin: 0; }
+.rule--strong { border-top-color: var(--rule-strong); }
+
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.page-intro { padding-top: calc(var(--nav-h) + 72px); }
+.page-title {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: var(--fs-display);
+  line-height: var(--lh-display);
+  margin: 0;
+}
+.page-intro__sub {
+  font-family: var(--serif);
+  font-style: italic;
+  color: var(--ink-60);
+  max-width: 46ch;
+  margin: 16px 0 0;
+  line-height: 1.8;
+}
+
+.empty {
+  padding: 64px 0;
+  border-top: 1px solid var(--rule);
+  font-family: var(--serif);
+  font-style: italic;
+  color: var(--ink-60);
+}
+
+.crosslinks { display: flex; flex-wrap: wrap; gap: 12px 32px; margin-top: 24px; }
+
 /* --- reduced motion --------------------------------------------------- */
-/* Placed after all animation declarations so it wins on source order too. */
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *,
@@ -272,11 +325,10 @@ hr { border: 0; border-top: 1px solid var(--rule); margin: 3rem 0; }
   }
 }
 
-/* --- print ------------------------------------------------------------ */
-/* The one place pure black on white is correct: on paper there is no screen
-   to glare, and it saves ink. Excluded from the style assertions. */
+/* --- print: the one place pure black on white is correct --------------
+   Excluded from the style assertions rather than special-cased inside them. */
 @media print {
-  .masthead, .motion, .colophon, .lb, .wall { display: none !important; }
+  .masthead, .colophon, .lb { display: none !important; }
   html, body { background: #FFFFFF; color: #000000; }
   .prose { max-width: none; }
 }

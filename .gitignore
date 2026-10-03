@@ -8,6 +8,7 @@ _images/*
 
 # ---- build internals ----
 .build/
+.shots/
 node_modules/
 npm-debug.log*
 

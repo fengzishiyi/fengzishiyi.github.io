@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * shots.mjs — capture the site and measure its layout at EXACT viewport widths.
+ * shots.mjs — capture the magazine and measure its layout at EXACT viewports.
  *
  * Driven over CDP rather than `--screenshot`, because Edge's headless window
  * cannot go below 496px and strips ~26px at every other size: those flags crop
@@ -20,11 +20,11 @@ import { Browser } from "./browser.mjs";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PORT = process.env.PORT || 4321;
 const BASE = `http://127.0.0.1:${PORT}`;
-const OUT = path.join(ROOT, ".build", "shots");
+/* NOT under .build/ — every build wipes that directory, which silently deleted
+   the screenshots each time the site was rebuilt. */
+const OUT = path.join(ROOT, ".shots");
 const measureOnly = process.argv.includes("--measure");
 
-/* Exact CSS viewports to review. 390 is a modern phone, 768 a tablet,
-   1440 and 1920 desktop, 2560 a wide desktop. */
 const VIEWPORTS = [
   ["phone", 390, 844],
   ["tablet", 768, 1024],
@@ -33,48 +33,50 @@ const VIEWPORTS = [
   ["ultra", 2560, 1100]
 ];
 
-const PAGES = [
-  ["home", "/"],
-  ["images", "/images/"],
-  ["articles", "/articles/"],
-  ["article", "/articles/why-the-wall-moves/"],
-  ["about", "/about/"],
-  ["404", "/404.html"]
-];
+/** Discover the pages that actually exist, so renaming a route never leaves a
+ *  stale entry here. */
+function discoverPages() {
+  const pages = ["/", "/contents/", "/archive/", "/about/", "/404.html", "/images/"];
+  const dir = path.join(ROOT, "articles");
+  if (fs.existsSync(dir)) {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (e.isDirectory()) pages.push(`/articles/${e.name}/`);
+    }
+  }
+  return pages;
+}
 
 let failures = 0;
 const fail = (m) => { console.log("  ✗ " + m); failures++; };
 
 const browser = await Browser.launch();
+const PAGES = discoverPages();
 
 /* ── 1. measure every page at every viewport ─────────────────────────────── */
 console.log("layout measurement (exact CSS viewports)\n");
-for (const [pname, page] of PAGES) {
-  console.log(`── ${pname} ${page}`);
+for (const page of PAGES) {
+  console.log(`── ${page}`);
   for (const [vname, w, h] of VIEWPORTS) {
     let m;
     try { m = await browser.measure({ url: BASE + page, width: w, height: h }); }
-    catch (e) { fail(`${vname}: ${e.message}`); continue; }
+    catch (e) { fail(`${page} ${vname}: ${e.message}`); continue; }
 
-    const tag = `${String(w).padStart(4)}px ${vname.padEnd(7)}`;
     const bits = [`client=${m.clientWidth}`];
-    if (m.hScroll) bits.push(`H_SCROLL!`);
+    if (m.hScroll) bits.push("H_SCROLL!");
     if (m.outsideViewport.length) bits.push(`outside=${m.outsideViewport.length}`);
+    if (m.h1Count !== 1) bits.push(`h1=${m.h1Count}!`);
     if (m.title) bits.push(`title=${m.title.w}@${m.title.fs}`);
+    if (m.openerTitle) bits.push(`opener=${m.openerTitle.w}@${m.openerTitle.fs}`);
+    if (m.nameplate) bits.push(`nameplate=${m.nameplate.w}@${m.nameplate.fs}`);
     if (m.prose) bits.push(`prose=${m.prose.w}@${m.prose.fs}`);
-    if (m.nav) bits.push(`nav=${m.nav.w}`);
-    console.log(`   ${tag} ${bits.join("  ")}`);
+    console.log(`   ${String(w).padStart(4)}px ${vname.padEnd(7)} ${bits.join("  ")}`);
 
-    if (m.clientWidth !== w) fail(`${pname}/${vname}: asked for ${w}px, laid out at ${m.clientWidth}px`);
-    if (m.hScroll) fail(`${pname}/${vname}: horizontal scrollbar (scrollWidth ${m.scrollWidth} > ${m.clientWidth})`);
-    if (m.outsideViewport.length) {
-      fail(`${pname}/${vname}: elements past the right edge → ${m.outsideViewport.join(", ")}`);
-    }
-    if (m.vw50 !== Math.round(m.clientWidth / 2)) {
-      fail(`${pname}/${vname}: 50vw resolved to ${m.vw50}, expected ${Math.round(m.clientWidth / 2)} — the full-bleed wall is misaligned`);
-    }
-    // text must never be laid out wider than its container
-    if (m.title && m.title.right > m.clientWidth + 1) fail(`${pname}/${vname}: the headline overflows its viewport`);
+    if (m.clientWidth !== w) fail(`${page} ${vname}: asked for ${w}px, laid out at ${m.clientWidth}px`);
+    if (m.hScroll) fail(`${page} ${vname}: horizontal scrollbar (${m.scrollWidth} > ${m.clientWidth})`);
+    if (m.outsideViewport.length) fail(`${page} ${vname}: past the right edge → ${m.outsideViewport.join(", ")}`);
+    if (m.h1Count !== 1) fail(`${page} ${vname}: ${m.h1Count} <h1> elements, expected exactly 1`);
+    if (m.title && m.title.right > m.clientWidth + 1) fail(`${page} ${vname}: a title overflows the viewport`);
+    if (m.openerTitle && m.openerTitle.right > m.clientWidth + 1) fail(`${page} ${vname}: the opener title overflows`);
   }
   console.log("");
 }
@@ -83,22 +85,25 @@ for (const [pname, page] of PAGES) {
 if (!measureOnly) {
   console.log("captures");
   fs.mkdirSync(OUT, { recursive: true });
-  for (const [pname, page] of PAGES) {
+  const wanted = (page, vname) =>
+    (vname === "laptop") ||
+    (vname === "phone" && ["/", "/contents/"].includes(page)) ||
+    (vname === "phone" && page.startsWith("/articles/")) ||
+    (vname === "ultra" && page === "/") ||
+    (vname === "tablet" && page.startsWith("/articles/"));
+
+  for (const page of PAGES) {
     for (const [vname, w, h] of VIEWPORTS) {
-      // only a representative subset, or this is dozens of files
-      const wanted = (vname === "phone" && ["home", "article", "articles"].includes(pname)) ||
-                     (vname === "laptop" && true) ||
-                     (vname === "ultra" && ["home"].includes(pname)) ||
-                     (vname === "tablet" && ["home", "article"].includes(pname));
-      if (!wanted) continue;
-      const png = path.join(OUT, `${pname}-${w}.png`);
+      if (!wanted(page, vname)) continue;
+      const name = (page === "/" ? "cover" : page.replace(/^\/|\/$/g, "").replace(/\//g, "-")) + `-${w}`;
+      const png = path.join(OUT, `${name}.png`);
       try {
         await browser.shoot({ url: BASE + page, width: w, height: h, out: png });
         const jpg = png.replace(/\.png$/, ".jpg");
         await sharp(png).jpeg({ quality: 80 }).toFile(jpg);
         const meta = await sharp(png).metadata();
-        console.log(`  ${(pname + "-" + w).padEnd(16)} ${meta.width}×${meta.height}  ${(fs.statSync(jpg).size / 1024).toFixed(0)}KB`);
-      } catch (e) { fail(`shoot ${pname}@${w}: ${e.message}`); }
+        console.log(`  ${name.padEnd(26)} ${meta.width}×${meta.height}  ${(fs.statSync(jpg).size / 1024).toFixed(0)}KB`);
+      } catch (e) { fail(`shoot ${name}: ${e.message}`); }
     }
   }
 }

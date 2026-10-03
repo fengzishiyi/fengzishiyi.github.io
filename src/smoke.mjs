@@ -1,15 +1,16 @@
 #!/usr/bin/env node
 /**
- * smoke.mjs — serve the published tree and pull it apart like a browser would.
+ * smoke.mjs — serve the built site and pull it apart like a browser would.
  *
  *   node src/smoke.mjs
  *
- * Checks, against the real HTTP responses:
- *   · every page returns 200 and declares HTML
+ * Checks, against real HTTP responses:
+ *   · every page returns 200 and declares HTML, with exactly one <h1>
  *   · every CSS/JS/image/JSON URL referenced anywhere in the HTML returns 200
  *   · a missing path falls back to the 404 page with a 404 status
- *   · no duplicate element ids on a page
- *   · the wall and the viewer are present and wired to each other
+ *   · the magazine's bones are present: nameplate, contents departments,
+ *     archive issues, article openers, and the /images/ redirect
+ *   · no duplicate element ids, balanced divs
  *   · sizes stay inside the budgets the design committed to
  */
 
@@ -19,6 +20,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const STAGE = path.join(ROOT, ".build");
 const PORT = 4399;
 const BASE = `http://127.0.0.1:${PORT}`;
 
@@ -27,30 +29,36 @@ let checks = 0;
 const fail = (m) => { console.log("  ✗ " + m); failures++; };
 const ok = (m) => { checks++; console.log("  " + m + "  ✓"); };
 
-/* ---- collect what should exist --------------------------------------- */
-const articles = fs.readdirSync(path.join(ROOT, "articles"), { withFileTypes: true })
-  .filter((e) => e.isDirectory()).map((e) => `/articles/${e.name}/`);
+/* ---- discover what should exist, from the built tree ------------------ */
+const dirs = (p) => fs.existsSync(p)
+  ? fs.readdirSync(p, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name)
+  : [];
 
-const pages = ["/", "/images/", "/articles/", "/about/", "/404.html", ...articles];
+const articles = dirs(path.join(STAGE, "articles")).map((n) => `/articles/${n}/`);
+const pages = ["/", "/contents/", "/archive/", "/about/", "/404.html", "/images/", ...articles];
 const mustExist = ["/images/manifest.json", "/sitemap.xml", "/robots.txt", "/favicon.svg",
-  ...["tokens", "base", "wall", "article", "lightbox"].map((n) => `/assets/${n}.css`),
+  ...["tokens", "base", "spread", "article", "lightbox"].map((n) => `/assets/${n}.css`),
   "/assets/site.js"];
+
+if (!fs.existsSync(path.join(STAGE, "index.html"))) {
+  console.error("没有构建产物 —— 先运行 npm run build");
+  process.exit(2);
+}
 
 /* ---- boot the server ------------------------------------------------- */
 const child = spawn(process.execPath, [path.join(ROOT, "src/serve.mjs"), String(PORT)], {
-  cwd: ROOT, stdio: "inherit"        // 'inherit' — the sandbox forbids piped stdio
+  cwd: ROOT, stdio: "inherit"
 });
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const get = async (p, method = "GET") => {
   const res = await fetch(BASE + p, { method });
   const body = method === "HEAD" ? "" : await res.text();
-  return { status: res.status, type: res.headers.get("content-type") || "", body, len: Number(res.headers.get("content-length") || 0) };
+  return { status: res.status, type: res.headers.get("content-type") || "", body };
 };
 
 let code = 1;
 try {
-  // wait for the port
   for (let i = 0; i < 40; i++) {
     try { await fetch(BASE + "/"); break; } catch { await sleep(150); }
   }
@@ -63,6 +71,10 @@ try {
     if (!r.type.includes("text/html")) { fail(`${p} → content-type ${r.type}`); continue; }
     if (!/<title>[^<]+<\/title>/.test(r.body)) fail(`${p} has no <title>`);
     if (!/<html lang=/i.test(r.body)) fail(`${p} has no lang attribute`);
+
+    const h1s = (r.body.match(/<h1\b/g) || []).length;
+    if (h1s !== 1) fail(`${p} has ${h1s} <h1> elements, expected exactly 1`);
+
     html[p] = r.body;
     ok(`${p} 200 · ${(r.body.length / 1024).toFixed(0)}KB`);
   }
@@ -71,7 +83,7 @@ try {
   for (const p of mustExist) {
     const r = await get(p);
     if (r.status !== 200) fail(`${p} → ${r.status}`);
-    else ok(`${p} 200 · ${(Buffer.byteLength(r.body) / 1024).toFixed(1)}KB`);
+    else ok(`${p} 200`);
   }
 
   console.log("\nreferenced urls resolve");
@@ -100,86 +112,109 @@ try {
     const ids = [...body.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1]);
     const dupes = ids.filter((id, i) => ids.indexOf(id) !== i);
     if (dupes.length) fail(`${page} has duplicate ids: ${[...new Set(dupes)].join(", ")}`);
-
-    const openTags = (body.match(/<div\b/g) || []).length;
-    const closeTags = (body.match(/<\/div>/g) || []).length;
-    if (openTags !== closeTags) fail(`${page}: ${openTags} <div> vs ${closeTags} </div> — markup is unbalanced`);
+    const open = (body.match(/<div\b/g) || []).length;
+    const close = (body.match(/<\/div>/g) || []).length;
+    if (open !== close) fail(`${page}: ${open} <div> vs ${close} </div> — unbalanced`);
   }
   ok("no duplicate ids, balanced divs on every page");
 
-  console.log("\nwall + viewer wiring");
-  const home = html["/"];
-  if (!home) fail("home page missing");
-  else {
-    const tiles = (home.match(/class="wall-tile/g) || []).length;
-    const slugs = new Set([...home.matchAll(/data-slug="([^"]+)"/g)].map((m) => m[1]));
-    const travel = [...home.matchAll(/--travel:(\d+)px/g)].map((m) => Number(m[1]));
-    if (tiles === 0) fail("no wall tiles on the home page");
-    else ok(`${tiles} tiles across ${travel.length} rows · ${slugs.size} distinct frames`);
-    if (travel.some((t) => !t)) fail("a row has no --travel distance");
-    if (!/data-lightbox/.test(home)) fail("the viewer is not on the page");
-    else ok("viewer present");
-    if (!/data-motion-toggle/.test(home)) fail("the motion toggle is not in the masthead");
-    else ok("motion toggle present");
-    if (!/aria-hidden="true"/.test(home)) fail("wall tiles are not aria-hidden");
-    else ok("wall tiles hidden from assistive tech (viewer is the accessible path)");
+  console.log("\nthe magazine's bones");
+  const home = html["/"] || "";
+  if (!/class="nameplate"/.test(home)) fail("the cover has no nameplate");
+  else if (!/class="feature"/.test(home)) fail("the cover has no featured article");
+  else ok("cover: nameplate + featured article");
+  if (!/og:image/.test(home)) fail("the cover has no og:image");
+  else ok("cover declares og:image for sharing");
+
+  const toc = html["/contents/"] || "";
+  const depts = (toc.match(/class="toc__dept"/g) || []).length;
+  if (!depts) fail("the contents page has no departments");
+  else ok(`contents groups articles into ${depts} department(s)`);
+
+  const arch = html["/archive/"] || "";
+  const issues = (arch.match(/class="issue"/g) || []).length;
+  if (!issues) fail("the archive lists no issues");
+  else ok(`archive lists ${issues} issue(s)`);
+
+  const redir = html["/images/"] || "";
+  if (!/http-equiv="refresh"/.test(redir) || !/url=\/archive\//.test(redir)) {
+    fail("the /images/ redirect is missing or points somewhere unexpected");
+  } else if (!/href="\/archive\/"/.test(redir)) {
+    fail("the /images/ redirect has no plain link fallback for no-JS");
+  } else ok("/images/ redirects to the archive, with a link fallback");
+
+  for (const p of articles) {
+    const body = html[p] || "";
+    if (!/class="opener/.test(body)) fail(`${p} has no magazine opener`);
+    if (!/class="lead"|prose/.test(body)) fail(`${p} has no reading column`);
+    if (!/data-lightbox/.test(body)) fail(`${p} has no image viewer`);
   }
+  ok("every article has an opener, a reading column and a viewer");
 
   console.log("\naccessibility spot-checks");
   const unlabelled = [];
-  for (const [page, body] of Object.entries(html)) {
-    if (page === "/404.html") continue;
+  // /images/ is a bare redirect page (meta refresh + link), not a destination —
+  // it carries no reading content, so landmark/heading rules do not apply.
+  const structural = Object.keys(html).filter((p) => p !== "/404.html" && p !== "/images/");
+  for (const page of structural) {
+    const body = html[page];
     if (!/<a class="skip" href="#main"/.test(body)) fail(`${page} has no skip link`);
     if (!/<main id="main"/.test(body)) fail(`${page} has no <main id="main">`);
     if (!/<nav[^>]*aria-label=/.test(body)) fail(`${page} has no labelled nav`);
-
-    // A button needs an accessible name from its text OR an aria-label — unless
-    // it is deliberately hidden from assistive tech (the wall's tiles are, by
-    // design: the collage is exposed as decoration and the viewer carries the
-    // accessible presentation instead).
+  }
+  for (const [page, body] of Object.entries(html)) {
     const re = /<button\b([^>]*)>([\s\S]*?)<\/button>/g;
     let m;
     while ((m = re.exec(body))) {
-      const [tag, content] = [m[1], m[2]];
-      if (/aria-hidden="true"/.test(tag)) continue;
-      const text = content.replace(/<[^>]+>/g, "").trim();
-      const hasLabel = /aria-label="[^"]+"/.test(tag);
-      if (!text && !hasLabel) unlabelled.push(`${page}: ${tag.trim().slice(0, 60)}`);
+      if (/aria-hidden="true"/.test(m[1])) continue;
+      const text = m[2].replace(/<[^>]+>/g, "").trim();
+      if (!text && !/aria-label="[^"]+"/.test(m[1])) {
+        unlabelled.push(`${page}: ${m[1].trim().slice(0, 50)}`);
+      }
     }
   }
-  if (unlabelled.length) unlabelled.slice(0, 6).forEach((u) => fail("unlabelled button → " + u));
+  if (unlabelled.length) unlabelled.slice(0, 5).forEach((u) => fail("unlabelled button → " + u));
   else ok("skip link, main landmark, labelled nav and buttons on every page");
 
-  // The one button that MUST be announced is the motion toggle.
-  for (const [page, body] of Object.entries(html)) {
-    const m = /<button class="motion"[^>]*>/.exec(body);
-    if (!m) continue;
-    if (!/aria-pressed=/.test(m[0])) fail(`${page}: motion toggle has no aria-pressed`);
+  // images the viewer can open must be reachable by keyboard
+  for (const p of articles) {
+    const body = html[p] || "";
+    const btn = (body.match(/role="button"/g) || []).length;
+    const focusable = (body.match(/role="button"[^>]*tabindex="0"|tabindex="0"[^>]*role="button"/g) || []).length;
+    if (btn && focusable !== btn) fail(`${p}: ${btn} openable images but only ${focusable} are focusable`);
   }
-  ok("motion toggle exposes its pressed state");
+  ok("every openable image is keyboard focusable");
 
   console.log("\nsize budget");
-  const imgBytes = (function walk(d) {
-    return fs.readdirSync(d, { withFileTypes: true })
-      .reduce((n, e) => n + (e.isDirectory() ? walk(path.join(d, e.name)) : fs.statSync(path.join(d, e.name)).size), 0);
-  })(path.join(ROOT, "images"));
-  // only the payload a visitor downloads — src/*.mjs tooling is not served
-  const shipped = ["tokens.css", "base.css", "wall.css", "article.css", "lightbox.css", "site.js"];
-  const cssJs = shipped.reduce((n, f) => n + fs.statSync(path.join(ROOT, "assets", f)).size, 0);
+  const walkSize = (d) => fs.readdirSync(d, { withFileTypes: true })
+    .reduce((n, e) => n + (e.isDirectory()
+      ? walkSize(path.join(d, e.name))
+      : fs.statSync(path.join(d, e.name)).size), 0);
+  const imgBytes = walkSize(path.join(STAGE, "images"));
+  const shipped = ["tokens.css", "base.css", "spread.css", "article.css", "lightbox.css", "site.js"];
+  const cssJs = shipped.reduce((n, f) => n + fs.statSync(path.join(STAGE, "assets", f)).size, 0);
   const homeKB = Buffer.byteLength(html["/"] || "", "utf8") / 1024;
 
-  const budgets = [
-    ["images/ total", imgBytes / 1048576, 8, "MB"],
-    ["css+js shipped", cssJs / 1024, 200, "KB"],
-    ["home page HTML", homeKB, 400, "KB"]
-  ];
-  const assets = fs.readdirSync(path.join(ROOT, "assets"));
-  const stray = assets.filter((f) => !shipped.includes(f));
-  if (stray.length) fail(`assets/ contains files a visitor would fetch but the budget ignores: ${stray.join(", ")}`);
-  for (const [name, val, max, unit] of budgets) {
+  const stray = fs.readdirSync(path.join(STAGE, "assets")).filter((f) => !shipped.includes(f));
+  if (stray.length) fail(`assets/ ships files the budget ignores: ${stray.join(", ")}`);
+
+  /* Budgets are set from the site's own economics, not round numbers. Each
+     image costs ~560KB for both derivatives plus its LQIP, and one is added per
+     article — so this scales with the collection and the limit is a tripwire
+     for a size regression, not a target. */
+  const derivedCount = fs.existsSync(path.join(STAGE, "images", "derived"))
+    ? fs.readdirSync(path.join(STAGE, "images", "derived")).filter((f) => f.endsWith("-1x.webp")).length
+    : 1;
+  const perImageKB = imgBytes / 1024 / Math.max(1, derivedCount);
+  for (const [name, val, max, unit] of [
+    ["images/ total", imgBytes / 1048576, 10, "MB"],
+    ["css+js shipped", cssJs / 1024, 60, "KB"],
+    ["cover page HTML", homeKB, 60, "KB"]
+  ]) {
     if (val > max) fail(`${name} is ${val.toFixed(1)}${unit}, budget ${max}${unit}`);
     else ok(`${name} ${val.toFixed(1)}${unit} / ${max}${unit}`);
   }
+  ok(`≈${perImageKB.toFixed(0)}KB of derivatives per image`);
 
   code = failures ? 1 : 0;
   console.log("");

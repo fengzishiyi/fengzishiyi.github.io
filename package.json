@@ -1,22 +1,25 @@
 {
   "name": "fengzishiyi.github.io",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
-  "description": "personal blog — editorial style: an infinite image wall and a magazine-style article section",
+  "description": "一个个人杂志：封面、目录、往期，和一篇篇有封面图的文章",
   "type": "module",
   "license": "MIT",
   "engines": {
     "node": ">=20"
   },
   "scripts": {
+    "dev": "node src/dev.mjs",
     "build": "node src/build.mjs",
+    "new": "node src/new.mjs",
+    "serve": "node src/serve.mjs",
     "check": "node src/build.mjs --check-only",
-    "wall": "node src/wall-math.mjs",
+    "check:content": "node src/build.mjs --content-only",
+    "contrast": "node src/contrast.mjs",
     "smoke": "node src/smoke.mjs",
     "shots": "node src/shots.mjs",
-    "verify": "node src/build.mjs && node src/wall-math.mjs && node src/smoke.mjs",
-    "clean": "node src/build.mjs --clean",
-    "serve": "node src/serve.mjs"
+    "verify": "node src/build.mjs && node src/contrast.mjs && node src/smoke.mjs",
+    "clean": "node src/build.mjs --clean && node -e \"require('fs').rmSync('.shots',{recursive:true,force:true})\""
   },
   "devDependencies": {
     "marked": "^15.0.7",

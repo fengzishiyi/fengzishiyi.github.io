@@ -1,23 +1,24 @@
 <!doctype html>
-<html lang="zh-Hans" data-motion="on">
+<html lang="zh-Hans">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>关于 — 枫子十一</title>
-<meta name="description" content="关于这个站点，以及它为什么长成现在这样。">
+<title>本刊 — 枫子十一</title>
+<meta name="description" content="关于这本杂志，以及它为什么长成现在这样。">
 <link rel="canonical" href="https://fengzishiyi.github.io/about/">
 <meta name="theme-color" content="#F9F8F6">
 <meta name="color-scheme" content="light">
 <meta property="og:site_name" content="枫子十一">
 <meta property="og:type" content="website">
-<meta property="og:title" content="关于 — 枫子十一">
-<meta property="og:description" content="关于这个站点，以及它为什么长成现在这样。">
+<meta property="og:title" content="本刊 — 枫子十一">
+<meta property="og:description" content="关于这本杂志，以及它为什么长成现在这样。">
 <meta property="og:url" content="https://fengzishiyi.github.io/about/">
-<meta name="twitter:card" content="summary_large_image">
+
+<meta name="twitter:card" content="summary">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/assets/tokens.css">
 <link rel="stylesheet" href="/assets/base.css">
-<link rel="stylesheet" href="/assets/wall.css">
+<link rel="stylesheet" href="/assets/spread.css">
 <link rel="stylesheet" href="/assets/article.css">
 <link rel="stylesheet" href="/assets/lightbox.css">
 
@@ -28,47 +29,48 @@
 <header class="masthead">
   <div class="shell masthead__in">
     <a class="wordmark" href="/">枫子十一</a>
+    <span class="masthead__issue label" aria-hidden="true">VOL.1 / NO.02</span>
     <nav class="masthead__nav" aria-label="主导航">
-      <a class="navlink" href="/images/">图片</a>
-      <a class="navlink" href="/articles/">文章</a>
-      <a class="navlink" href="/about/" aria-current="page">关于</a>
-      <button class="motion" type="button" data-motion-toggle aria-pressed="true">
-        <span data-motion-text>流动</span>
-      </button>
+      <a class="navlink" href="/contents/">目录</a>
+      <a class="navlink" href="/archive/">往期</a>
+      <a class="navlink" href="/about/" aria-current="page">本刊</a>
     </nav>
   </div>
 </header>
-<main id="main" class="shell article">
-  <div class="article__grid">
-    <aside class="article__aside">
-      <h1 class="article__title">关于</h1>
-      <p class="article__standfirst">一个放文章和图片的地方。</p>
-      <div class="speclist">
-        <div class="speclist__row"><span class="speclist__k">图片</span><span class="speclist__v">14 张</span></div>
-        <div class="speclist__row"><span class="speclist__k">文章</span><span class="speclist__v">2 篇</span></div>
+<main id="main" class="shell article" style="padding-top:calc(var(--nav-h) + 72px)">
+  <article>
+    <div class="article__body" style="padding-top:0">
+      <div class="article__main prose">
+        <h1 class="page-title" style="margin-bottom:0.4em">本刊</h1>
+        <p class="lead">一本只有一个人的杂志。封面、目录、栏目、跨页，都按印刷刊物的规矩来。</p>
+        <p>这里按<strong>期号</strong>组织内容：年份是卷，月份是期。每一期里有若干栏目，每个栏目下是文章。一篇文章就是一页，有自己的封面图、标题、导语与正文。</p>
+        <h2 id="how">怎么办刊</h2>
+        <p>没有框架，没有构建服务，没有网络字体。一套 Node 脚本把 <code>_images/</code> 里的原图压成 WebP，把 <code>_articles/</code> 里的 markdown 排成页面，然后把结果推到这个仓库的根目录。</p>
+        <ul>
+          <li>字体：系统衬线体（中文回退到宋体）配系统无衬线体，零网络请求。</li>
+          <li>配色：只有暖米色的底和柔和的黑，加上一串黑的不同深度。<em>颜色全部来自图片。</em></li>
+          <li>冲击力来自字号落差、不对称栏位与整版出血，不来自阴影、渐变或圆角。</li>
+        </ul>
+        <h2 id="colophon">版本信息</h2>
+        <div class="deflist">
+          <div class="deflist__row"><span class="deflist__k">期数</span><span class="deflist__v">2</span></div>
+          <div class="deflist__row"><span class="deflist__k">文章</span><span class="deflist__v">2 篇</span></div>
+          <div class="deflist__row"><span class="deflist__k">图片</span><span class="deflist__v">14 张</span></div>
+          <div class="deflist__row"><span class="deflist__k">创刊</span><span class="deflist__v">2026</span></div>
+        </div>
+        <p><a class="ulink" href="/contents/">目录</a> · <a class="ulink" href="/archive/">往期</a></p>
       </div>
-    </aside>
-    <div class="prose">
-      <p>这里是两件事叠在一起：一面一直在流动的图墙，和一份按时间倒序的文章存档。图片不写标题，因为它们在你点开之前不需要解释；文章一页一篇，因为它们值得被慢慢读完。</p>
-      <p>界面是纯单色的 —— 只有暖米色的底和柔和的黑。颜色全部来自画面本身，这是刻意的：当界面不去争抢注意力，图片和文字才站得住。</p>
-      <h2 id="colophon">Colophon</h2>
-      <p>没有框架，没有构建服务，没有网络字体。一套 Node 脚本把 <code>_images/</code> 里的原图压成 WebP，把 <code>_articles/</code> 里的 markdown 排成 HTML，然后把结果推到这个仓库的根目录。</p>
-      <ul>
-        <li>字体：系统衬线体（中文回退到宋体）配系统无衬线体，零网络请求。</li>
-        <li>图墙：CSS 关键帧做无缝循环，<em>没有任何滚动劫持</em>。</li>
-        <li>降级：脚本不加载时，图片照样看得到，只是不能放大。</li>
-      </ul>
-      <p><a class="ulink" href="/articles/">读文章</a> · <a class="ulink" href="/images/">看图片</a></p>
+      <aside class="article__side"></aside>
     </div>
-  </div>
+  </article>
 </main>
 
 <footer class="colophon">
   <div class="shell">
     <div class="colophon__grid">
       <span class="wordmark">枫子十一</span>
-      <p class="colophon__note">文章与图片档案。界面为纯单色，画面是页面上唯一带颜色的东西。</p>
-      <p class="colophon__note"><a class="ulink" href="https://github.com/fengzishiyi/fengzishiyi.github.io">GitHub</a> · <a class="ulink" href="/sitemap.xml">Sitemap</a> · <span class="meta">© 2026 fengzishiyi</span></p>
+      <p class="colophon__note">文章、图画与一些想不清楚的事。界面是单色的，颜色全部来自图片。 界面为纯单色，颜色全部来自图片。</p>
+      <p class="colophon__note">第 1 卷 · 第 02 期 · <a class="ulink" href="https://github.com/fengzishiyi/fengzishiyi.github.io">GitHub</a> · <a class="ulink" href="/sitemap.xml">Sitemap</a> · <span class="meta">© 2026 fengzishiyi</span></p>
     </div>
   </div>
 </footer>

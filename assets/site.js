@@ -1,110 +1,14 @@
 /* ==========================================================================
    site.js — the only script on the site.
-   Two jobs: drive the lightbox, and arm the wall's motion toggle.
-   The wall's drift itself is pure CSS; nothing here animates anything.
+
+   One job: a full-size image viewer for whatever images a page carries. The
+   images themselves are in the markup, so with scripting off every page still
+   reads and every caption is still there — only the enlarge step is lost.
    ========================================================================== */
 
 (function () {
   "use strict";
 
-  var MANIFEST = new URL("images/manifest.json", document.baseURI).href;
-  var root = document.documentElement;
-
-  /* ------------------------------------------------------------------ */
-  /* 1. motion toggle                                                    */
-  /* ------------------------------------------------------------------ */
-  /* Default: follow the OS. If the OS asks for reduced motion the wall
-     starts still. Either way the switch lets you change your mind, and the
-     choice is remembered. `data-motion` is what the CSS keys off. */
-  var mqReduce = window.matchMedia("(prefers-reduced-motion: reduce)");
-  var KEY = "wall-motion";
-
-  function readPref() {
-    try {
-      var v = localStorage.getItem(KEY);
-      if (v === "on" || v === "off") return v;
-    } catch (e) { /* private mode — fall through to the OS value */ }
-    return mqReduce.matches ? "off" : "on";
-  }
-
-  var motionOn = readPref() === "on";
-
-  function paintMotion(btn) {
-    root.setAttribute("data-motion", motionOn ? "on" : "off");
-    if (!btn) return;
-    // pressed === "currently flowing", so a screen reader hears the state, not the command
-    btn.setAttribute("aria-pressed", motionOn ? "true" : "false");
-    btn.setAttribute("aria-label", motionOn ? "照片墙正在流动，按下静止" : "照片墙已静止，按下恢复流动");
-    var text = btn.querySelector("[data-motion-text]");
-    if (text) text.textContent = motionOn ? "流动" : "静止";
-  }
-
-  var motionBtn = document.querySelector("[data-motion-toggle]");
-  paintMotion(motionBtn);
-
-  if (motionBtn) {
-    motionBtn.addEventListener("click", function () {
-      motionOn = !motionOn;
-      try { localStorage.setItem(KEY, motionOn ? "on" : "off"); } catch (e) { /* ignore */ }
-      paintMotion(motionBtn);
-    });
-  }
-
-  if (mqReduce.addEventListener) {
-    mqReduce.addEventListener("change", function (e) {
-      // only follow the OS while you have not expressed a preference
-      var stored = null;
-      try { stored = localStorage.getItem(KEY); } catch (err) { /* ignore */ }
-      if (stored === "on" || stored === "off") return;
-      motionOn = !e.matches;
-      paintMotion(motionBtn);
-    });
-  }
-
-  /* ------------------------------------------------------------------ */
-  /* 2. tile: LQIP fade, and lazy-loading for browsers without loading=  */
-  /* ------------------------------------------------------------------ */
-  var supportsLazy = "loading" in HTMLImageElement.prototype;
-
-  Array.prototype.forEach.call(document.querySelectorAll(".wall-tile img"), function (img) {
-    if (img.complete && img.naturalWidth) {
-      img.closest(".wall-tile").classList.add("is-ready");
-    } else {
-      img.addEventListener("load", function () {
-        img.closest(".wall-tile").classList.add("is-ready");
-      }, { once: true });
-      img.addEventListener("error", function () {
-        // leave the LQIP showing rather than a broken frame
-        img.closest(".wall-tile").classList.add("is-ready");
-      }, { once: true });
-    }
-  });
-
-  if (!supportsLazy) {
-    var tiles = Array.prototype.slice.call(document.querySelectorAll(".wall-tile img"));
-    var load = function (img) {
-      var d = img.getAttribute("data-src");
-      if (!d) return;
-      img.removeAttribute("data-src");
-      img.src = d;
-    };
-    if ("IntersectionObserver" in window) {
-      var io = new IntersectionObserver(function (entries) {
-        entries.forEach(function (en) {
-          if (!en.isIntersecting) return;
-          load(en.target);
-          io.unobserve(en.target);
-        });
-      }, { rootMargin: "600px 1200px" });   // the wall is wide, not tall
-      tiles.forEach(function (img) { io.observe(img); });
-    } else {
-      tiles.forEach(load);
-    }
-  }
-
-  /* ------------------------------------------------------------------ */
-  /* 3. lightbox                                                        */
-  /* ------------------------------------------------------------------ */
   var lb = document.querySelector("[data-lightbox]");
   if (!lb) return;
 
@@ -120,69 +24,73 @@
     zoom: lb.querySelector("[data-lb-zoom]")
   };
 
-  var items = [];
+  /* The gallery is every image the page actually shows, in document order:
+     the cover first, then each figure. Nothing is hard-coded, so adding a
+     {{figure:}} to an article needs no change here. */
+  var SEL = ".opener__img, .prose figure img, .fig-bleed img";
+  var gallery = [];
   var index = -1;
   var lastFocus = null;
   var ready = false;
-  var pendingSlug = null;
 
-  function fact(text, href) {
-    if (!text) return null;
-    var li = document.createElement("li");
-    if (href) {
-      var a = document.createElement("a");
-      a.href = href;
-      a.target = "_blank";
-      a.rel = "noopener noreferrer";
-      a.className = "ulink";
-      a.textContent = text;
-      li.appendChild(a);
-    } else {
-      li.textContent = text;
-    }
-    return li;
+  function collect() {
+    gallery = Array.prototype.slice.call(document.querySelectorAll(SEL))
+      .filter(function (img) {
+        // in a <picture> both the <source> and the <img> match; take the <img>
+        return img.tagName === "IMG";
+      })
+      .map(function (img) {
+        var fig = img.closest("figure");
+        var cap = fig ? fig.querySelector("figcaption") : null;
+        return {
+          el: img,
+          big: img.getAttribute("data-full") || img.currentSrc || img.src,
+          alt: img.getAttribute("alt") || "",
+          caption: cap ? cap.textContent.trim() : ""
+        };
+      });
+    ready = gallery.length > 0;
   }
 
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+
   function render(i) {
-    var it = items[i];
+    var it = gallery[i];
     if (!it) return;
     index = i;
 
     lb.setAttribute("data-loading", "true");
     lb.setAttribute("data-zoom", "off");
-    els.img.src = it.src2x || it.src;
-    els.img.alt = it.alt || "";
-    els.title.textContent = it.title || "未命名";
-    els.count.textContent = pad(i + 1) + " / " + pad(items.length);
+    if (els.zoom) els.zoom.setAttribute("aria-pressed", "false");
+
+    // prefer the widest derivative for the full view
+    var src = it.el.getAttribute("data-2x") || it.big;
+    els.img.src = src;
+    els.img.alt = it.alt;
+    els.title.textContent = it.caption || it.alt || "图片";
+    els.count.textContent = pad(i + 1) + " / " + pad(gallery.length);
 
     els.facts.textContent = "";
-    [it.creator, it.year, it.medium].forEach(function (f) {
-      var li = fact(f);
-      if (li) els.facts.appendChild(li);
-    });
-    if (it.source) {
-      var li = fact(it.sourceLabel || "来源", it.source);
-      if (li) els.facts.appendChild(li);
-    }
+    // keep the currentSrc as the visible fact when it is a webp derivative
+    var li = document.createElement("li");
+    li.textContent = it.el.getAttribute("data-label") || "";
+    if (li.textContent) els.facts.appendChild(li);
 
     els.stage.scrollTop = 0;
     els.stage.scrollLeft = 0;
-    setHash(it.slug);
   }
 
-  function pad(n) { return (n < 10 ? "0" : "") + n; }
-
   function step(delta) {
-    if (!items.length) return;
-    render((index + delta + items.length) % items.length);
+    if (!gallery.length) return;
+    render((index + delta + gallery.length) % gallery.length);
   }
 
   function open(i) {
-    if (!items.length) return;
+    if (!ready) return;
     lastFocus = document.activeElement;
     lb.setAttribute("data-open", "true");
     document.body.setAttribute("data-lightbox", "open");
-    if (i != null) render(i);
+    render(i);
     if (els.close) els.close.focus();
   }
 
@@ -191,34 +99,23 @@
     lb.removeAttribute("data-loading");
     document.body.removeAttribute("data-lightbox");
     els.img.removeAttribute("src");
-    clearHash();
     if (lastFocus && lastFocus.focus) lastFocus.focus();
   }
 
-  /* --- deep link: #g/<slug> ----------------------------------------- */
-  function setHash(slug) {
-    var next = "#g/" + slug;
-    if (location.hash === next) return;
-    history.replaceState(null, "", next);
-  }
-  function clearHash() {
-    if (!location.hash) return;
-    history.replaceState(null, "", location.pathname + location.search);
-  }
-  function slugFromHash() {
-    var m = /^#g\/(.+)$/.exec(location.hash);
-    return m ? decodeURIComponent(m[1]) : null;
-  }
+  /* --- events ---------------------------------------------------------- */
 
-  /* --- focus trap ---------------------------------------------------- */
-  function focusables() {
-    return Array.prototype.filter.call(
-      lb.querySelectorAll("button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])"),
-      function (el) { return el.offsetParent !== null; }
-    );
-  }
+  // Clicking a figure or the cover opens the viewer. Delegated, so figures
+  // added later in the document are picked up without rebinding.
+  document.addEventListener("click", function (e) {
+    if (!ready) return;
+    var img = e.target.closest ? e.target.closest(SEL) : null;
+    if (!img || img.tagName !== "IMG") return;
+    if (img.closest(".lb")) return;
+    e.preventDefault();
+    var i = gallery.findIndex(function (g) { return g.el === img; });
+    if (i >= 0) open(i);
+  });
 
-  /* --- events -------------------------------------------------------- */
   els.close.addEventListener("click", close);
   els.prev.addEventListener("click", function () { step(-1); });
   els.next.addEventListener("click", function () { step(1); });
@@ -231,10 +128,15 @@
     });
   }
 
-  /* click the scrim (but not the photo or the step buttons) to dismiss */
+  els.img.addEventListener("error", function () {
+    lb.removeAttribute("data-loading");
+  });
+  els.img.addEventListener("load", function () {
+    lb.removeAttribute("data-loading");
+  });
+
   lb.addEventListener("click", function (e) {
-    if (e.target === lb || e.target === els.stage ||
-        (els.img.closest("figure") === e.target)) {
+    if (e.target === lb || e.target === els.stage || e.target === els.img.closest("figure")) {
       close();
     }
   });
@@ -243,14 +145,30 @@
     els.zoom.click();
   });
 
+  /* --- focus trap ------------------------------------------------------ */
+  function focusables() {
+    return Array.prototype.filter.call(
+      lb.querySelectorAll("button, [href], [tabindex]:not([tabindex='-1'])"),
+      function (el) { return el.offsetParent !== null; }
+    );
+  }
+
   document.addEventListener("keydown", function (e) {
-    if (lb.getAttribute("data-open") !== "true") return;
+    if (lb.getAttribute("data-open") !== "true") {
+      // Enter/Space on a focused figure opens it, like a button
+      if ((e.key === "Enter" || e.key === " ") && document.activeElement &&
+          document.activeElement.matches && document.activeElement.matches(SEL)) {
+        e.preventDefault();
+        document.activeElement.click();
+      }
+      return;
+    }
     switch (e.key) {
       case "Escape": e.preventDefault(); close(); break;
       case "ArrowLeft": e.preventDefault(); step(-1); break;
       case "ArrowRight": e.preventDefault(); step(1); break;
       case "Home": e.preventDefault(); render(0); break;
-      case "End": e.preventDefault(); render(items.length - 1); break;
+      case "End": e.preventDefault(); render(gallery.length - 1); break;
       case "Tab": {
         var f = focusables();
         if (!f.length) break;
@@ -263,68 +181,5 @@
     }
   });
 
-  window.addEventListener("hashchange", function () {
-    var slug = slugFromHash();
-    if (!slug) {
-      if (lb.getAttribute("data-open") === "true") close();
-      return;
-    }
-    var i = indexOf(slug);
-    if (i >= 0) open(i);
-  });
-
-  function indexOf(slug) {
-    for (var i = 0; i < items.length; i++) if (items[i].slug === slug) return i;
-    return -1;
-  }
-
-  /* --- open from a tile (event delegation: tiles are duplicated for the
-         seamless loop, so binding per element would double up) ---------- */
-  document.addEventListener("click", function (e) {
-    var tile = e.target.closest ? e.target.closest(".wall-tile") : null;
-    if (!tile || !ready) return;
-    var slug = tile.getAttribute("data-slug");
-    var i = indexOf(slug);
-    if (i >= 0) open(i);
-  });
-
-  /* --- load the manifest once --------------------------------------- */
-  fetch(MANIFEST, { credentials: "same-origin" })
-    .then(function (r) {
-      if (!r.ok) throw new Error("manifest " + r.status);
-      return r.json();
-    })
-    .then(function (data) {
-      var pages = data.pages || {};
-      var order = data.order || Object.keys(pages);
-      items = [];
-      order.forEach(function (slug) {
-        var p = pages[slug];
-        if (!p) return;
-        items.push({
-          slug: slug,
-          src1x: p.d1x,
-          src2x: p.d2x,
-          alt: p.alt || "",
-          title: p.title || "",
-          creator: p.creator || "",
-          year: p.year || "",
-          medium: p.medium || "",
-          source: p.source || "",
-          sourceLabel: p.sourceLabel || ""
-        });
-      });
-      ready = true;
-
-      var slug = slugFromHash();
-      if (slug) {
-        var i = indexOf(slug);
-        if (i >= 0) open(i);
-      }
-    })
-    .catch(function () {
-      // The wall still works without JS at all — tiles are plain <button>s and
-      // photographs are already on the page. Only the viewer is lost.
-      ready = false;
-    });
+  collect();
 })();

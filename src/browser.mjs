@@ -212,14 +212,17 @@ export const MEASURE_EXPR = `(() => {
   var cs = getComputedStyle(de);
   out.vars = {
     padx: cs.getPropertyValue("--pad-x").trim(),
-    gutter: cs.getPropertyValue("--gutter").trim(),
-    rowH: cs.getPropertyValue("--tile-row-h").trim(),
-    tileXxl: cs.getPropertyValue("--tile-xxl-h").trim()
+    secY: cs.getPropertyValue("--sec-y").trim(),
+    fsBody: cs.getPropertyValue("--fs-body").trim()
   };
 
-  [["title", ".intro__title"], ["wallRow", ".wall-row"], ["masthead", ".masthead__in"],
-   ["nav", ".masthead__nav"], ["motion", ".motion"], ["prose", ".prose p"],
-   ["sectionHead", ".section-head"], ["articleGrid", ".article__grid"]].forEach(function (pair) {
+  out.h1Count = document.querySelectorAll("h1").length;
+
+  [["title", ".page-title"], ["nameplate", ".nameplate"], ["openerTitle", ".opener__title"],
+   ["featureTitle", ".feature__title"], ["prose", ".prose p"], ["lead", ".lead"],
+   ["masthead", ".masthead__in"], ["nav", ".masthead__nav"],
+   ["sectionHead", ".section-head"], ["articleBody", ".article__body"],
+   ["main", ".article__main"], ["side", ".article__side"]].forEach(function (pair) {
     var el = document.querySelector(pair[1]);
     if (!el) return;
     var r = el.getBoundingClientRect();
@@ -227,11 +230,17 @@ export const MEASURE_EXPR = `(() => {
                      fs: getComputedStyle(el).fontSize };
   });
 
-  var tiles = document.querySelectorAll(".wall-tile");
-  if (tiles.length) {
-    var t = tiles[0].getBoundingClientRect();
-    out.tile = { w: Math.round(t.width), h: Math.round(t.height) };
-    out.tileCount = tiles.length;
+  // the headline must actually be big: this is the thing that makes it a
+  // magazine rather than a blog, so measure it rather than trusting the CSS
+  var head = document.querySelector(".nameplate, .opener__title, .feature__title, .page-title");
+  if (head) out.headPx = Math.round(parseFloat(getComputedStyle(head).fontSize));
+
+  var imgs = document.querySelectorAll("img");
+  out.imgCount = imgs.length;
+  var broken = 0;
+  for (var k = 0; k < imgs.length; k++) {
+    if (imgs[k].complete && imgs[k].naturalWidth === 0) broken++;
   }
+  out.brokenImgs = broken;
   return JSON.stringify(out);
 })()`;

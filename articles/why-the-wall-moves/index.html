@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-Hans" data-motion="on">
+<html lang="zh-Hans">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -13,14 +13,15 @@
 <meta property="og:title" content="为什么这面墙一直在动 — 枫子十一">
 <meta property="og:description" content="一个会自己动的界面凭什么不惹人烦？把速度调慢、把暂停交给用户、把降级路径做实，流动就从干扰变成了背景。">
 <meta property="og:url" content="https://fengzishiyi.github.io/articles/why-the-wall-moves/">
+<meta property="og:image" content="https://fengzishiyi.github.io/images/derived/99424534-p0-1x.webp">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/assets/tokens.css">
 <link rel="stylesheet" href="/assets/base.css">
-<link rel="stylesheet" href="/assets/wall.css">
+<link rel="stylesheet" href="/assets/spread.css">
 <link rel="stylesheet" href="/assets/article.css">
 <link rel="stylesheet" href="/assets/lightbox.css">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"为什么这面墙一直在动","datePublished":"2026-02-18","inLanguage":"zh-Hans","author":{"@type":"Person","name":"fengzishiyi"},"description":"一个会自己动的界面凭什么不惹人烦？把速度调慢、把暂停交给用户、把降级路径做实，流动就从干扰变成了背景。"}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"为什么这面墙一直在动","datePublished":"2026-02-18","inLanguage":"zh-Hans","author":{"@type":"Person","name":"fengzishiyi"},"description":"一个会自己动的界面凭什么不惹人烦？把速度调慢、把暂停交给用户、把降级路径做实，流动就从干扰变成了背景。","image":"https://fengzishiyi.github.io/images/derived/99424534-p0-1x.webp"}</script>
 </head>
 <body>
 <a class="skip" href="#main">跳到正文</a>
@@ -28,84 +29,159 @@
 <header class="masthead">
   <div class="shell masthead__in">
     <a class="wordmark" href="/">枫子十一</a>
+    <span class="masthead__issue label" aria-hidden="true">VOL.1 / NO.02</span>
     <nav class="masthead__nav" aria-label="主导航">
-      <a class="navlink" href="/images/">图片</a>
-      <a class="navlink" href="/articles/" aria-current="page">文章</a>
-      <a class="navlink" href="/about/">关于</a>
-      <button class="motion" type="button" data-motion-toggle aria-pressed="true">
-        <span data-motion-text>流动</span>
-      </button>
+      <a class="navlink" href="/contents/" aria-current="page">目录</a>
+      <a class="navlink" href="/archive/">往期</a>
+      <a class="navlink" href="/about/">本刊</a>
     </nav>
   </div>
 </header>
-<main id="main" class="shell article">
-  <div class="article__grid">
-    <aside class="article__aside">
-      <p class="label" style="margin:0 0 14px">设计</p>
-      <h1 class="article__title">为什么这面墙一直在动</h1>
-      <p class="article__standfirst">自动移动的内容在网页上几乎总是错的。这面墙是个例外，但理由必须说清楚。</p>
-      <div class="speclist">
-        <div class="speclist__row"><span class="speclist__k">日期</span><span class="speclist__v"><time datetime="2026-02-18">2026-02-18</time></span></div>
-        <div class="speclist__row"><span class="speclist__k">篇幅</span><span class="speclist__v">1733 字 · 约 4 分钟</span></div>
-        <div class="speclist__row"><span class="speclist__k">作者</span><span class="speclist__v">fengzishiyi</span></div>
+<main id="main" class="article">
+  <article>
+    <header class="opener opener--paper">
+      <span class="opener__fig"><picture>
+    <source type="image/webp" sizes="100vw" srcset="/images/derived/99424534-p0-1x.webp 1x, /images/derived/99424534-p0-2x.webp 2x">
+    <img class="" src="/images/derived/99424534-p0-1x.jpg" srcset="/images/derived/99424534-p0-1x.jpg 1x, /images/derived/99424534-p0-2x.jpg 2x"
+         alt="为什么这面墙一直在动" width="538" height="1100"
+         loading="eager" decoding="async" fetchpriority="high" tabindex="0" role="button" data-2x="/images/derived/99424534-p0-2x.jpg" aria-label="放大查看：为什么这面墙一直在动">
+  </picture></span>
+      <div class="shell opener__text">
+        <p class="opener__kicker">专题 · 排版 · VOL.1 / NO.02</p>
+        <h1 class="opener__title">为什么这面墙一直在动</h1>
+        <p class="opener__deck">自动移动的内容在网页上几乎总是错的。这面墙是个例外，但理由必须说清楚。</p>
+        <ul class="opener__byline">
+          <li>fengzishiyi</li>
+          <li><time datetime="2026-02-18">2026.02.18</time></li>
+          <li>1453 字 · 约 4 分钟</li>
+        </ul>
       </div>
-      <ul class="tags"><li>排版</li><li>动效</li><li>无障碍</li></ul>
-      <nav class="speclist" aria-label="本文目录"><div class="speclist__row speclist__row--toc"><a class="ulink speclist__v" href="#h2-1">动，是为了让人不必动手</a></div><div class="speclist__row speclist__row--toc"><a class="ulink speclist__v" href="#h2-2">慢，是唯一重要的参数</a></div><div class="speclist__row speclist__row--toc"><a class="ulink speclist__v" href="#h2-3">无缝循环：一个八像素的坑</a></div><div class="speclist__row speclist__row--toc"><a class="ulink speclist__v" href="#h2-4">让它可以停下来</a></div><div class="speclist__row speclist__row--toc"><a class="ulink speclist__v" href="#h2-5">剩下的交给印刷感</a></div></nav>
-    </aside>
-    <div class="prose">
-<p>网站上的自动动效，绝大多数是在替用户做决定：它替你觉得你该往哪儿看，替你觉得你该停留多久。照片墙这种形式尤其容易翻车 —— 一个横着一直滚的图墙，看起来像是设计者舍不得让画面停下来。</p>
-<p>所以先要说清楚：这面墙为什么动。</p>
+    </header>
+
+<div class="shell article__body">
+      <div class="article__main prose prose--has-lead">
+        <p class="lead">网站上的自动动效，绝大多数是在替用户做决定：它替你觉得你该往哪儿看，替你觉得你该停留多久。照片墙这种形式尤其容易翻车。</p>
+<p>一个横着一直滚的图墙，看起来像是设计者舍不得让画面停下来。所以先要说清楚：这面墙为什么动。</p>
 <h2 id="h2-1">动，是为了让人不必动手</h2>
 <p>如果这面墙是静止的网格，那么它就变成一个需要你来操作的东西：拖滚动条，或者滚轮往下滚。在手机上，横向的网格还得左右滑。也就是说，你还没开始看画，先要花力气把画面挪到眼前。</p>
 <p>流动替掉了这一步。画面自己走到你面前，你只需要看。代价是它也在替你做决定 —— 所以下一步是把控制权还回去。</p>
-<p>下面的两张图来自同一组套图，在墙上是相邻的。流动的顺序保留原图的顺序，套图不会被拆散。</p>
-<p><figure><img src="/images/derived/147279021-p1-1x.webp" alt="" width="5333" height="8000" loading="lazy" decoding="async"><figcaption>同一组套图的第二张。墙上的排布保留了原图顺序，套图相邻出现，不被拆开。</figcaption></figure></p>
+
+      </div>
+      <aside class="article__side">
+<div class="article__side-block">
+      <div class="deflist">
+        <div class="deflist__row"><span class="deflist__k">栏目</span><span class="deflist__v">专题</span></div>
+        <div class="deflist__row"><span class="deflist__k">日期</span><span class="deflist__v"><time datetime="2026-02-18">2026.02.18</time></span></div>
+        <div class="deflist__row"><span class="deflist__k">篇幅</span><span class="deflist__v">1453 字 · 约 4 分钟</span></div>
+        <div class="deflist__row"><span class="deflist__k">作者</span><span class="deflist__v">fengzishiyi</span></div>
+      </div>
+    </div>
+<div class="article__side-block"><ul class="tags"><li>排版</li><li>动效</li><li>无障碍</li></ul></div>
+<div class="article__side-block">
+      <p class="label" style="margin:0 0 8px">本篇</p>
+      <nav class="tocmini" aria-label="本篇小节"><div class="tocmini__row"><a href="#h2-1">动，是为了让人不必动手</a></div><div class="tocmini__row"><a href="#h2-2">慢，是唯一重要的参数</a></div><div class="tocmini__row"><a href="#h2-3">无缝循环：一个八像素的坑</a></div><div class="tocmini__row"><a href="#h2-4">让它可以停下来</a></div><div class="tocmini__row"><a href="#h2-5">剩下的交给印刷感</a></div></nav>
+    </div>
+      </aside>
+    </div>
+
+<div class="fig-bleed"><figure><picture>
+    <source type="image/webp" sizes="100vw" srcset="/images/derived/147279021-p1-1x.webp 1x, /images/derived/147279021-p1-2x.webp 2x">
+    <img class="" src="/images/derived/147279021-p1-1x.jpg" srcset="/images/derived/147279021-p1-1x.jpg 1x, /images/derived/147279021-p1-2x.jpg 2x"
+         alt="" width="733" height="1100"
+         loading="lazy" decoding="async" tabindex="0" role="button" data-2x="/images/derived/147279021-p1-2x.jpg" aria-label="放大查看">
+  </picture><figcaption>同一组套图的第二张。墙上的排布保留了原图顺序，套图相邻出现，不被拆开。</figcaption></figure></div>
+
+<div class="shell article__body">
+      <div class="article__main prose prose--has-lead">
+        
 <h2 id="h2-2">慢，是唯一重要的参数</h2>
-<p>一个每秒移动几百像素的图墙会让人头晕。人眼追踪一个横向移动的目标是费力的事，速度越快越费力。真正的做法是把速度压到&quot;几乎察觉不到在动，但过一会儿发现画面换了&quot;这个区间。</p>
+<p>一个每秒移动几百像素的图墙会让人头晕。人眼追踪一个横向移动的目标是费力的事，速度越快越费力。真正的做法是把速度压到「几乎察觉不到在动，但过一会儿发现画面换了」这个区间。</p>
 <p>这套墙用的是每秒 40 像素。作为参照，一个成年人在屏幕上用眼睛平滑跟随的上限大概在每秒 30 到 100 度视角之间；40 像素在常见观看距离下远低于这个阈值，所以它读起来接近静止，只是每一分钟过去，你发现身边的东西变了。</p>
-<p>另一个容易忽略的点是：<strong>匀速比什么都重要</strong>。如果用「一圈固定 60 秒」来设定动画，那么图片多的那一行会跑得更快，图片少的那一行会更慢，整面墙会显出各行其是的混乱。所以这里用的是按行宽计算出的时长 —— 让每一行的线速度都等于每秒 40 像素。</p>
+<aside class="pull"><p class="pull__text">匀速比什么都重要。各行其速的动画，会被眼睛立刻辨认成混乱。</p><p class="pull__by">本刊排版笔记</p></aside>
+
+<p>另一个容易忽略的点是速度必须按行宽换算。如果用「一圈固定 60 秒」来设定动画，那么图片多的那一行会跑得更快，图片少的那一行会更慢，整面墙会显出各行其是的混乱。所以这里用的是按行宽计算出的时长 —— 让每一行的线速度都等于每秒 40 像素。</p>
 <pre><code>--wall-dur = (该行 1x 总宽 / 40) 秒
 </code></pre>
 <p>这样加图减图之后，速度依然不变，只有周期变长。</p>
 <h2 id="h2-3">无缝循环：一个八像素的坑</h2>
 <p>双份内容加半个轨道的位移，是循环动画的常规做法。这里有一个细节值得写下来，因为它踩过一次：</p>
-<blockquote><p>位移量是 <code>-50%</code>，它**不包含** flex 的 <code>gap</code>。所以每一圈的接缝处都会悄悄多出一半间隙的偏移 —— 8 像素。单看很小，但它出现在每一次循环的同一位置，看久了就是一次规律性的、无法忽略的顿挫。</p></blockquote>
-
-<p>修正是把位移改成 <code>calc(-50% - var(--gutter-half))</code>，把这一半间隙还回去。数学很短：</p>
+<blockquote>
+<p>位移量是 <code>-50%</code>，它<strong>不包含</strong> flex 的 <code>gap</code>。所以每一圈的接缝处都会悄悄多出一半间隙的偏移 —— 8 像素。单看很小，但它出现在每一次循环的同一位置，看久了就是一次规律性的、无法忽略的顿挫。</p>
+</blockquote>
+<p>修正是把位移改成绝对像素值，把这一半间隙还回去。数学很短：</p>
 <ul>
 <li>轨道总宽 <code>T = 2W + 2n·g</code>（W 是单份宽度，n 是每份的砖块数，g 是间隙）</li>
 <li>需要位移的距离应当是单份宽度加上它内部和末尾的全部间隙：<code>W + n·g</code></li>
 <li>而 <code>T/2 = W + n·g</code> ✔</li>
 </ul>
-<p>也就是说，<code>-50%</code> 减掉一半间隙，恰好等于&quot;单份宽度加全部间隙&quot;，接缝严丝合缝。这类问题没有捷径，只能把账算平。</p>
+<p>也就是说，<code>-50%</code> 减掉一半间隙，恰好等于「单份宽度加全部间隙」，接缝严丝合缝。这类问题没有捷径，只能把账算平。</p>
+<figure><picture>
+    <source type="image/webp" sizes="(min-width: 1000px) 640px, 92vw" srcset="/images/derived/147279021-p2-1x.webp 1x, /images/derived/147279021-p2-2x.webp 2x">
+    <img class="" src="/images/derived/147279021-p2-1x.jpg" srcset="/images/derived/147279021-p2-1x.jpg 1x, /images/derived/147279021-p2-2x.jpg 2x"
+         alt="" width="733" height="1100"
+         loading="lazy" decoding="async" tabindex="0" role="button" data-2x="/images/derived/147279021-p2-2x.jpg" aria-label="放大查看">
+  </picture><figcaption>第三张。点开可以看大图，方向键换图，Esc 关掉；键盘和鼠标走的是同一条路径。</figcaption></figure>
+
 <h2 id="h2-4">让它可以停下来</h2>
-<p>自动移动、且超过五秒的内容，必须能暂停 —— 这不是建议，是可访问性规范 WCAG 2.2.2 的硬要求（自动播放的移动内容超过五秒，用户必须能暂停、停止或隐藏它）。一个会动的图墙正好落在这条规则的射程里。</p>
+<p>自动移动、且超过五秒的内容，必须能暂停 —— 这不是建议，是可访问性规范 WCAG 2.2.2 的硬要求。一个会动的图墙正好落在这条规则的射程里。</p>
 <p>处理方式有三层：</p>
 <ol>
-<li><strong>尊重系统设置。</strong> 系统里开了&quot;减弱动态效果&quot;的人，打开这面墙时它是静止的。</li>
-<li><strong>给一个开关。</strong> 导航栏右侧那个「流动 / 静止」按钮，状态记在本地，下次打开还是你选的那个。</li>
-<li><strong>静止不等于空。</strong> 这一点最容易被做错：如果把动画直接 <code>animation: none</code>，那么四行内容会齐齐挤在左边，右边留下大片空白 —— 屏幕看起来像坏了。这里的做法是把动画周期拉长到将近半小时，于是砖块仍然铺满整行、仍然可以悬停暂停、每一张仍然点得开，但视觉上它是不动的。</li>
+<li><strong>尊重系统设置。</strong> 系统里开了「减弱动态效果」的人，打开这面墙时它是静止的。</li>
+<li><strong>给一个开关。</strong> 用户可以自己选择停下。</li>
+<li><strong>静止不等于空。</strong> 这一点最容易被做错：如果把动画直接 <code>animation: none</code>，那么几行内容会齐齐挤在左边，右边留下大片空白 —— 屏幕看起来像坏了。这里的做法是把动画周期拉长到将近半小时，于是砖块仍然铺满整行、仍然可以悬停暂停、每一张仍然点得开，但视觉上它是不动的。</li>
 </ol>
-<p><figure><img src="/images/derived/147279021-p2-1x.webp" alt="" width="5333" height="8000" loading="lazy" decoding="async"><figcaption>第三张。点开可以看大图，方向键换图，Esc 关掉；键盘和鼠标走的是同一条路径。</figcaption></figure></p>
 <h2 id="h2-5">剩下的交给印刷感</h2>
-<p>墙的界面本身不参与竞争：没有阴影，没有圆角，没有彩色强调。砖块只有一条一像素的细线，悬停时从 10% 的黑加深到 40%。图片不动、不放大 —— 因为它是页面上唯一有颜色的东西，也是唯一需要动的东西。</p>
-<p>如果你不想看它动，按一下「静止」。</p>
-
+<p>墙的界面本身不参与竞争：没有阴影，没有圆角，没有彩色强调。砖块只有一条一像素的细线，悬停时从一成的黑加深到四成五。图片不动、不放大 —— 因为它是页面上唯一有颜色的东西，也是唯一需要动的东西。</p>
 <nav class="pager" aria-label="文章翻页">
-      <a class="pager__link pager__link--prev" href="/articles/monochrome-shell/"><span class="pager__arrow">←</span><span>单色的界面，彩色的画面</span></a>
-      <span></span>
-    </nav>
-    <div class="crosslinks"><a class="ulink label label--plain" href="/articles/">← 文章索引</a></div>
+    <a class="pager__link pager__link--prev" href="/articles/monochrome-shell/"><span class="pager__arrow">←</span><span>单色的界面，彩色的画面</span></a>
+    <span></span>
+  </nav>
+  <div class="crosslinks"><a class="ulink label label--plain" href="/contents/">← 回到目录</a></div>
+      </div>
+      <aside class="article__side">
+<div class="article__side-block">
+      <div class="deflist">
+        <div class="deflist__row"><span class="deflist__k">栏目</span><span class="deflist__v">专题</span></div>
+        <div class="deflist__row"><span class="deflist__k">日期</span><span class="deflist__v"><time datetime="2026-02-18">2026.02.18</time></span></div>
+        <div class="deflist__row"><span class="deflist__k">篇幅</span><span class="deflist__v">1453 字 · 约 4 分钟</span></div>
+        <div class="deflist__row"><span class="deflist__k">作者</span><span class="deflist__v">fengzishiyi</span></div>
+      </div>
     </div>
-  </div>
+<div class="article__side-block"><ul class="tags"><li>排版</li><li>动效</li><li>无障碍</li></ul></div>
+<div class="article__side-block">
+      <p class="label" style="margin:0 0 8px">本篇</p>
+      <nav class="tocmini" aria-label="本篇小节"><div class="tocmini__row"><a href="#h2-1">动，是为了让人不必动手</a></div><div class="tocmini__row"><a href="#h2-2">慢，是唯一重要的参数</a></div><div class="tocmini__row"><a href="#h2-3">无缝循环：一个八像素的坑</a></div><div class="tocmini__row"><a href="#h2-4">让它可以停下来</a></div><div class="tocmini__row"><a href="#h2-5">剩下的交给印刷感</a></div></nav>
+    </div>
+      </aside>
+    </div>
+  </article>
 </main>
+
+<div class="lb" data-lightbox data-open="false" role="dialog" aria-modal="true" aria-label="图片查看器">
+  <div class="lb__top">
+    <span class="lb__count" aria-live="polite" aria-atomic="true"></span>
+    <span>
+      <button class="lb__btn lb__zoom" type="button" data-lb-zoom aria-pressed="false">放大</button>
+      <button class="lb__btn" type="button" data-lb-close>关闭</button>
+    </span>
+  </div>
+  <div class="lb__stage">
+    <button class="lb__step lb__step--prev" type="button" data-lb-prev aria-label="上一张">←</button>
+    <figure class="lb__figure"><img class="lb__img" alt="" decoding="async"><span class="lb__spinner" aria-hidden="true"></span></figure>
+    <button class="lb__step lb__step--next" type="button" data-lb-next aria-label="下一张">→</button>
+  </div>
+  <div class="lb__bar">
+    <h2 class="lb__title"></h2>
+    <ul class="lb__facts"></ul>
+  </div>
+</div>
 
 <footer class="colophon">
   <div class="shell">
     <div class="colophon__grid">
       <span class="wordmark">枫子十一</span>
-      <p class="colophon__note">文章与图片档案。界面为纯单色，画面是页面上唯一带颜色的东西。</p>
-      <p class="colophon__note"><a class="ulink" href="https://github.com/fengzishiyi/fengzishiyi.github.io">GitHub</a> · <a class="ulink" href="/sitemap.xml">Sitemap</a> · <span class="meta">© 2026 fengzishiyi</span></p>
+      <p class="colophon__note">文章、图画与一些想不清楚的事。界面是单色的，颜色全部来自图片。 界面为纯单色，颜色全部来自图片。</p>
+      <p class="colophon__note">第 1 卷 · 第 02 期 · <a class="ulink" href="https://github.com/fengzishiyi/fengzishiyi.github.io">GitHub</a> · <a class="ulink" href="/sitemap.xml">Sitemap</a> · <span class="meta">© 2026 fengzishiyi</span></p>
     </div>
   </div>
 </footer>
