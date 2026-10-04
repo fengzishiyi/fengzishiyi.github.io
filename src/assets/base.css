@@ -233,7 +233,10 @@ a { color: var(--ink-strong); text-decoration-thickness: 1px; text-underline-off
   margin: 0;
   margin-inline: auto;
   max-width: var(--measure-short);
-  text-wrap: pretty;
+  /* `balance`, not `pretty`: this is a two-line block, and evening the two lines
+     beats leaving "追踪。" alone on the second one. `pretty` is for paragraphs,
+     where the goal is only to avoid a one-word tail. */
+  text-wrap: balance;
 }
 .foot__chrono {
   display: flex;
