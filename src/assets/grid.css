@@ -69,8 +69,10 @@
   text-decoration: none;
   transition: background-color var(--dur) var(--ease);
 }
-.card:hover,
 .card:focus-within { background: var(--card-hover); }
+@media (hover: hover) and (pointer: fine) {
+  .card:hover { background: var(--card-hover); }
+}
 
 /* A display-only tile still lightens on hover, exactly as the reference's hobby
    tiles do, but nothing about it invites a click: no pointer, no arrow, no
@@ -111,7 +113,14 @@
   text-decoration: none;
   transition: color var(--dur) var(--ease);
 }
-.card__cat:hover { color: var(--ink-strong); text-decoration: underline; text-underline-offset: 4px; }
+@media (hover: hover) and (pointer: fine) {
+  .card__cat:hover {
+    color: var(--accent-fg);
+    text-decoration: underline;
+    text-decoration-color: var(--accent-fg);
+    text-underline-offset: 4px;
+  }
+}
 
 /* The arrow in the card's top-right corner, exactly as chester draws it: a thin
    stroked arrow-up-right, no background, no circle, muted grey that darkens with
@@ -130,7 +139,9 @@
 .card:hover .card__arrow,
 .card:focus-within .card__arrow {
   color: var(--ink-strong);
-  transform: translate(1px, -1px);
+}
+@media (hover: hover) and (pointer: fine) {
+  .card:hover .card__arrow { transform: translate(1px, -1px); }
 }
 .card__arrow svg { width: 1rem; height: 1rem; }
 
@@ -227,27 +238,10 @@
   text-underline-offset: 4px;
 }
 
-/* a card that is a photograph fills its cell; text sits on a scrim */
-.card--image .card__inner { justify-content: flex-start; }
-.card__img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  z-index: -1;
-}
-.card__caption {
-  margin-top: auto;
-  padding: 0.5rem;
-  align-self: flex-start;
-  font-size: var(--fs-nav);
-  letter-spacing: var(--tr-nav);
-  color: rgba(255, 255, 255, 0.7);
-  border-radius: var(--radius-card);
-  transition: background-color var(--dur) var(--ease);
-}
-.card:hover .card__caption { background: rgba(0, 0, 0, 0.7); }
+/* A card that is a photograph would fill its cell with a scrim caption — the
+   reference does this for its film and plant tiles. This site has no images at
+   all by design (see /about/), so the three rules that implemented it were dead
+   weight and are gone. */
 
 /* ---- below the grid ---------------------------------------------------- */
 

@@ -13,6 +13,11 @@
  * Changing anything here is a content migration: every article's `domain` and
  * `kind` are validated against it at build time, and an unknown value fails the
  * build with the legal list printed.
+ *
+ * `accent` is where the site's colour comes from. Each domain and collection
+ * owns one of the nine chip pairs in tokens.css, and `head()` writes it onto
+ * <body> as `data-accent`; adding a colour to the site means adding a line here,
+ * never a new hex value. Tags pick their own accent by name (see `accentFor`).
  */
 
 export const DOMAINS = [
@@ -20,18 +25,21 @@ export const DOMAINS = [
     key: "literature",
     name: "文学",
     blurb: "诗、小说、散文与翻译。文字本身是目的，不是手段。",
+    accent: "rose",
     kinds: ["诗", "小说", "散文", "随笔", "翻译", "书信", "日记", "片段"]
   },
   {
     key: "philosophy",
     name: "哲学",
     blurb: "论证、札记与评论。把想法逼到能站住或倒下为止。",
+    accent: "purple",
     kinds: ["论文", "札记", "对话", "评论", "术语", "思想实验"]
   },
   {
     key: "compsci",
     name: "计算机科学",
     blurb: "技术文章、算法笔记与踩坑记录。写下当时是怎么想错的。",
+    accent: "teal",
     kinds: ["技术文章", "算法笔记", "系统设计", "论文笔记", "实验", "工具", "踩坑"]
   }
 ];
@@ -94,6 +102,7 @@ export const COLLECTIONS = [
     name: "阅读",
     blurb: "读过的书与正在读的书。",
     chip: "amber",          // matches chester's amber READING chip
+    accent: "amber",
     linked: true,
     statuses: [
       { key: "reading", name: "在读", chip: "amber" },
@@ -107,6 +116,7 @@ export const COLLECTIONS = [
     name: "爱好",
     blurb: "写字之外的事。",
     chip: "sky",
+    accent: "sky",
     linked: false,
     statuses: [
       { key: "now", name: "当前", chip: "sky" },

@@ -189,8 +189,18 @@ export class Browser {
 
 /** Reports geometry, then any element crossing the viewport's right edge. The
  *  wall's full-bleed row and its track are excluded: they are SUPPOSED to
- *  extend past the viewport and are clipped by `overflow:hidden`. */
-export const MEASURE_EXPR = `(() => {
+ *  extend past the viewport and are clipped by `overflow:hidden`.
+
+ *  It runs ASYNC and waits for the entrance animations to finish first. The site
+ *  fades its cards and lifts its list rows into place; a probe that samples
+ *  mid-animation measures a page nobody will ever see, and reports it as a
+ *  layout bug. The wait is capped, because `getAnimations()` on a page with a
+ *  stalled animation would otherwise hang the whole sweep. */
+export const MEASURE_EXPR = `(async () => {
+  var settled = Promise.all((document.getAnimations ? document.getAnimations() : [])
+    .map(function (a) { return a.finished ? a.finished.catch(function () {}) : null; }));
+  await Promise.race([settled, new Promise(function (r) { setTimeout(r, 1200); })]);
+
   var de = document.documentElement, out = {};
   var vw = document.createElement("div");
   vw.style.cssText = "position:absolute;visibility:hidden;width:50vw;height:0";
@@ -217,8 +227,7 @@ export const MEASURE_EXPR = `(() => {
   out.vars = {
     measure: cs.getPropertyValue("--measure").trim(),
     fsBody: cs.getPropertyValue("--fs-body").trim(),
-    theme: de.getAttribute("data-theme"),
-    notes: de.getAttribute("data-notes") || "on"
+    accent: document.body.getAttribute("data-accent")
   };
 
   out.h1Count = document.querySelectorAll("h1").length;
@@ -272,6 +281,32 @@ export const MEASURE_EXPR = `(() => {
   var current = document.querySelector('.nav__link[aria-current="page"]');
   out.navCurrent = !!current;
   out.navRing = current ? getComputedStyle(current).boxShadow !== "none" : false;
+
+  // ---- motion ------------------------------------------------------------
+  // The fold's whole point is that it HIDES something. The old test checked that
+  // the class had been added, which it always had — the CSS was keyed on a class
+  // name nothing wrote, so the control flipped its own label and hid nothing.
+  out.fold = null;
+  var fold = document.querySelector(".fold");
+  if (fold) {
+    var toggle = fold.querySelector(".fold__toggle");
+    if (toggle) {
+      var bodyOf = function () {
+        var h = 0;
+        for (var i = 0; i < fold.children.length; i++) {
+          var child = fold.children[i];
+          if (child.classList.contains("fold__label")) continue;
+          h += child.getBoundingClientRect().height;
+        }
+        return Math.round(h);
+      };
+      var before = bodyOf();
+      toggle.click();
+      var after = bodyOf();
+      toggle.click();
+      out.fold = { before: before, after: after, collapsed: after < before && after < 2 };
+    }
+  }
 
   // ---- the masonry ------------------------------------------------------
   out.cards = document.querySelectorAll(".card").length;

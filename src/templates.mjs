@@ -20,14 +20,14 @@
  *    where it belongs and never needs JavaScript to be readable.
  */
 
-import { esc, plain, dateDots, dateLong } from "./lib.mjs";
+import { esc, plain, dateDots, dateLong, accentFor } from "./lib.mjs";
 import { DOMAINS, STATUSES, CONFIDENCES, statusByKey, confidenceByKey, domainByKey } from "./taxonomy.mjs";
 
 /* ══════════════════════════════════════════════════════════════════════ */
 /* chrome                                                                */
 /* ══════════════════════════════════════════════════════════════════════ */
 
-export const CSS = ["tokens", "base", "grid", "prose", "components", "search"];
+export const CSS = ["tokens", "base", "grid", "prose", "components", "search", "motion"];
 
 /* ══════════════════════════════════════════════════════════════════════ */
 /* navigation                                                            */
@@ -50,7 +50,14 @@ export const NAV = [
   { key: "about", href: "/about/", text: "关于" }
 ];
 
-export function head(site, { title, desc, canonical, type = "website", jsonld, extraCss = [], headExtra = "" }) {
+/**
+ * The document head, and the one place `data-accent` is written.
+ *
+ * Every page states which chip pair it is coloured with — a domain's, a
+ * collection's, or neutral — and all the coloured CSS reads `--accent-bg` /
+ * `--accent-fg` from there. One writer, so a page can never be half-coloured.
+ */
+export function head(site, { title, desc, canonical, type = "website", jsonld, extraCss = [], headExtra = "", accent = "neutral" }) {
   const full = title === site.title ? title : `${title} — ${site.title}`;
   return `<!doctype html>
 <html lang="${esc(site.lang)}">
@@ -76,7 +83,7 @@ ${jsonld ? `<script type="application/ld+json">${JSON.stringify(jsonld)}</script
 ${headExtra}
 <!-- No analytics, no fonts, no CDN, no third-party script. See /about/ . -->
 </head>
-<body>
+<body data-accent="${esc(accent)}">
 <a class="skip" href="#main">跳到正文</a>`;
 }
 
@@ -158,7 +165,13 @@ function chip(label, colour) {
  * overlay pseudo-element on it that stretches over the whole card so the click
  * target is still the card rather than the words alone.
  */
-export function card(item, size) {
+/** The card grid's cell, with its entrance index.
+ *
+ *  `--i` drives the staggered fade-in: the index is capped in CSS (six steps)
+ *  so a fifty-card grid does not end with a two-second queue. The index is
+ *  emitted rather than derived from `:nth-child` because the entrance is per
+ *  cell, and a wide card occupies two columns. */
+export function card(item, size, index = 0) {
   const category = item.collectionName || item.domainName || "";
   const label = item.collectionName ? (item.statusName || item.kind || "") : (item.kind || "");
   const catHref = item.collection ? `/${item.collection}/` : `/${item.domain}/`;
@@ -176,7 +189,7 @@ export function card(item, size) {
       </div>`;
 
   if (size === "intro") {
-    return `<div class="cell cell--intro">
+    return `<div class="cell cell--intro" style="--i:0">
       <div class="card card--intro">
         <div class="card__inner">
           <div class="card__text">
@@ -194,12 +207,14 @@ export function card(item, size) {
   // to be printed here in neutral grey, which read as grey-on-grey and was not in
   // the reference; the tags still live on the article itself and on /tags/.
   //
-  // A collection card gets its status plus up to two of its own tags, which is
-  // what gives the reference's coffee tiles their "FILTER · NOW BREWING" pair.
+  // A collection card gets its status in the collection's own accent, plus up to
+  // two of its tags in the tag's own accent — which is what gives the reference's
+  // coffee tiles their two differently-coloured chips, and keeps the rule that a
+  // tag is the same colour wherever it appears.
   const chipList = [];
   if (item.collection && item.statusName) chipList.push(chip(item.statusName, item.chip));
   if (item.collection && Array.isArray(item.tags)) {
-    for (const t of item.tags.slice(0, 2)) chipList.push(chip(t, item.chip));
+    for (const t of item.tags.slice(0, 2)) chipList.push(chip(t, accentFor(t)));
   }
   const chips = chipList.length ? `<div class="card__chips">${chipList.join("")}</div>` : "";
 
@@ -214,7 +229,7 @@ export function card(item, size) {
     ? `<h3 class="card__title">${esc(item.title)}</h3>`
     : `<h3 class="card__title"><a class="card__link stretched" href="${esc(item.url)}">${esc(item.title)}</a></h3>`;
 
-  return `<div class="cell cell--${esc(size)}">
+  return `<div class="cell cell--${esc(size)}" style="--i:${Math.min(index, 6)}">
     <div class="card${display ? " card--display" : ""}">
       <div class="card__inner">
         ${head}
@@ -261,21 +276,23 @@ ${rows.map(([k, v]) => `    <div class="meta-block__row"><dt>${k}</dt><dd>${v}</
   </dl>`;
 }
 
-function tagList(tags) {
-  if (!tags.length) return "";
-  return `<ul class="taglist" aria-label="标签">
-${tags.map((t) => `      <li><a href="/tags/${encodeURIComponent(t)}/">${esc(t)}</a></li>`).join("\n")}
-  </ul>`;
-}
+/** A tag, as a chip in its own fixed colour, and a link to that tag's page.
+ *
+ *  The colour is a hash of the name, so 纯文本 is the same tint on the tag index,
+ *  on the article rail and in the search results — the point of colour here is
+ *  that a reader can recognise a tag before reading it, and that only works if
+ *  the mapping never moves. See `accentFor` in lib.mjs. */
+const tagChip = (t) =>
+  `<li><a class="taglink" href="/tags/${encodeURIComponent(t)}/">${chip(t, accentFor(t))}</a></li>`;
 
-/** The same tags, as a rail block. They used to sit above the title, which put
- *  four separate elements between the reader and the first sentence. */
+/** The tags of an article, as a rail block. They used to sit above the title,
+ *  which put four separate elements between the reader and the first sentence. */
 function tagsRail(tags) {
   if (!tags || !tags.length) return "";
   return `<section class="railsec" id="tags" aria-labelledby="tags-h">
   <h2 class="rail__h" id="tags-h">标签</h2>
   <ul class="taglist taglist--rail" aria-label="标签">
-${tags.map((t) => `    <li><a href="/tags/${encodeURIComponent(t)}/">${esc(t)}</a></li>`).join("\n")}
+${tags.map((t) => `    ${tagChip(t)}`).join("\n")}
   </ul>
 </section>`;
 }
@@ -373,15 +390,10 @@ ${outgoing.map((l) => {
 </section>`;
 }
 
-function notesSection(notes) {
-  if (!notes?.length) return "";
-  return `<section class="railsec" id="notes" aria-labelledby="notes-h">
-  <h2 class="rail__h" id="notes-h">脚注</h2>
-  <ol class="notelist">
-${notes.map((n) => `    <li id="${esc(n.id)}list"><span class="meta">[${n.n}]</span> ${esc(plain(n.body))}</li>`).join("\n")}
-  </ol>
-</section>`;
-}
+/* `notesSection()` used to live here: a rail block listing every footnote, which
+   the `data-notes="off"` branch revealed. The notes control was removed, the
+   attribute lost its writer, and the block became a permanently hidden copy of
+   the notes already in the margin — so it went, along with its CSS. */
 
 /** Citation block: gwern gives every page a permalink and a stable version; a
  *  writer needs to be able to point at their own text, so four formats ship
@@ -416,6 +428,7 @@ ${row("BibTeX", bibtex)}
 ${row("GB/T 7714", gbt)}
 ${row("Chicago", chicago)}
 ${row("Markdown", markdown)}
+  <p class="cite__status" role="status" aria-live="polite" data-copy-status></p>
 </section>`;
 }
 
@@ -442,12 +455,14 @@ ${revisions.map((r, i) => `    <li>
 export function pageArticle(site, a, ctx) {
   const { revisions, backlinks, outgoing, related, bySlug, notesHtml, headings, prev, next, sectionBacklinks } = ctx;
   const status = statusByKey(a.status);
+  const domain = domainByKey(a.domain);
 
   return `${head(site, {
     title: a.title,
     desc: a.description,
     canonical: `${site.origin}${a.url}`,
     type: "article",
+    accent: (domain && domain.accent) || "neutral",
     jsonld: {
       "@context": "https://schema.org",
       "@type": a.domain === "literature" ? "CreativeWork" : "ScholarlyArticle",
@@ -512,14 +527,14 @@ ${foot(site, { prev, next })}`;
  * shapes resolve to the same "which list does this belong to, and what is it"
  * line, so ask each shape for its own answer rather than assuming one.
  */
-function entry(a, { showDomain = false } = {}) {
+function entry(a, { showDomain = false, index = 0 } = {}) {
   // Collection entries carry `collection`/`collectionName`; articles carry
   // `domain`/`domainName`. Pick whichever this item actually has.
   const owner = a.domain || a.collection || "";
   const ownerName = a.domainName || a.collectionName || "";
   const kind = a.kind || a.statusName || "";
   const statusName = statusByKey(a.status)?.name || a.statusName || a.status;
-  return `    <li class="entry">
+  return `    <li class="entry" style="--i:${Math.min(index, 6)}">
       <a class="entry__title" href="${esc(a.url)}">${esc(a.title)}</a>
       <p class="entry__meta meta">
         ${showDomain && owner ? `<a href="/${esc(owner)}/">${esc(ownerName)}</a> · ` : ""}${kind ? `${esc(kind)} · ` : ""}<time datetime="${esc(a.created)}">${esc(dateDots(a.created))}</time>
@@ -530,7 +545,7 @@ function entry(a, { showDomain = false } = {}) {
 }
 
 const entryList = (items, opts) => items.length
-  ? `<ol class="entries reveal">\n${items.map((a) => entry(a, opts)).join("\n")}\n</ol>`
+  ? `<ol class="entries reveal">\n${items.map((a, i) => entry(a, { ...opts, index: i })).join("\n")}\n</ol>`
   : `<p class="empty">这里还没有文章。</p>`;
 
 /**
@@ -574,8 +589,7 @@ export function buildCards(articles, collections, site) {
 
   const cards = [];
   ordered.forEach((item, i) => {
-    cards.push(card(item, sizeFor(item, false)));
-    void i;
+    cards.push(card(item, sizeFor(item, false), i + 1));   // +1: the intro is cell 0
   });
   cards.unshift(card(intro, "intro"));
   return cards;
@@ -624,7 +638,7 @@ ${foot(site)}`;
  */
 export function pageWriting(site, ctx) {
   const { articles, counts } = ctx;
-  const cards = articles.map((a) => card(a, sizeFor(a, false)));
+  const cards = articles.map((a, i) => card(a, sizeFor(a, false), i));
   return `${head(site, {
     title: "写作",
     desc: site.writingBlurb || "全部文章。",
@@ -658,11 +672,12 @@ ${blurb ? `    <p class="pagehead__desc">${blurb}</p>\n` : ""}${extra}  </header
 export function pageCollection(site, c, items, counts, activeKey) {
   // No intro block here — that belongs on the homepage only, so every card is
   // an entry and the grid stays a list.
-  const cards = items.map((e) => card(e, e.card === "wide" ? "wide" : "square"));
+  const cards = items.map((e, i) => card(e, e.card === "wide" ? "wide" : "square", i));
   return `${head(site, {
     title: c.name,
     desc: c.blurb,
-    canonical: `${site.origin}/${c.key}/`
+    canonical: `${site.origin}/${c.key}/`,
+    accent: c.accent || "neutral"
   })}
 ${nav(activeKey || c.key)}
 <a id="top"></a>
@@ -681,6 +696,7 @@ export function pageCollectionEntry(site, c, e, bodyHtml) {
     desc: e.description || e.title,
     canonical: `${site.origin}${e.url}`,
     type: "article",
+    accent: c.accent || "neutral",
     jsonld: {
       "@context": "https://schema.org",
       "@type": c.key === "reading" ? "Book" : "CreativeWork",
@@ -713,11 +729,12 @@ ${foot(site)}`;
 
 export function pageDomain(site, d, articles, counts) {
   const kinds = d.kinds.map((k) => [k, articles.filter((a) => a.kind === k)]);
-  const cards = articles.map((a) => card(a, sizeFor(a, false)));
+  const cards = articles.map((a, i) => card(a, sizeFor(a, false), i));
   return `${head(site, {
     title: d.name,
     desc: d.blurb,
-    canonical: `${site.origin}/${d.key}/`
+    canonical: `${site.origin}/${d.key}/`,
+    accent: d.accent || "neutral"
   })}
 ${nav("writing")}
 <a id="top"></a>
@@ -783,7 +800,7 @@ ${nav("tags")}
 ${pageHead("标签", "跨领域的线索靠标签串起来：同一个想法在文学、哲学与计算机里各长什么样。")}
   <ul class="tagindex">
 ${tags.map((t) => `    <li>
-      <a href="/tags/${encodeURIComponent(t.name)}/">${esc(t.name)}</a>
+      <a class="tagindex__name" href="/tags/${encodeURIComponent(t.name)}/">${chip(t.name, accentFor(t.name))}</a>
       <span class="meta">${t.count}</span>
       ${t.blurb ? `<p class="tagindex__blurb">${esc(t.blurb)}</p>` : ""}
     </li>`).join("\n")}
@@ -793,11 +810,12 @@ ${foot(site)}`;
 }
 
 export function pageTag(site, name, items, backlinks, counts) {
-  const cards = items.map((a) => card(a, sizeFor(a, false)));
+  const cards = items.map((a, i) => card(a, sizeFor(a, false), i));
   return `${head(site, {
     title: `标签：${name}`,
     desc: `${items.length} 篇关于「${name}」的文章。`,
-    canonical: `${site.origin}/tags/${encodeURIComponent(name)}/`
+    canonical: `${site.origin}/tags/${encodeURIComponent(name)}/`,
+    accent: accentFor(name)
   })}
 ${nav("tags")}
 <a id="top"></a>
@@ -810,11 +828,12 @@ ${foot(site)}`;
 }
 
 export function pageSeries(site, name, items, counts) {
-  const cards = [...items].reverse().map((a) => card(a, sizeFor(a, false)));
+  const cards = [...items].reverse().map((a, i) => card(a, sizeFor(a, false), i));
   return `${head(site, {
     title: `系列：${name}`,
     desc: `${items.length} 篇的系列。`,
-    canonical: `${site.origin}/series/${encodeURIComponent(name)}/`
+    canonical: `${site.origin}/series/${encodeURIComponent(name)}/`,
+    accent: accentFor(name)
   })}
 ${nav("writing")}
 <a id="top"></a>
@@ -879,7 +898,9 @@ ${DOMAINS.flatMap((d) => d.kinds).map((k) => `        <option value="${esc(k)}">
     </label>
   </div>
 
-  <p class="searchstatus" role="status" aria-live="polite" data-search-status></p>
+  <p class="searchstatus" role="status" aria-live="polite" data-search-status>
+    <span class="searchstatus__text">载入索引后就能检索。</span>
+  </p>
   <ol class="entries searchresults" data-search-results></ol>
   <noscript>
     <p class="empty">搜索需要 JavaScript。没有它也能用：<a href="/tags/">按标签</a>或<a href="/archive/">按时间</a>浏览全部文章。</p>

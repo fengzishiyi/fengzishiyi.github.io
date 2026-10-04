@@ -2,9 +2,8 @@
    base.css — reset, page shell, the frosted sticky nav, the footer
 
    The nav is chester.how's: a centred pill of links with a translucent white
-   ground, a hairline border, a small shadow and a backdrop blur, plus a
-   neutral pill that slides behind the current link. That pill is the only
-   animation on the site, and it is `transform`-only so it composites.
+   ground, a hairline border, a small shadow and a backdrop blur. The current
+   page is marked by colour and a blue ring — no script, no moving parts.
    ========================================================================== */
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -47,8 +46,29 @@ p:last-child { margin-bottom: 0; }
 
 a { color: var(--ink-strong); text-decoration-thickness: 1px; text-underline-offset: 4px; }
 
-:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--focus-ring); border-radius: var(--radius-chip); }
-:focus:not(:focus-visible) { box-shadow: none; }
+/* ---- focus ---------------------------------------------------------------
+   Two rings, because one of them is not enough. chester's blue-200 halo is kept
+   so the site still looks like the reference, but on white it measures 1.42:1 —
+   far below the 3:1 that WCAG 1.4.11 asks of a focus indicator — so a darker
+   outline carries the signal (#2563EB, 5.17:1). Neither touches border-radius:
+   the old rule set one on every focused element, so focusing a card or an input
+   visibly changed its shape. */
+:focus-visible {
+  outline: 2px solid var(--focus-ring-strong);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--focus-ring);
+}
+:focus:not(:focus-visible) { outline: none; box-shadow: none; }
+
+/* In forced-colors mode box-shadows are dropped and custom colours are ignored,
+   which would leave focus invisible. CanvasText is the system colour that
+   survives. */
+@media (forced-colors: active) {
+  :focus-visible { outline: 3px solid CanvasText; box-shadow: none; }
+}
+
+/* The skip link lands on #main, which sits under the sticky nav. */
+#main { scroll-margin-top: 4.5rem; }
 
 /* ---- primitives ------------------------------------------------------- */
 
@@ -62,9 +82,6 @@ a { color: var(--ink-strong); text-decoration-thickness: 1px; text-underline-off
 
 /* chester's own page width is narrower than its grid's maximum */
 .wrap--reading { max-width: 1024px; }
-.wrap--narrow { max-width: 720px; }
-
-.tracking-tight { letter-spacing: var(--tr-body); }
 
 .meta {
   font-size: var(--fs-nav);
@@ -143,9 +160,11 @@ a { color: var(--ink-strong); text-decoration-thickness: 1px; text-underline-off
   white-space: nowrap;
   transition: color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
-.nav__link:hover,
-.nav__link:focus-visible,
 .nav__link[aria-current="page"] { color: var(--ink-strong); }
+
+@media (hover: hover) and (pointer: fine) {
+  .nav__link:hover { color: var(--ink-strong); }
+}
 
 /* The current page is marked the way chester marks it: the link goes dark and
    gets a snug blue ring. An earlier revision slid a grey pill along behind the
@@ -154,15 +173,8 @@ a { color: var(--ink-strong); text-decoration-thickness: 1px; text-underline-off
   box-shadow: 0 0 0 2px var(--focus-ring);
 }
 .nav__link:focus-visible {
-  outline: 2px solid var(--focus-ring);
+  outline: 2px solid var(--focus-ring-strong);
   outline-offset: 2px;
-}
-
-/* the count badge some nav items carry, in chester's muted grey */
-.nav__n {
-  font-size: 0.6875rem;
-  color: var(--ink-muted);
-  margin-left: 0.25em;
 }
 
 /* ---- footer ------------------------------------------------------------ */
@@ -191,7 +203,10 @@ a { color: var(--ink-strong); text-decoration-thickness: 1px; text-underline-off
   border-radius: var(--radius-chip);
   transition: color var(--dur) var(--ease);
 }
-.foot__nav a:hover, .foot__nav a:focus-visible { color: var(--ink-strong); }
+.foot__nav a:focus-visible { color: var(--ink-strong); }
+@media (hover: hover) and (pointer: fine) {
+  .foot__nav a:hover { color: var(--ink-strong); }
+}
 .foot__note {
   font-size: var(--fs-nav);
   letter-spacing: var(--tr-nav);
@@ -240,6 +255,7 @@ a { color: var(--ink-strong); text-decoration-thickness: 1px; text-underline-off
   background: var(--chip-neutral-bg);
   color: var(--chip-neutral-fg);
   box-shadow: var(--shadow-inset);
+  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
 }
 .chip--amber  { background: var(--chip-amber-bg);  color: var(--chip-amber-fg); }
 .chip--lime   { background: var(--chip-lime-bg);   color: var(--chip-lime-fg); }
@@ -250,14 +266,29 @@ a { color: var(--ink-strong); text-decoration-thickness: 1px; text-underline-off
 .chip--rose   { background: var(--chip-rose-bg);   color: var(--chip-rose-fg); }
 .chip--teal   { background: var(--chip-teal-bg);   color: var(--chip-teal-fg); }
 
-/* ---- reduced motion ---------------------------------------------------- */
+/* A chip that is also a link gains a ring in its OWN colour on hover — the tint
+   is information, so hovering must not rewrite it. (`--accent-bg` would have
+   swapped the tag's colour for the page's, which is exactly the kind of
+   meaning-breaking hover this rule exists to avoid.) */
+@media (hover: hover) and (pointer: fine) {
+  a:hover > .chip, a:focus-visible > .chip {
+    box-shadow: var(--shadow-inset), 0 0 0 1px currentColor;
+  }
+}
+
+/* ---- reduced motion ----------------------------------------------------
+   Everything is switched off, delays included. Zeroing only the duration is not
+   enough: a staggered animation keeps its delay, and an element whose start
+   state is transparent would sit invisible for the length of that delay. */
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after {
     animation-duration: 0.001ms !important;
+    animation-delay: 0ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
+    transition-delay: 0ms !important;
   }
 }
 

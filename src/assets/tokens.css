@@ -21,21 +21,32 @@
   --card-hover: #F5F5F5;           /* neutral-100 */
   --nav-glass: rgba(255, 255, 255, 0.7);
   --inactive-area: #E5E5E5;        /* neutral-200, the nav indicator pill */
+  --skeleton-hi: #F2F2F2;          /* the sheen on a loading row */
 
   /* ---- text ------------------------------------------------------------- */
   --ink: #000000;                  /* body: pure black */
   --ink-strong: #171717;           /* neutral-900 — links and primary text */
   --ink-body: #404040;             /* neutral-700 — card copy */
   /* chester.how uses rgb(163,163,163) here. On white that measures 2.52:1,
-     which fails even the 3:1 large-text floor, so it is darkened one step to
-     the lightest grey that passes. It only ever sets labels and eyebrows at
-     14px, never prose — body copy is asserted at full AA separately. */
-  --ink-muted: #7A7A7A;
+     which fails even the 3:1 large-text floor, so it is darkened to the
+     LIGHTEST grey that clears AA on both grounds the site uses: 4.98:1 on the
+     page and 4.77:1 on a card. #7A7A7A, the previous value, measured 4.29:1 —
+     and it is not a label colour: .pagehead__desc, .card__sub, .entry__desc,
+     .foot__note and .sectionback__ctx are all reading text. */
+  --ink-muted: #6F6F6F;
+  /* Decoration only — the `#` anchor glyph and the `· · ·` divider dots. It
+     measures 3.45:1, which is fine for a decorative mark and NOT fine for text,
+     so the build fails if any other selector uses it. */
   --ink-faint: #8A8A8A;
 
   /* ---- lines ------------------------------------------------------------ */
   --border: #E5E7EB;               /* rgb(229,231,235) — neutral-200 */
+  /* chester's focus colour, kept for the halo. It measures 1.42:1 on white,
+     which fails WCAG 1.4.11 (≥3:1) on its own, so a second, darker ring carries
+     the indicator: #2563EB at 5.17:1. Both together look like the reference and
+     are actually visible. */
   --focus-ring: #BFDBFE;           /* blue-200, 4px spread */
+  --focus-ring-strong: #2563EB;    /* blue-600, 5.17:1 — the visible half */
 
   /* ---- type ramp (measured, not eyeballed) ------------------------------ */
   /* Fraunces replaced by a system serif stack; weights and tracking are exact. */
@@ -72,12 +83,21 @@
 
   /* three shadow levels, verbatim from the analysis */
   --shadow-card: rgba(0, 0, 0, 0.1) 0px 4px 6px -1px, rgba(0, 0, 0, 0.1) 0px 2px 4px -2px;
-  --shadow-lift: rgba(0, 0, 0, 0.1) 0px 10px 15px -3px;
   --shadow-inset: rgba(0, 0, 0, 0.1) 0px 0px 0px 1px inset;
   --shadow-nav: rgba(0, 0, 0, 0.1) 0px 4px 6px -1px, rgba(0, 0, 0, 0.1) 0px 2px 4px -2px;
+  /* the lift a card takes on hover — one step above the resting shadow */
+  --shadow-hover: rgba(0, 0, 0, 0.08) 0px 8px 12px -3px, rgba(0, 0, 0, 0.06) 0px 3px 6px -3px;
 
-  --dur: 200ms;
-  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  /* ---- motion -----------------------------------------------------------
+     Short by rule. Micro-interactions are 120ms, colour and hover 180ms, and
+     entrances 400ms with a stagger capped at six steps — so the longest thing
+     on the page finishes in 520ms. Nothing bounces: an ease that overshoots
+     reads as cheap, and this is a reading site. */
+  --dur-fast: 120ms;
+  --dur: 180ms;
+  --dur-slow: 400ms;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);   /* fast out, slow in */
+  --stagger: 20ms;                          /* × index, capped in the rule */
 
   /* ---- compatibility aliases -------------------------------------------
      prose.css and components.css were written against the previous revision's
@@ -91,18 +111,18 @@
   --paper: var(--page);
   --paper-sunk: var(--inactive-area);
   --paper-raised: var(--page);
-  --ink-80: var(--ink-body);
-  --ink-60: var(--ink-muted);
-  --ink-40: #D4D4D4;               /* decorative numerals only — neutral-300 */
   --ink-mute: var(--ink-muted);
-  --ink-faint: #8A8A8A;
   --rule: var(--border);
   --rule-strong: #D4D4D4;
   --link: var(--ink-strong);
-  --link-visited: var(--ink-strong);
   --mark: var(--chip-amber-bg);
   --fs-small: var(--fs-nav);
   --measure-shift: 0em;
+
+  /* The accent every page inherits via `body[data-accent]`. Defaults to the
+     neutral chip so a page with no category of its own still resolves. */
+  --accent-bg: var(--chip-neutral-bg);
+  --accent-fg: var(--chip-neutral-fg);
 
   /* chester.how keeps the full Tailwind breakpoint set */
   color-scheme: light;
@@ -110,7 +130,11 @@
 
 /* ---- chip accents ---------------------------------------------------------
    The only chromatic colour in the design. All at 40% opacity, which is what
-   keeps them reading as markers rather than as fills. */
+   keeps them reading as markers rather than as fills.
+
+   These double as the page accents: a domain, a collection and every tag pick
+   one of these nine pairs (see `accentFor` in lib.mjs), so the palette has one
+   definition and one contrast assertion rather than several. */
 :root {
   --chip-amber-bg: rgba(251, 191, 36, 0.4);   --chip-amber-fg: #78350F;
   --chip-lime-bg: rgba(163, 230, 53, 0.4);    --chip-lime-fg: #365314;
@@ -123,11 +147,29 @@
   --chip-neutral-bg: rgba(163, 163, 163, 0.28); --chip-neutral-fg: #404040;
 }
 
+/* ---- the page accent ------------------------------------------------------
+   `head()` writes `data-accent` on <body> from the taxonomy, and everything
+   that should carry the page's colour reads these two variables. Adding a
+   colour to the site means adding one line here and one `accent:` in
+   taxonomy.mjs — never a new hex value. */
+body[data-accent="amber"]  { --accent-bg: var(--chip-amber-bg);  --accent-fg: var(--chip-amber-fg); }
+body[data-accent="lime"]   { --accent-bg: var(--chip-lime-bg);   --accent-fg: var(--chip-lime-fg); }
+body[data-accent="orange"] { --accent-bg: var(--chip-orange-bg); --accent-fg: var(--chip-orange-fg); }
+body[data-accent="green"]  { --accent-bg: var(--chip-green-bg);  --accent-fg: var(--chip-green-fg); }
+body[data-accent="purple"] { --accent-bg: var(--chip-purple-bg); --accent-fg: var(--chip-purple-fg); }
+body[data-accent="sky"]    { --accent-bg: var(--chip-sky-bg);    --accent-fg: var(--chip-sky-fg); }
+body[data-accent="rose"]   { --accent-bg: var(--chip-rose-bg);   --accent-fg: var(--chip-rose-fg); }
+body[data-accent="teal"]   { --accent-bg: var(--chip-teal-bg);   --accent-fg: var(--chip-teal-fg); }
+body[data-accent="neutral"]{ --accent-bg: var(--chip-neutral-bg); --accent-fg: var(--chip-neutral-fg); }
+
+::selection { background: var(--accent-bg); color: var(--ink); }
+
 @media (min-width: 768px) { :root { --pad-x: 2rem; } }
 
 /* ---- print ---------------------------------------------------------------
    The one place pure black on white is already correct — which is the whole
-   palette here, so print mostly just needs the chrome to disappear. */
+   palette here, so print mostly just needs the chrome to disappear, and the
+   accents flattened so a tag does not print as a grey blob. */
 @media print {
   :root {
     --card: #FFFFFF;
@@ -135,6 +177,9 @@
     --nav-glass: #FFFFFF;
     --ink-body: #000000;
     --ink-muted: #333333;
+    --ink-faint: #333333;
     --border: #CCCCCC;
+    --accent-bg: transparent;
+    --accent-fg: #000000;
   }
 }

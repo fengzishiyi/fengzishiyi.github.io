@@ -49,11 +49,17 @@
   color: var(--ink);
   text-decoration: none;
 }
-.entry__title:hover { text-decoration: underline; text-decoration-thickness: 1px; }
+@media (hover: hover) and (pointer: fine) {
+  .entry__title:hover {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-decoration-color: var(--accent-fg);
+  }
+}
 
 .entry__meta { margin: 0.15rem 0 0.25rem; }
 .entry__meta a { color: var(--ink-mute); text-decoration: none; }
-.entry__meta a:hover { color: var(--ink); text-decoration: underline; }
+.entry__meta a:hover { color: var(--accent-fg); text-decoration: underline; }
 
 .entry__desc {
   margin: 0;
@@ -62,90 +68,7 @@
   max-width: 62ch;
 }
 
-.more { margin-top: 1rem; font-size: var(--fs-small); }
-.linkbtn {
-  font: inherit;
-  color: var(--link);
-  background: none;
-  border: 0;
-  padding: 0;
-  cursor: pointer;
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 2px;
-}
-.linkbtn:hover { text-decoration-thickness: 2px; }
-
-/* ---- home ------------------------------------------------------------- */
-
-.home { padding-top: 2.2rem; }
-.home__title { font-size: var(--fs-h1); margin: 0 0 0.3rem; }
-.home__tagline {
-  color: var(--ink-mute);
-  margin: 0 0 2rem;
-  max-width: calc(var(--measure) + var(--measure-shift));
-}
-
-.domains {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.6rem;
-  padding-bottom: 2rem;
-  border-bottom: 1px solid var(--rule);
-}
-@media (min-width: 720px) { .domains { grid-template-columns: repeat(3, 1fr); gap: 2rem; } }
-
-.domain h2 {
-  font-size: var(--fs-h3);
-  margin: 0 0 0.3rem;
-}
-.domain h2 a { color: var(--ink); text-decoration: none; }
-.domain h2 a:hover { text-decoration: underline; }
-.domain__blurb {
-  font-size: var(--fs-small);
-  color: var(--ink-mute);
-  margin: 0 0 0.6rem;
-}
-.domain__kinds {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.2rem 0.8rem;
-  font-size: var(--fs-tiny);
-  color: var(--ink-mute);
-}
-
-.homecols {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 2rem;
-  padding-top: 2rem;
-}
-@media (min-width: 900px) { .homecols { grid-template-columns: 1.35fr 1fr; gap: 3rem; } }
-.homecol > section { margin-bottom: 2.2rem; }
-
-.tagcloud, .serieslist, .tagindex, .seriesindex {
-  list-style: none;
-  margin: 0 0 0.6rem;
-  padding: 0;
-}
-.tagcloud {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem 0.9rem;
-  font-size: var(--fs-small);
-}
-.tagcloud a { color: var(--ink-mute); text-decoration: none; }
-.tagcloud a:hover { color: var(--ink); text-decoration: underline; }
-.tagcloud a::before { content: "#"; opacity: 0.45; }
-
-.serieslist li { padding: 0.2rem 0; font-size: var(--fs-small); }
-.serieslist a { color: var(--ink-mute); text-decoration: none; }
-.serieslist a:hover { color: var(--ink); text-decoration: underline; }
-
-/* ---- archive ---------------------------------------------------------- */
+/* ---- search ----------------------------------------------------------- */
 
 .filters {
   display: flex;
@@ -158,7 +81,7 @@
 }
 .filters__label { flex: 0 0 auto; }
 .filters a { color: var(--ink-mute); text-decoration: none; }
-.filters a:hover { color: var(--ink); text-decoration: underline; }
+.filters a:hover { color: var(--accent-fg); text-decoration: underline; }
 
 .yearblock { padding-top: 2rem; }
 
@@ -168,13 +91,16 @@
   padding: 0.8rem 0;
   border-top: 1px solid var(--rule);
 }
-.tagindex a, .seriesindex a {
+/* The tag index lists chips, so each row's name is already a coloured marker;
+   the anchor only has to not fight it. */
+.tagindex__name { text-decoration: none; display: inline-block; }
+.seriesindex a {
   font-family: var(--serif);
   font-size: 1.0625rem;
   color: var(--ink);
   text-decoration: none;
 }
-.tagindex a:hover, .seriesindex a:hover { text-decoration: underline; }
+.seriesindex a:hover { text-decoration: underline; text-decoration-color: var(--accent-fg); }
 .tagindex__blurb {
   margin: 0.2rem 0 0;
   font-size: var(--fs-small);
@@ -198,20 +124,28 @@
   color: var(--ink);
   background: var(--paper-sunk);
   border: 1px solid var(--rule);
+  border-radius: var(--radius-chip);
   padding: 0.5rem 0.7rem;
+  transition: border-color var(--dur) var(--ease);
 }
-.searchbox input:focus { border-color: var(--rule-strong); }
+.searchbox input:focus { border-color: var(--focus-ring-strong); }
 .searchbox button {
   font: inherit;
   font-size: var(--fs-small);
   color: var(--ink);
   background: var(--paper-sunk);
   border: 1px solid var(--rule);
+  border-radius: var(--radius-chip);
   padding: 0.5rem 0.9rem;
   cursor: pointer;
-  transition: border-color var(--dur) var(--ease);
+  transition: border-color var(--dur) var(--ease), background-color var(--dur) var(--ease);
 }
-.searchbox button:hover { border-color: var(--rule-strong); }
+@media (hover: hover) and (pointer: fine) {
+  .searchbox button:hover {
+    border-color: var(--accent-fg);
+    background: var(--accent-bg);
+  }
+}
 
 .searchfilters {
   display: flex;
@@ -229,6 +163,7 @@
   color: var(--ink);
   background: var(--paper);
   border: 1px solid var(--rule);
+  border-radius: var(--radius-chip);
   padding: 0.2rem 0.35rem;
 }
 
@@ -238,13 +173,17 @@
   color: var(--ink-mute);
   margin: 0;
 }
+/* The loading state, drawn as the shape of the answer rather than as a word.
+   `data-loading` is set by the script; without it the status line is plain. */
+.searchstatus[data-loading="true"] { padding: 0.4rem 0 1rem; }
+.searchstatus[data-loading="true"] .searchstatus__text { display: none; }
 
 .searchresults .entry h3 {
   font-size: 1.0625rem;
   margin: 0 0 0.15rem;
 }
 .searchresults .entry h3 a { color: var(--ink); text-decoration: none; }
-.searchresults .entry h3 a:hover { text-decoration: underline; }
+.searchresults .entry h3 a:hover { text-decoration: underline; text-decoration-color: var(--accent-fg); }
 .searchresults .entry__ctx {
   margin: 0.3rem 0 0;
   font-size: var(--fs-small);
@@ -253,7 +192,7 @@
 }
 .searchresults .entry[aria-current="true"] {
   background: var(--paper-raised);
-  outline: 1px solid var(--rule-strong);
+  outline: 1px solid var(--focus-ring-strong);
   outline-offset: 0.3rem;
 }
 

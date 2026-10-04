@@ -144,6 +144,14 @@ for (const [vname, w, h, cols] of (quick ? [] : VIEWPORTS)) {
     if (m.outsideViewport.length) fail(`${page} @${w}: 越界 → ${m.outsideViewport.join(", ")}`);
     if (m.h1Count !== 1) fail(`${page} @${w}: ${m.h1Count} 个 h1`);
     if (m.clipped) fail(`${page} @${w}: ${m.clipped} 处文字被裁切`);
+    if (!m.vars.accent) fail(`${page} @${w}: <body> 上没有 data-accent，这一页没有配色`);
+
+    // The fold must actually hide something. Asserted on the article page at
+    // every width, because "the class was added" is what let it stay broken.
+    if (page === ARTICLE) {
+      if (!m.fold) fail(`${page} @${w}: 找不到 +++ 折叠块`);
+      else if (!m.fold.collapsed) fail(`${page} @${w}: 折叠块收起了却仍占 ${m.fold.after}px`);
+    }
 
     // The measure promise holds wherever a desktop-width reading column exists.
     // On a phone the column is ~340px, which is 20 汉字 and cannot be otherwise;
@@ -236,10 +244,23 @@ if (ARTICLE) {
       expanded: document.querySelector(".sec__toggle").getAttribute("aria-expanded")
     })`);
     await s.evalJson(clickExpr(".fold__toggle"));
-    const foldState = await s.evalJson(`JSON.stringify({
-      collapsed: document.querySelectorAll(".fold.is-collapsed").length,
-      label: document.querySelector(".fold__toggle").textContent
-    })`);
+    // The class is not the point — the CONTENT disappearing is. Asserting the
+    // class is what let this stay broken: site.js wrote `is-collapsed` and the
+    // stylesheet answered to `fold--folded`, so the toggle changed its own label
+    // and hid nothing while the test stayed green.
+    const foldState = await s.evalJson(`JSON.stringify((function(){
+      var f = document.querySelector(".fold");
+      var h = 0;
+      for (var i = 0; i < f.children.length; i++) {
+        if (f.children[i].classList.contains("fold__label")) continue;
+        h += f.children[i].getBoundingClientRect().height;
+      }
+      return {
+        collapsed: document.querySelectorAll(".fold.is-collapsed").length,
+        label: document.querySelector(".fold__toggle").textContent,
+        bodyHeight: Math.round(h)
+      };
+    })())`);
     return { before, folded, reopened, foldState };
   });
 
@@ -252,6 +273,7 @@ if (ARTICLE) {
   if (r.reopened.folded !== 0) fail("跳到折叠章节的锚点后，那一节没有自动展开");
   if (!r.before.folds) fail("文章里没有独立的 +++ 折叠块");
   else if (r.foldState.collapsed !== 1) fail("点击 +++ 折叠块没有反应");
+  else if (r.foldState.bodyHeight > 2) fail(`+++ 折叠块标了 is-collapsed，但正文还占着 ${r.foldState.bodyHeight}px`);
   else console.log(`   折叠：章节 ${r.before.secs} 个 · +++ 块 ${r.before.folds} 个 · 折叠后可展开、状态已记住  ✓`);
 
   // The article head is the tidy-up this round was about: a back link, a title,
@@ -281,7 +303,39 @@ if (ARTICLE) {
   else if (head.stray) fail(`文章页首还堆着 ${head.stray} 个旧元素（眉标/标签行/阅读模式按钮）`);
   else console.log(`   文章页首：返回「${head.back.text}」· 标题 ${head.titleSize}/${head.titleWeight} · 一行元信息 · 导语  ✓`);
 
-  // link previews — hover and keyboard focus both, Escape to dismiss
+  // The focus ring has to be VISIBLE, not merely declared. The old one was a
+  // 4px halo of blue-200 — 1.42:1 on white, a ring you cannot see.
+  //
+  // It also has to be reached the way a reader reaches it: `:focus-visible` does
+  // not match a programmatic `.focus()` on a link, so this presses Tab for real.
+  {
+    const r = await withPage(BASE + "/", { width: 1280, height: 900 }, async (s) => {
+      await s.send("Input.dispatchKeyEvent", { type: "rawKeyDown", windowsVirtualKeyCode: 9, key: "Tab", code: "Tab" });
+      await s.send("Input.dispatchKeyEvent", { type: "keyUp", windowsVirtualKeyCode: 9, key: "Tab", code: "Tab" });
+      await new Promise((r2) => setTimeout(r2, 120));
+      return s.evalJson(`JSON.stringify((function(){
+        var el = document.activeElement;
+        if (!el) return { none: true };
+        var cs = getComputedStyle(el);
+        return {
+          tag: el.tagName.toLowerCase(),
+          cls: el.className,
+          width: parseFloat(cs.outlineWidth) || 0,
+          style: cs.outlineStyle,
+          colour: cs.outlineColor,
+          shadow: cs.boxShadow !== "none"
+        };
+      })())`);
+    });
+    if (r.none) fail("按 Tab 之后没有任何元素获得焦点");
+    else if (r.style === "none" || r.width < 2) fail(`按 Tab 聚焦到 ${r.tag}.${r.cls}，但 outline 是 ${r.width}px ${r.style}`);
+    else if (!r.shadow && !/rgb/.test(r.colour)) fail("焦点环没有颜色");
+    else console.log(`   键盘焦点：Tab 到 ${r.tag}.${String(r.cls).split(" ")[0]} · outline ${r.width}px ${r.colour}  ✓`);
+  }
+
+  // link previews — hover and keyboard focus both, Escape to dismiss, and a fade
+  // that actually runs (`is-in` is what the transition is keyed on; the popup
+  // used to appear instantly because nothing ever added it)
   const preview = await withPage(BASE + ARTICLE, {}, async (s) => {
     const target = await s.evalJson(`JSON.stringify(
       (document.querySelector(".ref[data-preview]") || {}).getAttribute
@@ -291,7 +345,12 @@ if (ARTICLE) {
       a.dispatchEvent(new MouseEvent("mouseover",{bubbles:true})); return "1";})()`);
     await new Promise((r) => setTimeout(r, 400));
     const hover = await s.evalJson(`JSON.stringify((function(){var p=document.querySelector(".preview");
-      return { shown: !!p && !p.hidden, text: p ? p.textContent.trim().slice(0,24) : "" };})())`);
+      return {
+        shown: !!p && !p.hidden,
+        faded: !!p && p.classList.contains("is-in"),
+        transition: p ? getComputedStyle(p).transitionProperty : "",
+        text: p ? p.textContent.trim().slice(0,24) : ""
+      };})())`);
     await s.evalJson(`(function(){document.dispatchEvent(new KeyboardEvent("keydown",{key:"Escape"})); return "1";})()`);
     const after = await s.evalJson(`JSON.stringify((function(){var p=document.querySelector(".preview");
       return { hidden: !p || p.hidden };})())`);
@@ -299,8 +358,36 @@ if (ARTICLE) {
   });
   if (!preview.target) fail("文章里没有可预览的互链");
   else if (!preview.hover.shown) fail("悬停互链没有出现预览");
+  else if (!preview.hover.faded) fail("预览出现了，但 is-in 没有加上，淡入不会发生");
+  else if (!/opacity/.test(preview.hover.transition)) fail(`预览没有 opacity 过渡（现在过渡的是 ${preview.hover.transition}）`);
   else if (!preview.after.hidden) fail("按 Esc 之后预览没有关掉");
-  else console.log(`   链接预览：悬停「${preview.hover.text}…」出现、Esc 关闭  ✓`);
+  else console.log(`   链接预览：悬停「${preview.hover.text}…」淡入出现、Esc 关闭  ✓`);
+
+  // the citation copy buttons — shipped for several revisions with no handler
+  const copy = await withPage(BASE + ARTICLE, {}, async (s) => {
+    const btn = await s.evalJson(`JSON.stringify(!!document.querySelector("[data-copy]"))`);
+    if (!btn) return { btn: false };
+    // Headless denies the clipboard by default; grant it so the happy path is
+    // what gets tested, and keep the fallback assertion for when it is refused.
+    try {
+      await s.send("Browser.grantPermissions", {
+        origin: BASE,
+        permissions: ["clipboardReadWrite", "clipboardSanitizedWrite"]
+      });
+    } catch { /* older engines: the fallback path is asserted instead */ }
+    await s.evalJson(clickExpr("[data-copy]"));
+    await new Promise((r) => setTimeout(r, 400));
+    return { btn: true, ...(await s.evalJson(`JSON.stringify({
+      done: document.querySelector("[data-copy]").getAttribute("data-done"),
+      label: document.querySelector("[data-copy]").textContent.trim(),
+      status: (document.querySelector("[data-copy-status]") || {}).textContent || ""
+    })`)) };
+  });
+  if (!copy.btn) fail("文章页没有引用复制按钮");
+  else if (copy.done === null) fail("点复制之后按钮没有任何反馈 —— 后面还是没有代码");
+  else if (copy.done === "true" && copy.label !== "已复制") fail(`复制成功后按钮写着「${copy.label}」`);
+  else if (copy.done === "false" && !copy.status) fail("复制失败时没有告诉读者怎么办");
+  else console.log(`   引用复制：${copy.done === "true" ? "复制成功，按钮变「已复制」" : "剪贴板被拒时退回到选中文本并给出提示"}  ✓`);
 }
 
 // search — the index loads, a query filters, a URL query pre-fills

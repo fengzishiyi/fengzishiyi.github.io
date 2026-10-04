@@ -69,33 +69,27 @@
   font-family: var(--mono);
   font-size: var(--fs-tiny);
 }
-.status--draft { color: var(--ink-faint); }
+.status--draft { color: var(--ink-muted); }
 .status--notes { color: var(--ink-mute); }
 .status--in-progress { color: var(--ink-mute); }
 .status--finished { color: var(--ink-mute); }
-.status--abandoned { color: var(--ink-faint); text-decoration: line-through; }
+.status--abandoned { color: var(--ink-muted); text-decoration: line-through; }
 
 .taglist {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.35rem 0.6rem;
+  gap: 0.35rem 0.5rem;
   list-style: none;
   margin: 0;
   padding: 0;
 }
-.taglist a {
-  font-size: var(--fs-small);
-  color: var(--ink-mute);
-  text-decoration: none;
-  border-bottom: 1px solid var(--rule-strong);
-  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
-}
-.taglist a:hover { color: var(--ink); border-color: var(--ink); }
-.taglist a::before { content: "#"; opacity: 0.5; }
+/* Tags are chips now, so they carry their own colour. The list keeps no link
+   styling of its own: the chip inside the anchor is the whole affordance. */
+.taglist a { text-decoration: none; display: inline-block; }
 
-/* the same list, inside the rail: smaller, and not a row of underlined links */
-.taglist--rail { gap: 0.3rem 0.5rem; }
-.taglist--rail a { font-size: var(--fs-tiny); border-bottom: 0; }
+/* the same list, inside the rail: one step smaller */
+.taglist--rail { gap: 0.3rem 0.4rem; }
+.taglist--rail .chip { font-size: var(--fs-tiny); }
 
 /* ---- the grid --------------------------------------------------------
    Two side columns, not one. The notes and the rail both want the margin, and
@@ -182,7 +176,7 @@ h2:hover .anchor, h3:hover .anchor, .anchor:focus-visible { opacity: 1; }
 
 .marginnote {
   font-size: var(--fs-small);
-  color: var(--ink-faint);
+  color: var(--ink-muted);
   border-left: 2px solid var(--rule);
   padding-left: 0.7rem;
   /* Sits ABOVE the paragraph it summarises, as a skimmable line. It keeps a
@@ -215,16 +209,17 @@ h2:hover .anchor, h3:hover .anchor, .anchor:focus-visible { opacity: 1; }
   .note__n {
     font-family: var(--mono);
     font-size: var(--fs-tiny);
-    color: var(--ink-faint);
+    color: var(--ink-muted);
     margin-right: 0.4em;
   }
   /* the note and its reference are adjacent already, so a jump link is noise */
   .fnref { display: none; }
 }
 
-/* the page's own footnotes list duplicates the inline notes; show it only when
-   the reader has switched notes off */
-.notelist { display: none; }
+/* The end-of-article footnote list and the `data-notes="off"` branch that
+   revealed it were removed with the notes control: the attribute has had no
+   writer since the toolbar was deleted, so the whole branch was unreachable and
+   the list was a permanently hidden copy of the notes above. */
 
 @media (min-width: 1160px) {
   /* Notes live in the LEFT margin. They are positioned from `.artbody` — the
@@ -258,21 +253,6 @@ h2:hover .anchor, h3:hover .anchor, .anchor:focus-visible { opacity: 1; }
   }
   .note--block { max-width: 260px; }
 }
-
-/* when the reader turns notes off, they become plain end-of-article footnotes */
-:root[data-notes="off"] .note {
-  position: static;
-  width: auto;
-  display: block;
-  border-left: 2px solid var(--rule);
-  border-right: 0;
-  padding-right: 0;
-  padding-left: 0.8rem;
-  margin: 1rem 0;
-  max-width: 46ch;
-  transform: none;
-}
-:root[data-notes="off"] .notelist { display: block; }
 
 .fnref a {
   text-decoration: none;
@@ -328,7 +308,7 @@ li { margin-bottom: 0.3em; }
 mark { background: var(--mark); color: var(--ink); }
 
 .ref-broken {
-  border-bottom: 1px dotted var(--ink-faint);
+  border-bottom: 1px dotted currentColor;
   cursor: help;
 }
 
@@ -366,7 +346,7 @@ mark { background: var(--mark); color: var(--ink); }
   padding: 0.15rem 0;
 }
 .meta-block dt {
-  color: var(--ink-faint);
+  color: var(--ink-muted);
   font-size: var(--fs-tiny);
   white-space: nowrap;
 }
@@ -377,14 +357,19 @@ mark { background: var(--mark); color: var(--ink); }
   text-align: right;
 }
 
-.outline ol, .srclist, .revlist, .notelist {
+.outline ol, .srclist, .revlist {
   margin: 0;
   padding-left: 1.1em;
   color: var(--ink-mute);
   font-size: var(--fs-small);
 }
 .outline a { text-decoration: none; }
-.outline a:hover { text-decoration: underline; }
+@media (hover: hover) and (pointer: fine) {
+  .outline a:hover, .backlist a:hover, .rellist a:hover, .srclist a:hover {
+    text-decoration: underline;
+    text-decoration-color: var(--accent-fg);
+  }
+}
 
 .backlist { list-style: none; margin: 0; padding: 0; }
 .backlist li {
@@ -393,16 +378,15 @@ mark { background: var(--mark); color: var(--ink); }
 }
 .backlist li:last-child { border-bottom: 0; }
 .backlist a { text-decoration: none; }
-.backlist a:hover { text-decoration: underline; }
 .backlist__meta { margin-left: 0.5em; }
 .backlist__ctx {
   margin: 0.2rem 0 0;
   font-size: var(--fs-tiny);
-  color: var(--ink-faint);
+  color: var(--ink-muted);
   line-height: 1.6;
 }
 
-.srclist li, .revlist li, .notelist li { margin-bottom: 0.35em; }
+.srclist li, .revlist li { margin-bottom: 0.35em; }
 
 /* Similar links: the title, then the tags that earned the suggestion. Closer to
    the backlink list than to the outline, because each row is a page with a
@@ -411,12 +395,11 @@ mark { background: var(--mark); color: var(--ink); }
 .rellist li { padding: 0.4rem 0; border-bottom: 1px solid var(--rule); }
 .rellist li:last-child { border-bottom: 0; }
 .rellist a { text-decoration: none; font-size: var(--fs-small); }
-.rellist a:hover { text-decoration: underline; }
 .rellist__meta {
   display: block;
   margin-top: 0.15rem;
   font-size: var(--fs-tiny);
-  color: var(--ink-faint);
+  color: var(--ink-muted);
 }
 
 .revlist { list-style: none; padding-left: 0; }
@@ -427,9 +410,9 @@ mark { background: var(--mark); color: var(--ink); }
   align-items: baseline;
   font-size: var(--fs-tiny);
 }
-.revlist__hash { color: var(--ink-faint); }
+.revlist__hash { color: var(--ink-muted); }
 .revlist__msg { color: var(--ink-mute); }
-.revlist__now { grid-column: 1 / -1; color: var(--ink-faint); }
+.revlist__now { grid-column: 1 / -1; color: var(--ink-muted); }
 
 .cite__perm { margin: 0 0 0.6rem; font-size: var(--fs-tiny); word-break: break-all; }
 .cite__row {
@@ -443,7 +426,7 @@ mark { background: var(--mark); color: var(--ink); }
 .cite__label {
   font-family: var(--mono);
   font-size: var(--fs-tiny);
-  color: var(--ink-faint);
+  color: var(--ink-muted);
   white-space: nowrap;
 }
 .cite__code {
@@ -463,7 +446,13 @@ mark { background: var(--mark); color: var(--ink); }
   transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
 .cite__copy:hover { color: var(--ink); border-color: var(--rule-strong); }
-.cite__copy[data-done] { color: var(--ink); border-color: var(--rule-strong); }
+.cite__copy[data-done] { color: var(--ink); border-color: var(--accent-fg); background: var(--accent-bg); }
+.cite__status {
+  margin: 0.5rem 0 0;
+  font-size: var(--fs-tiny);
+  color: var(--ink-muted);
+  min-height: 1em;
+}
 
 .lic { font-size: var(--fs-tiny); color: var(--ink-mute); border-top: 1px solid var(--rule); padding-top: 0.8rem; }
 
@@ -475,13 +464,18 @@ mark { background: var(--mark); color: var(--ink); }
 
 /* ---- admonition ------------------------------------------------------- */
 /* Reuses chester's card surface: a soft radius, a neutral fill, no border.
-   Type is distinguished by a glyph and a label rather than by colour, which
-   keeps the palette's chromatic budget for tags alone. */
+   Type is carried by the glyph, the label AND a colour — but the colour goes on
+   the MARKER (the glyph, and a hairline down the left edge), not on the whole
+   panel. A full-width 40% tint is a fill, and the first version of this rule
+   made a lime block bigger and louder than anything else on the page; chester
+   only ever uses these tints in small chips, and that is the whole reason they
+   read as markers instead of as backgrounds. */
 .admon {
   margin: 1.8em 0;
   padding: 1rem 1.25rem;
   border-radius: var(--radius-card);
   background: var(--card);
+  border-left: 3px solid var(--border);
 }
 .admon__title {
   display: flex;
@@ -504,8 +498,16 @@ mark { background: var(--mark); color: var(--ink); }
   color: var(--ink-strong);
 }
 .admon > p:last-child { margin-bottom: 0; }
-.admon--warn { background: var(--chip-amber-bg); }
-.admon--warn .admon__glyph { background: var(--chip-amber-fg); color: var(--page); }
+
+/* One colour per type, all from the chip palette. `note` stays neutral because
+   it is the default and should not compete; the other three are the ones a
+   reader scans for. */
+.admon--tip   { border-left-color: var(--chip-lime-fg); }
+.admon--tip   .admon__glyph { background: var(--chip-lime-bg);  color: var(--chip-lime-fg); }
+.admon--warn  { border-left-color: var(--chip-amber-fg); }
+.admon--warn  .admon__glyph { background: var(--chip-amber-bg); color: var(--chip-amber-fg); }
+.admon--aside { border-left-color: var(--chip-sky-fg); }
+.admon--aside .admon__glyph { background: var(--chip-sky-bg);   color: var(--chip-sky-fg); }
 
 /* ---- foldable paragraph / block --------------------------------------- */
 /* Rendered OPEN in the markup. The script adds the control and may hide the
@@ -513,9 +515,8 @@ mark { background: var(--mark); color: var(--ink); }
 .fold {
   margin: 1.8em 0;
   padding: 0 0 0 1rem;
-  border-left: 2px solid var(--border);
+  border-left: 2px solid var(--accent-bg);
 }
-.fold--inline { font-style: italic; color: var(--ink-body); }
 .fold__label {
   margin: 0 0 0.5rem;
   font-size: var(--fs-nav);
@@ -535,8 +536,16 @@ mark { background: var(--mark); color: var(--ink); }
   border-radius: var(--radius-chip);
 }
 .fold.is-foldable > .fold__label .fold__toggle { display: inline-block; }
-.fold--folded > *:not(.fold__label) { display: none; }
-.fold--folded { padding-bottom: 0.2rem; }
+
+/* A collapsed fold hides everything except its own label.
+ *
+ * The script has always toggled `is-collapsed` on `.fold`; the rule that was
+ * supposed to answer it said `.fold--folded`, a class nothing ever wrote. So
+ * clicking the control flipped the label from 收起 to 展开 and hid nothing at
+ * all — and the test passed, because it checked that the class had been added
+ * rather than that the content had gone. `layout.mjs` now measures the body. */
+.fold.is-collapsed > *:not(.fold__label) { display: none; }
+.fold.is-collapsed { padding-bottom: 0.2rem; }
 
 /* ---- epigraph --------------------------------------------------------- */
 .epigraph {

@@ -22,7 +22,7 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 import { esc, plain, slugify, walk, relative, rm, ensure, exists } from "./lib.mjs";
-import { Problems, nearMiss, hexFrom, contrast, todayISO } from "./lib.mjs";
+import { Problems, nearMiss, hexFrom, rgbaFrom, flatten, contrast, todayISO } from "./lib.mjs";
 import { DOMAINS, domainByKey, domainKeys, statusByKey } from "./taxonomy.mjs";
 import { loadSources, loadCollections, buildLinkGraph } from "./content.mjs";
 import { renderBody, searchText } from "./render.mjs";
@@ -79,7 +79,19 @@ const PRIVATE = new Set([
   "_articles", "_images", "_issues", "_reading", "_hobbies",
   "package.json", "package-lock.json", "README.md", "DESIGN-NOTES.md", "LICENSE"
 ]);
-const isPrivate = (name) => PRIVATE.has(name) || name.startsWith("_") || name.startsWith(".");
+
+/**
+ * What the publish pruner must never delete.
+ *
+ * The name list above is for files that live in the root but are not output.
+ * The extension rule is the important half: the build never emits Markdown, so
+ * ANY root-level `.md` is documentation and must survive. Without it, adding a
+ * new document to the repository root means the next build silently deletes it —
+ * which is exactly what happened to AUDIT.md the first time it was written.
+ * Protection by rule rather than by a list someone has to remember to extend.
+ */
+const isPrivate = (name) =>
+  PRIVATE.has(name) || name.startsWith("_") || name.startsWith(".") || /\.(md|markdown)$/i.test(name);
 
 const write = (rel, contents) => {
   const p = path.join(STAGE, rel);
@@ -273,7 +285,10 @@ function checkDesign(log) {
   // `--note-offset` is the one legitimate exception — site.js sets it on the
   // element, so it can never appear in a stylesheet.
   const defined = new Set([...tokens.matchAll(/(--[a-z0-9-]+)\s*:/gi)].map((m) => m[1]));
-  const RUNTIME_VARS = new Set(["--note-offset"]);
+  // Two legitimate exceptions, both set on the element at runtime rather than in
+  // a stylesheet: the sidenote offset the script computes, and the entrance
+  // index the template writes per card and per list row.
+  const RUNTIME_VARS = new Set(["--note-offset", "--i"]);
   const undefinedVars = new Set();
   for (const m of css.matchAll(/var\((--[a-z0-9-]+)/gi)) {
     if (!defined.has(m[1]) && !RUNTIME_VARS.has(m[1])) undefinedVars.add(m[1]);
@@ -318,24 +333,124 @@ function checkDesign(log) {
     if (!ok) failures.push(`正文行宽是 ${perLine.toFixed(1)} 字，超出 30–34 的目标区间`);
   }
 
-  // ---- contrast, against the white canvas ------------------------------
-  const pairs = [
-    ["正文", "ink", "page"],
-    ["卡片正文", "ink-body", "card"],
-    ["次要文字", "ink-muted", "page"]
+  // ---- contrast ---------------------------------------------------------
+  // Measured on the values that actually render: the two text greys against
+  // every ground they sit on, and every chip — the site's only chromatic
+  // surfaces — composited over the page and over a card, because a 40% tint is
+  // not the colour anybody sees until it is laid over something.
+  const contrastPairs = [
+    ["正文", "ink", "page", 4.5],
+    ["卡片正文", "ink-body", "card", 4.5],
+    ["次要文字（页面）", "ink-muted", "page", 4.5],
+    ["次要文字（卡片）", "ink-muted", "card", 4.5],
+    ["焦点环", "focus-ring-strong", "page", 3],
+    ["焦点环（卡片）", "focus-ring-strong", "card", 3]
   ];
-  for (const [name, fg, bg] of pairs) {
+  for (const [name, fg, bg, need] of contrastPairs) {
     const a = hexFrom(tokens, fg, null);
     const b = hexFrom(tokens, bg, null);
     if (!a || !b) { failures.push(`色板缺少 --${fg} 或 --${bg}，无法校验${name}对比度`); continue; }
     const r = contrast(a, b);
-    // 3:1 for muted text: it is only ever used at >=14px for labels and
-    // eyebrows, never for prose. Body copy runs at 16px/400 and is asserted at
-    // full AA below.
-    const need = name === "次要文字" ? 3 : 4.5;
     const ok = r >= need;
-    log(`  ${ok ? "ok  " : "FAIL"} ${name.padEnd(10)} ${r.toFixed(2)}:1 (需要 ${need})`);
+    log(`  ${ok ? "ok  " : "FAIL"} ${name.padEnd(16)} ${r.toFixed(2)}:1 (需要 ${need})`);
     if (!ok) failures.push(`${name}对比度 ${r.toFixed(2)}:1 低于 ${need}:1`);
+  }
+
+  // The chips are drawn at 14px, so they are normal text and need the full 4.5.
+  const chipNames = ["amber", "lime", "orange", "green", "purple", "sky", "rose", "teal", "neutral"];
+  const chipFailures = [];
+  for (const name of chipNames) {
+    const fill = rgbaFrom(tokens, `chip-${name}-bg`, null);
+    const ink = hexFrom(tokens, `chip-${name}-fg`, null);
+    if (!fill || !ink) { chipFailures.push(`${name} 缺少定义`); continue; }
+    for (const [ground, base] of [["页面", hexFrom(tokens, "page", null)], ["卡片", hexFrom(tokens, "card", null)]]) {
+      const r = contrast(ink, flatten(fill, base));
+      if (r < 4.5) chipFailures.push(`${name}/${ground} ${r.toFixed(2)}:1`);
+    }
+  }
+  const chipCount = chipNames.length * 2;
+  if (chipFailures.length) failures.push(`标签配色对比度不足：${chipFailures.slice(0, 4).join(", ")}`);
+  else log(`  ok   标签配色      ${chipNames.length} 色 × 2 底色 = ${chipCount} 组全部 ≥4.5`);
+
+  // ---- decoration stays decoration -------------------------------------
+  // `--ink-faint` measures 3.45:1 — fine for a glyph, not for text. Rather than
+  // leave that as a note in a comment, the allowed selectors are listed and
+  // anything else using it fails the build.
+  const FAINT_ALLOWED = [".anchor", "hr.divider::before"];
+  const faintUsers = [];
+  for (const block of css.match(/[^{}]+\{[^}]*\}/g) || []) {
+    if (!/var\(--ink-faint\)/.test(block)) continue;
+    const selector = block.slice(0, block.indexOf("{")).trim();
+    if (!FAINT_ALLOWED.includes(selector)) faintUsers.push(selector);
+  }
+  if (faintUsers.length) {
+    failures.push(`--ink-faint（3.45:1）只能用于装饰，这些地方把它用在文字上了：${[...new Set(faintUsers)].join(", ")}`);
+  } else {
+    log(`  ok   浅灰用途     --ink-faint 只用于 ${FAINT_ALLOWED.join(" / ")}`);
+  }
+
+  // ---- the script and the stylesheet must agree -------------------------
+  // The bug this exists for: site.js toggled `is-collapsed` on a fold while the
+  // stylesheet answered to `fold--folded`, so the control flipped its own label
+  // and hid nothing. Same shape as `.reveal`/`is-shown`, which had a script and
+  // no CSS at all. Neither was an error anywhere — a class name is a string, and
+  // nothing checks strings. So: every class the script writes must be a selector
+  // somewhere, and every `data-` attribute the stylesheet branches on must have
+  // a writer.
+  const SCRIPT_CLASS_EXCEPTIONS = new Set(["fold__label--inline"]);
+  const written = new Set();
+  for (const m of js.matchAll(/classList\.(?:add|toggle|remove)\(\s*"([^"]+)"/g)) {
+    for (const c of m[1].split(/\s+/)) written.add(c);
+  }
+  for (const m of js.matchAll(/\.className\s*=\s*"([^"]+)"/g)) {
+    for (const c of m[1].split(/\s+/)) written.add(c);
+  }
+  const unstyled = [...written].filter((c) => !SCRIPT_CLASS_EXCEPTIONS.has(c) && !new RegExp(`\\.${c}\\b`).test(css));
+  if (unstyled.length) {
+    failures.push(`脚本会写这些类名，但样式表里没有对应规则，等于点了没反应：${unstyled.join(", ")}`);
+  } else {
+    log(`  ok   脚本↔样式   ${written.size} 个类名都有对应规则`);
+  }
+
+  const sources = fs.readdirSync(HERE).filter((f) => f.endsWith(".mjs"))
+    .map((f) => fs.readFileSync(path.join(HERE, f), "utf8"))
+    .join("\n") + fs.readFileSync(path.join(ASSETS, "site.js"), "utf8")
+    + fs.readFileSync(path.join(ASSETS, "guess404.js"), "utf8");
+  const dataAttrs = new Set([...css.matchAll(/\[(data-[a-z-]+)/g)].map((m) => m[1]));
+  const unwritten = [...dataAttrs].filter((a) => !sources.includes(a));
+  if (unwritten.length) {
+    failures.push(`样式表按这些属性分支，但没有任何地方写它，分支永远走不到：${unwritten.join(", ")}`);
+  } else {
+    log(`  ok   属性分支   ${dataAttrs.size} 个 data- 属性都有写入者`);
+  }
+
+  // ---- deleted things stay deleted --------------------------------------
+  // Each of these was removed for a reason recorded in DESIGN-NOTES; a selector
+  // creeping back means the reason was forgotten.
+  const GONE = {
+    "card--image": "本站没有图片",
+    "card__img": "本站没有图片",
+    "card__caption": "本站没有图片",
+    "home__title": "上一代的首页版式",
+    "homecols": "上一代的首页版式",
+    "tagcloud": "上一代的首页版式",
+    "serieslist": "上一代的首页版式",
+    "linkbtn": "无人使用",
+    "wrap--narrow": "无人使用",
+    "tracking-tight": "无人使用",
+    "nav__n": "无人使用",
+    "fold--folded": "脚本写的是 is-collapsed",
+    "notelist": "脚注开关已删除",
+    "readerbtn": "阅读模式已删除"
+  };
+  const back = Object.keys(GONE).filter((c) => new RegExp(`\\.${c}\\b`).test(css));
+  if (back.length) failures.push(`这些已经删掉的东西又回来了：${back.map((c) => `${c}（${GONE[c]}）`).join("；")}`);
+  else log(`  ok   已删项       ${Object.keys(GONE).length} 个删除项没有回来`);
+  for (const dead of ["--ink-40", "--ink-60", "--ink-80", "--link-visited", "--shadow-lift"]) {
+    if (new RegExp(`${dead}:`).test(tokens)) failures.push(`令牌 ${dead} 又出现了，它是前几代的遗留`);
+  }
+  if (/data-notes|data-reader/.test(css + js)) {
+    failures.push("样式或脚本里又出现了 data-notes / data-reader —— 那些开关已经删掉了");
   }
 
   // ---- the nav is fixed ------------------------------------------------
@@ -644,20 +759,50 @@ function prunePublished(log) {
   return removed;
 }
 
+/**
+ * Strip comments and redundant whitespace from a stylesheet before it ships.
+ *
+ * The source CSS is 61KB and half of it is commentary — the reasoning that
+ * belongs next to the rule, not in the reader's download. This is deliberately
+ * the smallest possible transform rather than a real minifier: it removes
+ * comments and collapses whitespace, and it does NOT touch anything inside a
+ * value. `calc(100% - 2rem)` keeps its spaces around the minus because that
+ * space is syntax, and every assertion in the build reads the SOURCE files, so
+ * nothing that is checked can be affected by what is stripped here.
+ */
+function minifyCss(src) {
+  // Comments go first, so an apostrophe inside a comment cannot be mistaken for
+  // the start of a string.
+  const code = src.replace(/\/\*[\s\S]*?\*\//g, "");
+  // Then everything quoted is held aside. The four link-type icons are inline
+  // SVG data URIs, and their contents — `viewBox='0 0 16 16'`, the `%3A` in a
+  // colour — must survive untouched: collapsing whitespace inside a URL is a
+  // silent corruption that no assertion would catch.
+  return code
+    .split(/("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')/)
+    .map((part, i) => (i % 2 === 1 ? part : part
+      .replace(/\s*([{};:,>])\s*/g, "$1")
+      .replace(/\s+/g, " ")))
+    .join("")
+    .trim();
+}
+
 function publish(log) {
   const stageAssets = path.join(STAGE, "assets");
   rm(stageAssets);
   ensure(stageAssets);
-  for (const f of fs.readdirSync(ASSETS)) {
-    fs.copyFileSync(path.join(ASSETS, f), path.join(stageAssets, f));
-  }
+  const writeAsset = (dir, f) => {
+    const from = path.join(ASSETS, f);
+    const to = path.join(dir, f);
+    if (f.endsWith(".css")) fs.writeFileSync(to, minifyCss(fs.readFileSync(from, "utf8")));
+    else fs.copyFileSync(from, to);
+  };
+  for (const f of fs.readdirSync(ASSETS)) writeAsset(stageAssets, f);
 
   const assetDst = path.join(ROOT, "assets");
   rm(assetDst);
   ensure(assetDst);
-  for (const f of fs.readdirSync(ASSETS)) {
-    fs.copyFileSync(path.join(ASSETS, f), path.join(assetDst, f));
-  }
+  for (const f of fs.readdirSync(ASSETS)) writeAsset(assetDst, f);
 
   for (const rel of MANAGED) {
     if (rel === "assets") continue;
@@ -1027,9 +1172,15 @@ async function main() {
     .map((f) => [f, fs.statSync(path.join(STAGE, f)).size])
     .sort((a, b) => b[1] - a[1])[0];
   // T.CSS holds bare names ("tokens", "base", …); the script is listed too so
-  // the budget covers everything a reader actually downloads.
+  // the budget covers everything a reader actually downloads. CSS is measured
+  // AFTER minifyCss, because that is what publish() writes — counting the
+  // comments here would charge the reader for bytes they never receive.
   const shippedFiles = T.CSS.map((n) => `${n}.css`).concat(["site.js"]);
-  const cssJs = shippedFiles.reduce((n, f) => n + fs.statSync(path.join(ASSETS, f)).size, 0);
+  const shippedBytes = (f) => {
+    const src = fs.readFileSync(path.join(ASSETS, f), "utf8");
+    return Buffer.byteLength(f.endsWith(".css") ? minifyCss(src) : src, "utf8");
+  };
+  const cssJs = shippedFiles.reduce((n, f) => n + shippedBytes(f), 0);
 
   log("▸ 体积");
   log(`  文章平均    ${(pageBytes / Math.max(1, htmlFiles.length) / 1024).toFixed(1)} KB`);
@@ -1038,14 +1189,11 @@ async function main() {
 
   const budgets = [
     ["最大单页", biggest[1] / 1024, 120, "KB"],
-    // Raised from 60KB when the chester skin landed, and to 80KB once the gwern
-    // controls were finished: the grid, the card system, the chips, the folding,
-    // the previews and the 404 guess all have to live somewhere, and this is
-    // still far smaller than one Tailwind or React build. The point of the
-    // budget is to catch a CDN or a framework creeping in, not to force
-    // hand-minification — so it is set with real headroom, and the actual figure
-    // is printed above it on every build.
-    ["css+js", cssJs / 1024, 80, "KB"]
+    // 64KB, down from 80. Publishing the stylesheets without their comments cut
+    // 30KB, so the budget can now be tight enough to catch a regression again
+    // rather than sitting slack. The rule the number protects is the same one it
+    // always was: no CDN, no framework, no downloaded font.
+    ["css+js", cssJs / 1024, 64, "KB"]
   ];
   for (const [name, val, max, unit] of budgets) {
     if (val > max) failures.push(`${name} ${val.toFixed(1)}${unit} 超出预算 ${max}${unit}`);
@@ -1060,7 +1208,41 @@ async function main() {
     process.exit(1);
   }
 
+  // Every root-level document that existed before the publish must still be
+  // there. The pruner deletes files the build no longer emits, and a doc added
+  // by hand looks exactly like one of those unless it is protected — AUDIT.md
+  // was written, reported success, and was gone by the next build.
+  const docsBefore = fs.readdirSync(ROOT).filter((f) => /\.(md|markdown)$/i.test(f));
   publish(log);
+  const eaten = docsBefore.filter((f) => !exists(path.join(ROOT, f)));
+  if (eaten.length) {
+    log("\n✗ 发布时删掉了仓库里的文档：");
+    for (const f of eaten) log("   · " + f);
+    log("   （把它的名字或扩展名加进 build.mjs 的 PRIVATE / isPrivate）");
+    process.exit(1);
+  }
+
+  // The published CSS has been through minifyCss, which is a transformation on
+  // the thing every other check reads the SOURCE of — so verify the result
+  // rather than trust it: every declaration and selector in the source must
+  // still be present in what was written. A corrupted data URI or a dropped
+  // rule would otherwise reach readers unnoticed.
+  const stripped = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\s+/g, "");
+  const minifyLosses = [];
+  for (const f of fs.readdirSync(ASSETS).filter((x) => x.endsWith(".css"))) {
+    const src = stripped(fs.readFileSync(path.join(ASSETS, f), "utf8"));
+    const out = stripped(fs.readFileSync(path.join(ROOT, "assets", f), "utf8"));
+    const decls = [...src.matchAll(/[a-z-]+:[^;{}]+/g)].map((m) => m[0]);
+    const missing = decls.filter((d) => !out.includes(d));
+    if (missing.length) minifyLosses.push(`${f}: ${missing.length} 条声明在压缩后不见了（${missing[0].slice(0, 40)}…）`);
+    if (/\/\*/.test(out)) minifyLosses.push(`${f}: 注释没有被剥掉`);
+  }
+  if (minifyLosses.length) {
+    log("\n✗ 发布前的 CSS 压缩丢东西了：");
+    for (const m of minifyLosses) log("   · " + m);
+    process.exit(1);
+  }
+
   log(`\n✓ 构建完成：${walk(STAGE).length} 个文件，用时 ${((Date.now() - t0) / 1000).toFixed(1)}s`);
   log(`  ${articles.length} 篇 · ${tags.length} 个标签 · ${series.length} 个系列 · ${refCount} 条互链`);
 }

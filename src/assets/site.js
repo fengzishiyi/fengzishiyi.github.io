@@ -142,6 +142,69 @@
   }
 
   /* ---------------------------------------------------------------- */
+  /* citations: the one-button copy                                    */
+  /* ---------------------------------------------------------------- */
+
+  /* The citation block has shipped four 「复制」 buttons on every article for
+     several revisions with nothing behind them: the CSS even had a
+     `[data-done]` state, and no code ever set it. The build now refuses a
+     `data-` branch with no writer, which is how this was found. */
+  function setupCopy() {
+    var status = document.querySelector("[data-copy-status]");
+    if (!status) return;
+
+    function fallback(btn) {
+      // Clipboard API needs a secure context and permission. When it is not
+      // there, select THAT row's text — not the first one on the page — so the
+      // reader only has to press Ctrl/Cmd + C.
+      var row = btn.closest ? btn.closest(".cite__row") : null;
+      var code = row ? row.querySelector(".cite__code") : document.querySelector(".cite__code");
+      if (!code || !window.getSelection) return false;
+      var range = document.createRange();
+      range.selectNodeContents(code);
+      var sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      return true;
+    }
+
+    var resetTimer = null;
+    document.addEventListener("click", function (e) {
+      var btn = e.target.closest && e.target.closest("[data-copy]");
+      if (!btn) return;
+      var text = btn.getAttribute("data-copy") || "";
+      // The message is passed IN rather than set before the call: the first
+      // version set it in the fallback and then cleared it here, so the reader
+      // got a silent failure with the text selected and no explanation.
+      var done = function (ok, message) {
+        btn.setAttribute("data-done", ok ? "true" : "false");
+        btn.textContent = ok ? "已复制" : "复制";
+        status.textContent = message || (ok ? "已复制到剪贴板。" : "");
+        clearTimeout(resetTimer);
+        resetTimer = setTimeout(function () {
+          btn.removeAttribute("data-done");
+          btn.textContent = "复制";
+        }, 2400);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text)
+          .then(function () { done(true); })
+          .catch(function () {
+            var selected = fallback(btn);
+            done(false, selected
+              ? "这个浏览器不允许自动复制，已经选中文本，按 Ctrl/Cmd + C。"
+              : "这个浏览器不允许自动复制，请手动选中上面的文本。");
+          });
+      } else {
+        var selected = fallback(btn);
+        done(false, selected
+          ? "这个浏览器不支持自动复制，已经选中文本，按 Ctrl/Cmd + C。"
+          : "这个浏览器不支持自动复制，请手动选中上面的文本。");
+      }
+    });
+  }
+
+  /* ---------------------------------------------------------------- */
   /* notes: keep them from colliding in the margin                      */
   /* ---------------------------------------------------------------- */
 
@@ -188,6 +251,7 @@
 
   var preview = null;
   var previewTimer = null;
+  var previewFrame = null;
 
   function ensurePreview() {
     if (preview) return preview;
@@ -207,9 +271,21 @@
     var box = anchor.getBoundingClientRect();
     p.style.left = Math.max(12, Math.min(box.left + (window.scrollX || 0), window.innerWidth - 380)) + "px";
     p.style.top = (box.bottom + (window.scrollY || window.pageYOffset || 0) + 8) + "px";
+    // `hidden` off, then `is-in` on the NEXT frame: a transition cannot run
+    // across a display change, so the two have to be separated by a frame or the
+    // popup appears instantly (which is what it used to do).
+    if (previewFrame) cancelAnimationFrame(previewFrame);
+    previewFrame = requestAnimationFrame(function () {
+      previewFrame = requestAnimationFrame(function () { p.classList.add("is-in"); });
+    });
   }
 
-  function hidePreview() { if (preview) preview.hidden = true; }
+  function hidePreview() {
+    if (!preview) return;
+    if (previewFrame) { cancelAnimationFrame(previewFrame); previewFrame = null; }
+    preview.classList.remove("is-in");
+    preview.hidden = true;
+  }
 
   document.addEventListener("mouseover", function (e) {
     var a = e.target.closest && e.target.closest(".ref[data-preview]");
@@ -278,14 +354,46 @@
     var debounce = null;
     var params = new URLSearchParams(window.location.search);
 
+    /** Three grey rows in the shape the results will take.
+     *
+     *  A spinner says "wait"; a skeleton says "three results, about this big".
+     *  Decorative and hidden from assistive tech — the live region above already
+     *  announces the loading text, and the rows are removed the moment the real
+     *  results arrive. */
+    function showSkeleton() {
+      status.setAttribute("data-loading", "true");
+      if (!results.querySelector(".skeleton")) {
+        var frag = document.createDocumentFragment();
+        for (var i = 0; i < 3; i++) {
+          var li = document.createElement("li");
+          li.className = "entry";
+          li.setAttribute("aria-hidden", "true");
+          li.innerHTML = '<span class="skeleton skeleton--lead"></span><span class="skeleton skeleton--row"></span>';
+          frag.appendChild(li);
+        }
+        results.appendChild(frag);
+      }
+    }
+
+    function clearSkeleton() {
+      status.removeAttribute("data-loading");
+      Array.prototype.forEach.call(results.querySelectorAll('[aria-hidden="true"]'), function (n) {
+        n.remove();
+      });
+    }
+
     function ensureIndex() {
       if (index || loading) return;
       loading = true;
       status.textContent = "正在载入索引…";
+      showSkeleton();
       fetch("/search/index.json", { credentials: "same-origin" })
         .then(function (r) { if (!r.ok) throw new Error("索引 " + r.status); return r.json(); })
         .then(function (data) { index = data; fillFacets(); run(); })
-        .catch(function () { status.textContent = "索引载入失败。可以用标签或归档页浏览。"; });
+        .catch(function () {
+          clearSkeleton();
+          status.textContent = "索引载入失败。可以用标签或归档页浏览。";
+        });
     }
 
     function fillFacets() {
@@ -375,6 +483,7 @@
         return a.date < b.date ? 1 : -1;
       });
 
+      clearSkeleton();
       results.textContent = "";
       cursor = -1;
 
@@ -441,6 +550,7 @@
 
   setupSections();
   setupFolds();
+  setupCopy();
   layoutNotes();
   setupReveal();
   setupSearch();

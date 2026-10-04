@@ -23,11 +23,12 @@
 <link rel="stylesheet" href="/assets/prose.css">
 <link rel="stylesheet" href="/assets/components.css">
 <link rel="stylesheet" href="/assets/search.css">
+<link rel="stylesheet" href="/assets/motion.css">
 
 
 <!-- No analytics, no fonts, no CDN, no third-party script. See /about/ . -->
 </head>
-<body>
+<body data-accent="neutral">
 <a class="skip" href="#main">跳到正文</a>
 
 <div class="wrap">
@@ -99,7 +100,9 @@
     </label>
   </div>
 
-  <p class="searchstatus" role="status" aria-live="polite" data-search-status></p>
+  <p class="searchstatus" role="status" aria-live="polite" data-search-status>
+    <span class="searchstatus__text">载入索引后就能检索。</span>
+  </p>
   <ol class="entries searchresults" data-search-results></ol>
   <noscript>
     <p class="empty">搜索需要 JavaScript。没有它也能用：<a href="/tags/">按标签</a>或<a href="/archive/">按时间</a>浏览全部文章。</p>

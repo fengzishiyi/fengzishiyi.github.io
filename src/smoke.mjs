@@ -96,7 +96,7 @@ try {
   console.log("\nassets");
   const mustExist = [
     "/search/index.json", "/rss.xml", "/sitemap.xml", "/robots.txt", "/favicon.svg",
-    ...["tokens", "base", "grid", "prose", "components", "search"].map((n) => `/assets/${n}.css`),
+    ...["tokens", "base", "grid", "prose", "components", "search", "motion"].map((n) => `/assets/${n}.css`),
     "/assets/site.js", "/assets/guess404.js"
   ];
   for (const p of mustExist) {
@@ -193,6 +193,49 @@ try {
   } else {
     ok("导航当前页由 aria-current 标记，无需脚本");
   }
+
+  console.log("\nthe colour system");
+  // Every page states its accent, and the stylesheet has a rule for it — one
+  // without the other means the page silently renders neutral.
+  const accented = Object.entries(html).filter(([, b]) => /<body data-accent="[a-z]+"/.test(b));
+  if (accented.length !== Object.keys(html).length) {
+    fail(`${Object.keys(html).length - accented.length} 个页面没有 data-accent`);
+  } else {
+    const kinds = new Set(Object.values(html).map((b) => /<body data-accent="([a-z]+)"/.exec(b)[1]));
+    for (const k of kinds) {
+      if (!new RegExp(`body\\[data-accent="${k}"\\]`).test((await get("/assets/tokens.css")).body)) {
+        fail(`样式表里没有 body[data-accent="${k}"] 的规则`);
+      }
+    }
+    ok(`${accented.length} 个页面都声明了强调色（${[...kinds].sort().join(" / ")}）`);
+  }
+
+  // Tags are chips in a fixed per-name colour, and a tag page carries that same
+  // colour as its accent. The invariant worth asserting is the sameness: the
+  // colour is information only if it never moves between pages.
+  const chipByTag = new Map();
+  for (const p of articles) {
+    const rail = /id="tags"[\s\S]*?<\/section>/.exec(html[p] || "");
+    if (!rail) continue;
+    for (const m of rail[0].matchAll(/href="\/tags\/([^"]+)\/"[^>]*>.*?chip chip--([a-z]+)/g)) {
+      chipByTag.set(decodeURIComponent(m[1]), m[2]);
+    }
+  }
+  const tagProblems = [];
+  for (const [name, colour] of chipByTag) {
+    // `html` is keyed by the directory names as they are on disk, which are the
+    // decoded ones; the hrefs are percent-encoded, hence the decode above.
+    const page = html[`/tags/${name}/`];
+    if (!page) { tagProblems.push(`标签「${name}」没有页面`); continue; }
+    const accent = /<body data-accent="([a-z]+)"/.exec(page);
+    if (!accent) tagProblems.push(`标签页「${name}」没有强调色`);
+    else if (accent[1] !== colour) {
+      tagProblems.push(`标签「${name}」在文章页是 ${colour}，在标签页是 ${accent[1]}`);
+    }
+  }
+  if (tagProblems.length) tagProblems.slice(0, 3).forEach(fail);
+  else if (!chipByTag.size) fail("文章页的标签没有上色");
+  else ok(`${chipByTag.size} 个标签在文章页与标签页上同色`);
 
   console.log("\narticles keep their promises");
   const articleHtml = articles.map((p) => html[p]).filter(Boolean).join("\n");
@@ -338,7 +381,7 @@ try {
 
   const walkSize = (d) => fs.readdirSync(d, { withFileTypes: true })
     .reduce((n, e) => n + (e.isDirectory() ? walkSize(path.join(d, e.name)) : fs.statSync(path.join(d, e.name)).size), 0);
-  const shipped = ["tokens", "base", "grid", "prose", "components", "search"].map((n) => `/assets/${n}.css`)
+  const shipped = ["tokens", "base", "grid", "prose", "components", "search", "motion"].map((n) => `/assets/${n}.css`)
     .concat(["/assets/site.js"]);
   const cssJs = shipped.reduce((n, p) => n + fs.statSync(path.join(ROOT, p)).size, 0);
   const biggest = Object.entries(html)
@@ -346,7 +389,7 @@ try {
     .sort((a, b) => b[1] - a[1])[0];
 
   for (const [name, val, max, unit] of [
-    ["css + js", cssJs / 1024, 80, "KB"],
+    ["css + js", cssJs / 1024, 64, "KB"],
     ["最大单页", biggest[1] / 1024, 120, "KB"]
   ]) {
     if (val > max) fail(`${name} 是 ${val.toFixed(1)}${unit}，超出预算 ${max}${unit}`);

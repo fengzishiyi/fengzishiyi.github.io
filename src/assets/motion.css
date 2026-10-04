@@ -1,0 +1,135 @@
+/* ==========================================================================
+   motion.css — every animation on the site, and the rules they obey
+
+   Three rules, and the reasons for them:
+
+   1. NOTHING HIDES OUTSIDE A KEYFRAME. The hidden start state of an entrance
+      lives inside `@keyframes`, never in a plain rule. A plain `opacity: 0`
+      depends on an animation arriving to undo it, so a browser with animations
+      off — reduced-motion, an old engine, a print stylesheet — would render the
+      page blank. This way the worst case is "no animation", never "no content".
+
+   2. EVERYTHING IS SHORT. 120ms for a control, 180ms for colour, 400ms for an
+      entrance, staggered 20ms and capped at six steps, so the last card on a
+      page is done in 520ms. Nothing bounces: an overshooting ease reads as
+      cheap, and this is a reading site.
+
+   3. MOTION NEVER TOUCHES GEOMETRY THAT IS MEASURED. Cards fade; they do not
+      slide. The layout suite measures positions at six viewports, and a card
+      that is 6px into a rise when the probe runs is a flaky test rather than a
+      bug — so entrances that move are confined to list rows.
+   ========================================================================== */
+
+/* ---- entrances --------------------------------------------------------- */
+
+@keyframes card-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes target-flash {
+  from { background-color: var(--accent-bg); }
+  to   { background-color: transparent; }
+}
+
+/* Index grids: opacity only, indexed by the `--i` the template emits. This runs
+   on load rather than on intersection — the grid is the content, and a card
+   that has to be scrolled to before it can be seen is a card that pops. */
+.cell > .card {
+  animation: card-in var(--dur-slow) var(--ease) both;
+  animation-delay: calc(var(--i, 0) * var(--stagger));
+}
+
+/* Long lists — the archive, the changelog, the 404 guess — animate as they come
+   into view, because animating fifty rows on load wastes the animation on rows
+   nobody has looked at yet. The script adds `is-shown`; without it the list is
+   simply there, which is also what a reader with no scripting gets. */
+.reveal.is-shown > li {
+  animation: rise var(--dur-slow) var(--ease) both;
+  animation-delay: calc(var(--i, 0) * var(--stagger));
+}
+
+/* ---- state changes ----------------------------------------------------- */
+
+/* The link preview: 120ms rather than a snap. `hidden` still does the
+   accessibility work; `is-in` (added a frame later, by the script) does the
+   fading, because a transition cannot run across a display change. */
+.preview {
+  transition: opacity var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+}
+.preview[hidden] { opacity: 0; }
+.preview.is-in { opacity: 1; }
+
+/* Landing on a heading from a backlink: a short tint so the reader can see where
+   the jump put them. */
+h2:target,
+h3:target,
+.sectionback:target {
+  animation: target-flash 520ms var(--ease) 1;
+  border-radius: var(--radius-chip);
+}
+
+/* A `+++` fold's control, and the section fold's, turn rather than jump. */
+.fold__toggle,
+.sec__toggle {
+  transition: transform var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+.fold.is-collapsed > .fold__label .fold__toggle,
+.sec--folded > h2 .sec__toggle { transform: rotate(-90deg); }
+
+/* ---- surfaces ---------------------------------------------------------- */
+
+/* Card lift. Wrapped in a hover-capable query so a touch device does not keep a
+   card raised after a tap. */
+@media (hover: hover) and (pointer: fine) {
+  .card {
+    transition: background-color var(--dur) var(--ease),
+                box-shadow var(--dur) var(--ease),
+                transform var(--dur) var(--ease);
+  }
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+  }
+  .card--intro:hover,
+  .card--display:hover { transform: none; }
+}
+
+/* ---- loading -----------------------------------------------------------
+   A skeleton rather than a spinner: the search results have a known shape, so
+   showing that shape says "three rows are coming" instead of "wait". */
+
+.skeleton {
+  display: block;
+  height: 0.75rem;
+  margin: 0.6rem 0;
+  border-radius: var(--radius-chip);
+  background: linear-gradient(90deg, var(--inactive-area) 0%, var(--skeleton-hi) 50%, var(--inactive-area) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.1s linear infinite;
+}
+.skeleton--lead { width: 45%; }
+.skeleton--row { width: 100%; }
+@keyframes shimmer {
+  from { background-position: 150% 0; }
+  to   { background-position: -50% 0; }
+}
+
+/* ---- reduced motion ----------------------------------------------------
+   base.css already collapses every duration and delay to zero; these rules make
+   the intent explicit for the animations that would otherwise read as noise. */
+
+@media (prefers-reduced-motion: reduce) {
+  .cell > .card,
+  .reveal.is-shown > li,
+  h2:target,
+  h3:target,
+  .sectionback:target { animation: none; }
+  .skeleton { animation: none; background: var(--inactive-area); }
+  .card:hover { transform: none; }
+}

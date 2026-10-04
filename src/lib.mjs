@@ -187,6 +187,44 @@ export function hexFrom(css, name, fallback) {
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
 
+/** Read a `--name: rgba(r, g, b, a)` custom property. The chips are the only
+ *  chromatic surfaces on the site and they are all translucent, so a check that
+ *  cannot read an alpha channel cannot check them at all. */
+export function rgbaFrom(css, name, fallback) {
+  const m = new RegExp(`--${name}:\\s*rgba\\(\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*([\\d.]+)\\s*\\)`).exec(css);
+  if (!m) return fallback;
+  return { rgb: [+m[1], +m[2], +m[3]], alpha: +m[4] };
+}
+
+/** Flatten a translucent fill onto an opaque ground: what the reader's eye gets
+ *  is the composite, and the composite is what contrast must be measured on. */
+export const flatten = ({ rgb, alpha }, base) => rgb.map((c, i) => c * alpha + base[i] * (1 - alpha));
+
+/* ── accents ──────────────────────────────────────────────────────────────
+ * Every coloured thing on the site picks one of the nine chip pairs, and the
+ * pick has to be the SAME every time or the colour means nothing: a tag that is
+ * amber on the index and sky on the article is decoration, not information.
+ * The eight chromatic names below are the palette; `accentFor` hashes a name
+ * onto them deterministically, so tag colour is stable across builds, pages and
+ * machines without storing a colour anywhere.
+ */
+export const ACCENTS = ["amber", "lime", "orange", "green", "purple", "sky", "rose", "teal"];
+
+/** FNV-1a, 32-bit. Small, well-mixed, and identical on every machine — which is
+ *  the whole requirement here. */
+export function hash32(str) {
+  let h = 0x811c9dc5;
+  const s = String(str);
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h >>> 0;
+}
+
+export const accentFor = (name) => ACCENTS[hash32(name) % ACCENTS.length];
+
+
 /** Count the CJK characters in a string — used to keep the reading measure
  *  honest, since `ch` and `max-width` say nothing useful about 汉字. */
 export const cjkCount = (s) => (String(s).match(/[\u4e00-\u9fff]/g) || []).length;
