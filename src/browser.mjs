@@ -223,9 +223,8 @@ export const MEASURE_EXPR = `(() => {
 
   out.h1Count = document.querySelectorAll("h1").length;
 
-  [["title", ".arthead__title"], ["pageTitle", ".pagehead h1"],
-   ["prose", ".prose p"], ["artmain", ".artmain"], ["rail", ".rail"],
-   ["mast", ".mast__in"], ["toolbar", ".toolbar"]].forEach(function (pair) {
+  [["title", ".arthead__title"], ["pageTitle", ".pagehead__title"],
+   ["prose", ".prose p"], ["artmain", ".artmain"], ["rail", ".rail"]].forEach(function (pair) {
     var el = document.querySelector(pair[1]);
     if (!el) return;
     var r = el.getBoundingClientRect();

@@ -4,7 +4,6 @@
    Everything here is an enhancement of a default that already works:
 
      · folding       — sections and folds render OPEN; this adds the control
-     · reader mode   — strips the chrome for reading; off by default
      · previews      — links resolve and read fine as plain links
      · search        — the archive and tags pages cover the same ground
 
@@ -12,9 +11,9 @@
    it looks the same whether or not this file ever runs.
 
    Removed in this revision, deliberately: the dark/light theme switch, the
-   font-size and line-width steppers, and the reading-progress bar. The design
-   is light-only and has no reading controls — the reader mode replaces all of
-   them with one switch.
+   font-size and line-width steppers, the reading-progress bar, and reader mode.
+   The design is light-only and has no reading controls — the article page is
+   already down to a title, a meta line and a lead.
 
    No third-party code, no network requests, no analytics.
    ========================================================================== */
@@ -143,33 +142,6 @@
   }
 
   /* ---------------------------------------------------------------- */
-  /* reader mode                                                       */
-  /* ---------------------------------------------------------------- */
-
-  function setupReader() {
-    var btns = document.querySelectorAll("[data-reader-toggle]");
-    if (!btns.length) return;
-
-    var apply = function (on) {
-      root.setAttribute("data-reader", on ? "on" : "off");
-      Array.prototype.forEach.call(btns, function (b) {
-        b.setAttribute("aria-pressed", on ? "true" : "false");
-        b.textContent = on ? "退出阅读模式" : "阅读模式";
-      });
-      layoutNotes();
-    };
-
-    apply(store.get("reader") === "on");
-    document.addEventListener("click", function (e) {
-      var b = e.target.closest && e.target.closest("[data-reader-toggle]");
-      if (!b) return;
-      var on = root.getAttribute("data-reader") !== "on";
-      store.set("reader", on ? "on" : "off");
-      apply(on);
-    });
-  }
-
-  /* ---------------------------------------------------------------- */
   /* notes: keep them from colliding in the margin                      */
   /* ---------------------------------------------------------------- */
 
@@ -184,7 +156,7 @@
     var wide = window.matchMedia && window.matchMedia("(min-width: 1160px)").matches;
     var notes = noteEls();
 
-    if (!wide || root.getAttribute("data-reader") === "on") {
+    if (!wide) {
       for (var i = 0; i < notes.length; i++) notes[i].style.removeProperty("--note-offset");
       return;
     }
@@ -469,7 +441,6 @@
 
   setupSections();
   setupFolds();
-  setupReader();
   layoutNotes();
   setupReveal();
   setupSearch();

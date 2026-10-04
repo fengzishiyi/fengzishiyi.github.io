@@ -162,12 +162,17 @@ export function card(item, size) {
   const category = item.collectionName || item.domainName || "";
   const label = item.collectionName ? (item.statusName || item.kind || "") : (item.kind || "");
   const catHref = item.collection ? `/${item.collection}/` : `/${item.domain}/`;
+  // A display-only card — a hobby tile — has nowhere to go, so it gets neither
+  // a link nor the arrow that promises one. That is the reference's rule, and a
+  // card that looks clickable but is not is worse than a plain one.
+  const display = !item.url;
 
   const head = `<div class="card__head">
-        <span><a class="card__cat" href="${esc(catHref)}">${esc(category)}</a>${
-          label ? `&nbsp;·&nbsp;${esc(label)}` : ""
+        <span>${display
+          ? `${esc(category)}${label ? `&nbsp;·&nbsp;${esc(label)}` : ""}`
+          : `<a class="card__cat" href="${esc(catHref)}">${esc(category)}</a>${label ? `&nbsp;·&nbsp;${esc(label)}` : ""}`
         }</span>
-        <span class="card__arrow">${arrowSvg}</span>
+        ${display ? "" : `<span class="card__arrow">${arrowSvg}</span>`}
       </div>`;
 
   if (size === "intro") {
@@ -184,13 +189,19 @@ export function card(item, size) {
   }
 
   // Chips only where chester has them. Its Writing cards carry no chips at all —
-  // header, title, date, text — while its Reading and Hobbies cards lead with the
-  // coloured status chip (READING / READ / FILTER). An article's tags used to be
-  // printed here in neutral grey, which read as grey-on-grey and was not in the
-  // reference; the tags still live on the article itself and on /tags/.
-  const chips = item.collection && item.statusName
-    ? `<div class="card__chips">${chip(item.statusName, item.chip)}</div>`
-    : "";
+  // header, title, date, text — while its Reading and Hobbies cards open with
+  // coloured ones (READING / READ, FILTER / NOW BREWING). An article's tags used
+  // to be printed here in neutral grey, which read as grey-on-grey and was not in
+  // the reference; the tags still live on the article itself and on /tags/.
+  //
+  // A collection card gets its status plus up to two of its own tags, which is
+  // what gives the reference's coffee tiles their "FILTER · NOW BREWING" pair.
+  const chipList = [];
+  if (item.collection && item.statusName) chipList.push(chip(item.statusName, item.chip));
+  if (item.collection && Array.isArray(item.tags)) {
+    for (const t of item.tags.slice(0, 2)) chipList.push(chip(t, item.chip));
+  }
+  const chips = chipList.length ? `<div class="card__chips">${chipList.join("")}</div>` : "";
 
   const sub = item.author
     ? `<span class="card__sub">${esc(item.author)}${item.created ? ` · ${esc(item.created.slice(0, 4))}` : ""}</span>`
@@ -199,13 +210,17 @@ export function card(item, size) {
   const bodyText = item.note || item.description || "";
   const body = bodyText ? `<p class="card__body">${esc(bodyText)}</p>` : "";
 
+  const title = display
+    ? `<h3 class="card__title">${esc(item.title)}</h3>`
+    : `<h3 class="card__title"><a class="card__link stretched" href="${esc(item.url)}">${esc(item.title)}</a></h3>`;
+
   return `<div class="cell cell--${esc(size)}">
-    <div class="card">
+    <div class="card${display ? " card--display" : ""}">
       <div class="card__inner">
         ${head}
         <div class="card__text">
           ${chips}
-          <h3 class="card__title"><a class="card__link stretched" href="${esc(item.url)}">${esc(item.title)}</a></h3>
+          ${title}
           ${sub}
           ${body}
         </div>
@@ -251,6 +266,18 @@ function tagList(tags) {
   return `<ul class="taglist" aria-label="标签">
 ${tags.map((t) => `      <li><a href="/tags/${encodeURIComponent(t)}/">${esc(t)}</a></li>`).join("\n")}
   </ul>`;
+}
+
+/** The same tags, as a rail block. They used to sit above the title, which put
+ *  four separate elements between the reader and the first sentence. */
+function tagsRail(tags) {
+  if (!tags || !tags.length) return "";
+  return `<section class="railsec" id="tags" aria-labelledby="tags-h">
+  <h2 class="rail__h" id="tags-h">标签</h2>
+  <ul class="taglist taglist--rail" aria-label="标签">
+${tags.map((t) => `    <li><a href="/tags/${encodeURIComponent(t)}/">${esc(t)}</a></li>`).join("\n")}
+  </ul>
+</section>`;
 }
 
 function outline(headings) {
@@ -435,22 +462,19 @@ export function pageArticle(site, a, ctx) {
       ...(a.license || site.license ? { license: a.license || site.license } : {})
     }
   })}
-${nav(a.domain === "literature" || a.domain === "philosophy" || a.domain === "compsci" ? "writing" : "home")}
+${nav("writing")}
 <a id="top"></a>
 <main id="main" class="wrap wrap--reading article">
+  <p class="artback"><a href="/writing/"><span aria-hidden="true">←</span> 写作</a></p>
   <header class="arthead">
-    <p class="arthead__kicker">
-      <a href="/writing/">写作</a>
-      <span aria-hidden="true"> · </span><a href="/${esc(a.domain)}/">${esc(a.domainName)}</a>
+    <h1 class="arthead__title">${esc(a.title)}</h1>
+    <p class="arthead__meta">
+      <a href="/${esc(a.domain)}/">${esc(a.domainName)}</a>
       <span aria-hidden="true"> · </span>${esc(a.kind)}
+      <span aria-hidden="true"> · </span><time datetime="${esc(a.created)}">${esc(dateDots(a.created))}</time>
       ${status ? `<span aria-hidden="true"> · </span><span class="status status--${esc(a.status)}">${esc(status.name)}</span>` : ""}
     </p>
-    <h1 class="arthead__title">${esc(a.title)}</h1>
     <p class="arthead__desc">${esc(a.description)}</p>
-${tagList(a.tags)}
-    <p class="arthead__tools">
-      <button type="button" class="readerbtn" data-reader-toggle aria-pressed="false">阅读模式</button>
-    </p>
   </header>
 
   <div class="artbody">
@@ -461,6 +485,7 @@ ${notesHtml}
     <aside class="rail" aria-label="页面工具" data-rail>
 ${metaBlock(a, { revisions })}
 ${outline(headings)}
+${tagsRail(a.tags)}
 ${sourcesSection(outgoing, bySlug)}
 ${backlinksSection(backlinks)}
 ${relatedSection(related)}
@@ -588,32 +613,45 @@ ${masonry(cards)}
 ${foot(site)}`;
 }
 
-/** `/writing/` — the index that the three domains used to occupy directly. */
+/**
+ * `/writing/` — every piece, scattered into one grid.
+ *
+ * This page used to be three labelled blocks, one per domain, each with its own
+ * heading and list. The instruction was that writing does not need to be forced
+ * into three groups: it should just be cards. So it is the homepage's grid
+ * without the intro tile, and the three domains survive as filters you reach
+ * from a tag, an article's own header, or `/archive/`.
+ */
 export function pageWriting(site, ctx) {
-  const { articles, byDomain, counts } = ctx;
+  const { articles, counts } = ctx;
+  const cards = articles.map((a) => card(a, sizeFor(a, false)));
   return `${head(site, {
     title: "写作",
-    desc: site.writingBlurb || "按领域分组的全部文章。",
+    desc: site.writingBlurb || "全部文章。",
     canonical: `${site.origin}/writing/`
   })}
 ${nav("writing")}
 <a id="top"></a>
 <main id="main" class="wrap">
-  <header class="pagehead">
-    <h1>写作</h1>
-    <p class="pagehead__desc">${esc(site.writingBlurb || "文学、哲学与计算机科学。三个领域各自成列，也可以按标签横着找。")}</p>
-  </header>
-${DOMAINS.map((d) => {
-  const items = byDomain.get(d.key) || [];
-  return `  <section class="secblock" aria-labelledby="d-${esc(d.key)}">
-    <h2 id="d-${esc(d.key)}" class="secblock__h"><a href="/${esc(d.key)}/">${esc(d.name)}</a> <span class="meta">${items.length}</span></h2>
-    <p class="secblock__blurb">${esc(d.blurb)}</p>
-${entryList(items.slice(0, 6))}
-${items.length > 6 ? `    <p class="more"><a href="/${esc(d.key)}/">全部 ${items.length} 篇 →</a></p>` : ""}
-  </section>`;
-}).join("\n")}
+${pageHead("写作", esc(site.writingBlurb || "文学、哲学与计算机科学，散在一面墙上。"), `    <p class="meta">${articles.length} 篇 · <a href="/archive/">按时间</a> · <a href="/tags/">按标签</a> · <a href="/series/">系列</a></p>\n`)}
+${masonry(cards)}
 </main>
 ${foot(site)}`;
+}
+
+/**
+ * The header every sub-page wears.
+ *
+ * The reference sets its section titles at `text-6xl md:text-8xl` — 60px, then
+ * 96px — in the lightest weight the serif has, over one grey lead paragraph.
+ * That is the whole header: no eyebrow line, no tags, no controls. It is also
+ * the clearest statement of the site's hierarchy, because a page title that
+ * large needs no decoration to read as one.
+ */
+function pageHead(title, blurb, extra = "") {
+  return `  <header class="pagehead">
+    <h1 class="pagehead__title">${title}</h1>
+${blurb ? `    <p class="pagehead__desc">${blurb}</p>\n` : ""}${extra}  </header>`;
 }
 
 /** A collection index: `/reading/`, `/hobbies/`. Works when empty. */
@@ -629,16 +667,14 @@ export function pageCollection(site, c, items, counts, activeKey) {
 ${nav(activeKey || c.key)}
 <a id="top"></a>
 <main id="main" class="wrap">
-  <header class="pagehead">
-    <h1>${esc(c.name)}</h1>
-    <p class="pagehead__desc">${esc(c.blurb)}</p>
-  </header>
+${pageHead(esc(c.name), esc(c.blurb))}
 ${items.length ? masonry(cards) : `<p class="empty">还没有条目。在 <code>${esc(c.dir)}/</code> 里放一个 .md 就会出现。</p>`}
 </main>
 ${foot(site)}`;
 }
 
-/** One collection entry: a book, a hobby note. */
+/** One collection entry with a page of its own — i.e. a book. Hobby entries are
+ *  display tiles with nothing behind them, so they never reach this function. */
 export function pageCollectionEntry(site, c, e, bodyHtml) {
   return `${head(site, {
     title: e.title,
@@ -656,18 +692,16 @@ export function pageCollectionEntry(site, c, e, bodyHtml) {
 ${nav(c.key)}
 <a id="top"></a>
 <main id="main" class="wrap wrap--reading">
+  <p class="artback"><a href="/${esc(c.key)}/"><span aria-hidden="true">←</span> ${esc(c.name)}</a></p>
   <article>
     <header class="arthead">
-      <p class="arthead__kicker">
-        <a href="/${esc(c.key)}/">${esc(c.name)}</a>
-        ${e.statusName ? `<span aria-hidden="true"> · </span>${chip(e.statusName, e.chip)}` : ""}
-      </p>
       <h1 class="arthead__title">${esc(e.title)}</h1>
-      ${e.author ? `<p class="arthead__desc">${esc(e.author)}</p>` : ""}
-${tagList(e.tags)}
-      <p class="arthead__tools">
-        <button type="button" class="readerbtn" data-reader-toggle aria-pressed="false">阅读模式</button>
-      </p>
+      <p class="arthead__meta">${
+        [e.statusName ? chip(e.statusName, e.chip) : "",
+         e.author ? esc(e.author) : "",
+         e.created ? `<time datetime="${esc(e.created)}">${esc(dateDots(e.created))}</time>` : ""
+        ].filter(Boolean).join('<span aria-hidden="true"> · </span>')
+      }</p>
     </header>
     <div class="prose">
 ${bodyHtml}
@@ -679,6 +713,7 @@ ${foot(site)}`;
 
 export function pageDomain(site, d, articles, counts) {
   const kinds = d.kinds.map((k) => [k, articles.filter((a) => a.kind === k)]);
+  const cards = articles.map((a) => card(a, sizeFor(a, false)));
   return `${head(site, {
     title: d.name,
     desc: d.blurb,
@@ -687,12 +722,8 @@ export function pageDomain(site, d, articles, counts) {
 ${nav("writing")}
 <a id="top"></a>
 <main id="main" class="wrap">
-  <header class="pagehead">
-    <h1>${esc(d.name)}</h1>
-    <p class="pagehead__desc">${esc(d.blurb)}</p>
-    <p class="meta">${articles.length} 篇 · ${kinds.filter(([, v]) => v.length).map(([k, v]) => `${k} ${v.length}`).join(" · ")}</p>
-  </header>
-${entryList(articles)}
+${pageHead(esc(d.name), esc(d.blurb), `    <p class="meta">${articles.length} 篇 · ${kinds.filter(([, v]) => v.length).map(([k, v]) => `${esc(k)} ${v.length}`).join(" · ")}</p>\n`)}
+${masonry(cards)}
 </main>
 ${foot(site)}`;
 }
@@ -768,6 +799,7 @@ ${foot(site)}`;
 }
 
 export function pageTag(site, name, items, backlinks, counts) {
+  const cards = items.map((a) => card(a, sizeFor(a, false)));
   return `${head(site, {
     title: `标签：${name}`,
     desc: `${items.length} 篇关于「${name}」的文章。`,
@@ -776,17 +808,15 @@ export function pageTag(site, name, items, backlinks, counts) {
 ${nav("tags")}
 <a id="top"></a>
 <main id="main" class="wrap">
-  <header class="pagehead">
-    <h1>#${esc(name)}</h1>
-    <p class="pagehead__desc">${items.length} 篇。${items[0] ? esc(items[0].description) : ""}</p>
-  </header>
-${entryList(items, { showDomain: true })}
+${pageHead(`#${esc(name)}`, `${items.length} 项`, "")}
+${masonry(cards)}
 ${backlinks && backlinks.length ? `  <p class="more"><a href="/search/?tag=${encodeURIComponent(name)}">在全文里检索这个标签 →</a></p>` : ""}
 </main>
 ${foot(site)}`;
 }
 
 export function pageSeries(site, name, items, counts) {
+  const cards = [...items].reverse().map((a) => card(a, sizeFor(a, false)));
   return `${head(site, {
     title: `系列：${name}`,
     desc: `${items.length} 篇的系列。`,
@@ -795,11 +825,8 @@ export function pageSeries(site, name, items, counts) {
 ${nav("writing")}
 <a id="top"></a>
 <main id="main" class="wrap">
-  <header class="pagehead">
-    <h1>${esc(name)}</h1>
-    <p class="pagehead__desc">${items.length} 篇，按写作时间排列。</p>
-  </header>
-${entryList([...items].reverse(), { showDomain: true })}
+${pageHead(esc(name), `${items.length} 篇，按写作时间排列。`)}
+${masonry(cards)}
 </main>
 ${foot(site)}`;
 }

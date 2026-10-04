@@ -104,6 +104,17 @@ function findRichestArticle() {
   return best;
 }
 
+// Fail with something a person can act on. Without this, a server that is not
+// running surfaces as "Uncaught" from a page evaluation twenty lines later,
+// which reads like a bug in the site rather than a missing `npm run serve`.
+try {
+  const probe = await fetch(BASE + "/", { method: "HEAD" });
+  if (!probe.ok) throw new Error(`HTTP ${probe.status}`);
+} catch (e) {
+  console.log(`✗ 连不上 ${BASE} —— 先跑 npm run serve（或 npm run dev）。(${e.message})`);
+  process.exit(1);
+}
+
 const richest = findRichestArticle();
 const ARTICLE = richest.url;
 console.log(`重点检查的文章：${ARTICLE}`);
@@ -186,7 +197,7 @@ if (ARTICLE) {
 
 /* ── 4. interactive behaviour ───────────────────────────────────────────── */
 /* Markup checks cannot tell whether a control DOES anything, and the gwern
- * skeleton is mostly controls: folding, reader mode, previews, search. Each is
+ * skeleton is mostly controls: folding, previews, search, the 404 guess. Each is
  * exercised the way a reader would — a real click, a real keystroke — and the
  * resulting DOM state is asserted, not just the presence of the button. */
 console.log("\n── 交互行为");
@@ -243,33 +254,32 @@ if (ARTICLE) {
   else if (r.foldState.collapsed !== 1) fail("点击 +++ 折叠块没有反应");
   else console.log(`   折叠：章节 ${r.before.secs} 个 · +++ 块 ${r.before.folds} 个 · 折叠后可展开、状态已记住  ✓`);
 
-  // reader mode — the one control that survived the reskin, so it gets a test
-  const reader = await withPage(BASE + ARTICLE, {}, async (s) => {
-    const initial = await s.evalJson(`JSON.stringify({
-      state: document.documentElement.getAttribute("data-reader"),
-      pressed: document.querySelector("[data-reader-toggle]").getAttribute("aria-pressed"),
-      rail: !!document.querySelector(".rail") && document.querySelector(".rail").getBoundingClientRect().width
-    })`);
-    await s.evalJson(clickExpr("[data-reader-toggle]"));
-    const on = await s.evalJson(`JSON.stringify({
-      state: document.documentElement.getAttribute("data-reader"),
-      pressed: document.querySelector("[data-reader-toggle]").getAttribute("aria-pressed"),
-      stored: localStorage.getItem("site:reader"),
-      rail: !!document.querySelector(".rail") && document.querySelector(".rail").getBoundingClientRect().width,
-      lines: getComputedStyle(document.querySelector(".prose p")).lineHeight
-    })`);
-    await s.evalJson(clickExpr("[data-reader-toggle]"));
-    const off = await s.evalJson(`JSON.stringify({
-      state: document.documentElement.getAttribute("data-reader"),
-      stored: localStorage.getItem("site:reader")
-    })`);
-    return { initial, on, off };
-  });
-  if (reader.on.state !== "on") fail("点阅读模式按钮后没有进入阅读模式");
-  else if (reader.on.pressed !== "true") fail("阅读模式开着，但 aria-pressed 没更新");
-  else if (reader.on.rail) fail("阅读模式里右侧栏仍然占着 " + Math.round(reader.on.rail) + "px");
-  else if (reader.off.state !== "off") fail("再点一次没有退出阅读模式");
-  else console.log("   阅读模式：进入后右栏让位、aria-pressed 同步、退出干净  ✓");
+  // The article head is the tidy-up this round was about: a back link, a title,
+  // ONE meta line, a lead — and nothing else between the reader and the text.
+  const head = await withPage(BASE + ARTICLE, {}, async (s) => s.evalJson(`JSON.stringify((function(){
+    var back = document.querySelector(".artback a");
+    var title = document.querySelector(".arthead__title");
+    var cs = title ? getComputedStyle(title) : null;
+    return {
+      back: back ? { text: back.textContent.trim(), href: back.getAttribute("href") } : null,
+      titleSize: cs ? cs.fontSize : null,
+      titleWeight: cs ? cs.fontWeight : null,
+      meta: (document.querySelector(".arthead__meta") || {}).textContent ? document.querySelector(".arthead__meta").textContent.replace(/\\s+/g, " ").trim() : "",
+      lead: !!document.querySelector(".arthead__desc"),
+      // everything stacked above the title that used to make this page look busy
+      stray: document.querySelectorAll(".arthead__kicker, .arthead__tools, .arthead .taglist, .readerbtn, [data-reader-toggle]").length,
+      // prev/next at the foot, the other way back
+      footLinks: document.querySelectorAll(".foot__chrono a").length
+    };
+  })())`));
+  if (!head.back) fail("文章页没有返回入口");
+  else if (!/^\/(writing|reading|hobbies)\/$/.test(head.back.href)) fail(`返回链接指向了 ${head.back.href}`);
+  else if (!head.titleSize) fail("文章页没有标题");
+  else if (Number.parseFloat(head.titleSize) < 32) fail(`文章标题只有 ${head.titleSize}，页首层级没立起来`);
+  else if (!head.meta) fail("文章页没有元信息行");
+  else if (!head.lead) fail("文章页没有导语");
+  else if (head.stray) fail(`文章页首还堆着 ${head.stray} 个旧元素（眉标/标签行/阅读模式按钮）`);
+  else console.log(`   文章页首：返回「${head.back.text}」· 标题 ${head.titleSize}/${head.titleWeight} · 一行元信息 · 导语  ✓`);
 
   // link previews — hover and keyboard focus both, Escape to dismiss
   const preview = await withPage(BASE + ARTICLE, {}, async (s) => {
@@ -365,21 +375,6 @@ if (!measureOnly && !quick) {
       console.log(`  ${name.padEnd(16)} ${w}×${h}`);
     } catch (e) { fail(`shoot ${name}: ${e.message}`); }
   }
-
-  // reader mode, because it is the replacement for three retired controls
-  try {
-    const png = path.join(OUT, "article-reader.png");
-    const s = await browser.open({ url: BASE + ARTICLE, width: 1440, height: 1000, settleMs: 400 });
-    await s.send("Runtime.evaluate", {
-      expression: `document.documentElement.setAttribute('data-reader','on')`
-    });
-    await new Promise((r) => setTimeout(r, 300));
-    const shot = await s.send("Page.captureScreenshot", { format: "png" });
-    fs.writeFileSync(png, Buffer.from(shot.data, "base64"));
-    await s.close();
-    await sharp(png).jpeg({ quality: 80 }).toFile(png.replace(/\.png$/, ".jpg"));
-    console.log("  article-reader   1440×1000");
-  } catch (e) { fail(`reader capture: ${e.message}`); }
 }
 
 await browser.close();

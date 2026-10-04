@@ -436,6 +436,52 @@ function checkRendered(log) {
   else log(`  ok   网格          ${cells.length} 格 (${[...kinds].join(" / ")})`);
   if (!kinds.has("intro")) failures.push("首页缺少 intro 大卡");
 
+  // ---- the section pages are grids too ---------------------------------
+  // They used to be three labelled blocks with entry lists, which is what the
+  // instruction "writing does not need to be forced into three groups, just
+  // scatter it into cards" was about. Every one of them now wears the same
+  // header and the same grid as the homepage.
+  const gridPages = [
+    "writing/index.html", "reading/index.html", "hobbies/index.html",
+    ...DOMAINS.map((d) => `${d.key}/index.html`)
+  ];
+  const notGrid = [];
+  for (const rel of gridPages) {
+    const f = path.join(STAGE, rel);
+    if (!exists(f)) { notGrid.push(`${rel} 不存在`); continue; }
+    const body = fs.readFileSync(f, "utf8");
+    if (!/<div class="masonry">/.test(body)) notGrid.push(`${rel} 没有砖石网格`);
+    if (!/class="pagehead__title"/.test(body)) notGrid.push(`${rel} 没有页首大标题`);
+    if (/class="secblock"/.test(body)) notGrid.push(`${rel} 还留着按领域分组的旧结构`);
+  }
+  if (notGrid.length) failures.push(`分区页不一致：${notGrid.slice(0, 3).join("；")}`);
+  else log(`  ok   分区页        ${gridPages.length} 个分区页都是网格 + 页首标题`);
+
+  // ---- hobby cards are display tiles -----------------------------------
+  // A card that looks clickable but is not is worse than one that plainly is
+  // not, so this is checked in both directions: the hobby grid must have no card
+  // links, and the reading grid must still have them.
+  const hobbyPage = path.join(STAGE, "hobbies/index.html");
+  if (exists(hobbyPage)) {
+    const body = fs.readFileSync(hobbyPage, "utf8");
+    const gridHtml = /<div class="masonry">([\s\S]*?)\n<\/div>/.exec(body);
+    const inner = gridHtml ? gridHtml[1] : "";
+    const links = (inner.match(/<a\b/g) || []).length;
+    const arrows = (inner.match(/class="card__arrow"/g) || []).length;
+    const tiles = (inner.match(/class="card card--display"/g) || []).length;
+    if (links) failures.push(`爱好卡片里出现了 ${links} 个链接 —— 它们是只展示的卡片`);
+    else if (arrows) failures.push(`爱好卡片里出现了 ${arrows} 个 ↗ —— 没有链接就不该有箭头`);
+    else log(`  ok   爱好卡片      ${tiles} 张只展示：无链接、无箭头`);
+  }
+
+  // ---- and they have no pages of their own -----------------------------
+  const strayHobbyPages = walk(STAGE).filter((f) => /[\\/]hobbies[\\/][^\\/]+[\\/]index\.html$/.test(f));
+  if (strayHobbyPages.length) {
+    failures.push(`爱好条目不该有自己的页面：${strayHobbyPages.slice(0, 2).map((f) => relative(STAGE, f)).join(", ")}`);
+  } else {
+    log("  ok   爱好条目     没有生成页面，与只展示的卡片一致");
+  }
+
   // exactly one h1 per page, checked on the rendered files
   let worst = 0;
   const themed = [];
@@ -840,6 +886,10 @@ async function main() {
   for (const c of COLLECTIONS) {
     const items = collections[c.key] || [];
     write(`${c.key}/index.html`, T.pageCollection(site, c, items, counts));
+    // A collection whose cards are display tiles gets the index and nothing
+    // else: writing a page per tile would produce pages nothing links to. See
+    // the `linked` flag in taxonomy.mjs.
+    if (c.linked === false) continue;
     for (const e of items) {
       write(`${c.key}/${e.slug}/index.html`, T.pageCollectionEntry(site, c, e, e.html));
       htmlFiles.push(`${c.key}/${e.slug}/index.html`);

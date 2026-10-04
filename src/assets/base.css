@@ -211,75 +211,11 @@ a { color: var(--ink-strong); text-decoration-thickness: 1px; text-underline-off
 .foot__chrono a { text-decoration: none; }
 .foot__chrono a:hover { text-decoration: underline; }
 
-/* ---- page heads & lists ------------------------------------------------ */
-
-.pagehead { padding: 2rem 0 2.5rem; }
-.pagehead h1 { font-size: var(--fs-h1); margin: 0 0 0.5rem; }
-.pagehead__desc {
-  color: var(--ink-muted);
-  letter-spacing: var(--tr-body);
-  margin: 0;
-  max-width: 62ch;
-}
-
-.entries { list-style: none; margin: 0; padding: 0; }
-
-.entry {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 0.15rem 2rem;
-  padding: 1.1rem 0;
-  border-top: 1px solid var(--border);
-}
-.entry:last-child { border-bottom: 1px solid var(--border); }
-.entry__title {
-  grid-column: 1;
-  font-family: var(--serif);
-  font-size: 1.5rem;
-  font-weight: 300;
-  letter-spacing: var(--tr-h3);
-  color: var(--ink);
-  text-decoration: none;
-}
-.entry__title:hover { text-decoration: underline; text-underline-offset: 4px; }
-.entry__meta {
-  grid-column: 2;
-  text-align: right;
-  font-size: var(--fs-nav);
-  letter-spacing: var(--tr-nav);
-  color: var(--ink-muted);
-  white-space: nowrap;
-}
-.entry__meta a { color: var(--ink-muted); text-decoration: none; }
-.entry__meta a:hover { color: var(--ink-strong); }
-.entry__desc {
-  grid-column: 1 / -1;
-  font-size: var(--fs-nav);
-  letter-spacing: var(--tr-body);
-  color: var(--ink-body);
-  margin: 0;
-  max-width: 68ch;
-}
-.entry__ctx {
-  grid-column: 1 / -1;
-  font-size: var(--fs-nav);
-  color: var(--ink-muted);
-  margin: 0.2rem 0 0;
-}
-
-.more { margin-top: 1.2rem; font-size: var(--fs-nav); }
-.linkbtn {
-  font: inherit;
-  font-size: var(--fs-nav);
-  letter-spacing: var(--tr-nav);
-  color: var(--ink-strong);
-  background: none;
-  border: 0;
-  padding: 0;
-  cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 4px;
-}
+/* ---- page heads & lists ------------------------------------------------
+   These rules live in components.css. They used to be duplicated here with
+   different values, which meant the file that loaded second silently won and
+   every edit to the first one did nothing. Two copies of a component is worse
+   than one wrong copy: at least a wrong copy is wrong in a way you can see. */
 
 /* ---- tags -------------------------------------------------------------- */
 

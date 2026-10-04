@@ -513,8 +513,10 @@ export function loadCollections(root, problems, log) {
       items.push({
         collection: c.key,
         collectionName: c.name,
+        // whether this collection's entries are pages at all — see taxonomy.mjs
+        linked: c.linked !== false,
         slug,
-        url: `/${c.key}/${slug}/`,
+        url: c.linked === false ? "" : `/${c.key}/${slug}/`,
         file,
         name,
         title,

@@ -2,16 +2,36 @@
    components.css — index pages, lists, tags, series, 404
    ========================================================================== */
 
-/* ---- page head -------------------------------------------------------- */
+/* ---- page head --------------------------------------------------------
+   The reference sets section titles at text-6xl then md:text-8xl in the
+   lightest serif weight. Chinese titles are shorter in character count but
+   wider per glyph, so the scale is capped a step lower — 56px then 80px — which
+   reads the same without a four-character title running off a phone screen. */
 
-.pagehead { padding: 2rem 0 1.2rem; }
-.pagehead h1 { font-size: var(--fs-h1); margin: 0 0 0.4rem; }
-.pagehead__desc {
-  color: var(--ink-mute);
-  margin: 0 0 0.5rem;
-  max-width: calc(var(--measure) + var(--measure-shift));
+.pagehead { padding: 2.5rem 0 2.5rem; }
+.pagehead__title {
+  font-family: var(--serif);
+  font-weight: 200;
+  font-size: 3.5rem;               /* 56px */
+  line-height: 1.05;
+  letter-spacing: var(--tr-h1);
+  color: var(--ink);
+  margin: 0;
 }
-.pagehead .meta { display: block; }
+@media (min-width: 768px) { .pagehead__title { font-size: 5rem; } }   /* 80px */
+.pagehead__desc {
+  color: var(--ink-muted);
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  margin: 1.25rem 0 0;
+  max-width: 42rem;                 /* the reference's max-w-prose */
+}
+.pagehead .meta {
+  display: block;
+  margin: 0.75rem 0 0;
+  font-size: var(--fs-nav);
+  color: var(--ink-muted);
+}
 
 /* ---- entry lists ------------------------------------------------------ */
 

@@ -63,7 +63,6 @@
      Chinese prose does not run 80 characters wide. Set in em because one em is
      one 汉字 — `ch` measures the "0" glyph and says nothing about CJK. */
   --measure: 33em;
-  --read-mode: 0;          /* flips to 1 when the reader mode is on */
 
   /* ---- metrics ----------------------------------------------------------- */
   --radius-card: 8px;

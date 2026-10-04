@@ -72,6 +72,12 @@
 .card:hover,
 .card:focus-within { background: var(--card-hover); }
 
+/* A display-only tile still lightens on hover, exactly as the reference's hobby
+   tiles do, but nothing about it invites a click: no pointer, no arrow, no
+   stretched hit area. */
+.card--display { cursor: default; }
+.card--display .card__title { cursor: default; }
+
 .card__inner {
   position: relative;
   isolation: isolate;

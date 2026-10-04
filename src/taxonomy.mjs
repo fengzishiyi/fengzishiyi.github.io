@@ -80,7 +80,13 @@ export const CARD_SIZES = {
 };
 
 /** The two collections that are not writing. Both are optional directories:
- *  if `_reading/` does not exist the homepage simply carries no book cards. */
+ *  if `_reading/` does not exist the homepage simply carries no book cards.
+ *
+ *  `linked` is the difference the reference site draws between the two: a book
+ *  card leads somewhere (the reference sends it to Goodreads, this site to the
+ *  book's own page), while a hobby card is a display tile with nothing behind
+ *  it. So `_hobbies/` entries get no page, no link and no arrow — only a chip,
+ *  a heading and a line or two of text. */
 export const COLLECTIONS = [
   {
     key: "reading",
@@ -88,6 +94,7 @@ export const COLLECTIONS = [
     name: "阅读",
     blurb: "读过的书与正在读的书。",
     chip: "amber",          // matches chester's amber READING chip
+    linked: true,
     statuses: [
       { key: "reading", name: "在读", chip: "amber" },
       { key: "read", name: "已读", chip: "green" },
@@ -100,6 +107,7 @@ export const COLLECTIONS = [
     name: "爱好",
     blurb: "写字之外的事。",
     chip: "sky",
+    linked: false,
     statuses: [
       { key: "now", name: "当前", chip: "sky" },
       { key: "past", name: "曾经", chip: "neutral" }
