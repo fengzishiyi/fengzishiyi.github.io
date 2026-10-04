@@ -745,10 +745,7 @@ export function pageArchive(site, ctx) {
 ${nav("home")}
 <a id="top"></a>
 <main id="main" class="wrap">
-  <header class="pagehead">
-    <h1>归档</h1>
-    <p class="pagehead__desc">全部 ${articles.length} 篇。也可以按<a href="/tags/">标签</a>或<a href="/search/">检索</a>找。</p>
-  </header>
+${pageHead("归档", `全部 ${articles.length} 篇。也可以按<a href="/tags/">标签</a>或<a href="/search/">检索</a>找。`)}
 
   <nav class="filters" aria-label="按领域浏览">
     <span class="filters__label meta">领域</span>
@@ -783,10 +780,7 @@ export function pageTags(site, tags, counts) {
 ${nav("tags")}
 <a id="top"></a>
 <main id="main" class="wrap">
-  <header class="pagehead">
-    <h1>标签</h1>
-    <p class="pagehead__desc">跨领域的线索靠标签串起来：同一个想法在文学、哲学与计算机里各长什么样。</p>
-  </header>
+${pageHead("标签", "跨领域的线索靠标签串起来：同一个想法在文学、哲学与计算机里各长什么样。")}
   <ul class="tagindex">
 ${tags.map((t) => `    <li>
       <a href="/tags/${encodeURIComponent(t.name)}/">${esc(t.name)}</a>
@@ -836,8 +830,7 @@ export function pageSeriesIndex(site, series, counts) {
 ${nav("writing")}
 <a id="top"></a>
 <main id="main" class="wrap">
-  <header class="pagehead"><h1>系列</h1>
-    <p class="pagehead__desc">同一主题下的多篇。</p></header>
+${pageHead("系列", "同一主题下的多篇。")}
 ${series.length ? `  <ul class="seriesindex">
 ${series.map((s) => `    <li><a href="/series/${encodeURIComponent(s.name)}/">${esc(s.name)}</a> <span class="meta">${s.items.length}</span>
       <p class="tagindex__blurb">${esc(s.items[0].description)}</p></li>`).join("\n")}
@@ -856,10 +849,7 @@ export function pageSearch(site, counts) {
 ${nav("home")}
 <a id="top"></a>
 <main id="main" class="wrap">
-  <header class="pagehead">
-    <h1>搜索</h1>
-    <p class="pagehead__desc">索引在构建时生成，检索完全在浏览器里完成 —— 没有服务端，也没有请求发出去。</p>
-  </header>
+${pageHead("搜索", "索引在构建时生成，检索完全在浏览器里完成 —— 没有服务端，也没有请求发出去。")}
 
   <form class="searchbox" role="search" data-search-form>
     <label class="visually-hidden" for="q">关键词</label>
@@ -908,10 +898,7 @@ export function pageAbout(site, ctx) {
 ${nav("about")}
 <a id="top"></a>
 <main id="main" class="wrap prose narrow">
-  <header class="pagehead">
-    <h1>自述</h1>
-    <p class="pagehead__desc">个人站点，非商业。</p>
-  </header>
+${pageHead("自述", "个人站点，非商业。")}
 
   <section id="what">
     <h2 id="s1">这是什么<a class="anchor" href="#s1" aria-label="本节链接">#</a></h2>
@@ -966,10 +953,7 @@ export function pageChangelog(site, ctx) {
 ${nav("home")}
 <a id="top"></a>
 <main id="main" class="wrap">
-  <header class="pagehead">
-    <h1>更新</h1>
-    <p class="pagehead__desc">按写作时间倒序。每篇文章自己的修订记录在文章页右下。</p>
-  </header>
+${pageHead("更新", "按写作时间倒序。每篇文章自己的修订记录在文章页下方。")}
 ${entryList(recent, { showDomain: true })}
 </main>
 ${foot(site)}`;
@@ -995,8 +979,7 @@ export function page404(site, counts) {
 ${nav("")}
 <a id="top"></a>
 <main id="main" class="wrap prose narrow">
-  <header class="pagehead"><h1>没有这一页</h1></header>
-  <p>这个地址下没有内容。</p>
+${pageHead("没有这一页", "这个地址下没有内容。")}
   <div class="guess" data-guess hidden></div>
   <p class="meta">可以试试<a href="/search/">搜索</a>，或者从<a href="/archive/">归档</a>里翻。</p>
 </main>
@@ -1014,10 +997,10 @@ export function pageRedirect(site, from, to, why, counts) {
 <meta name="robots" content="noindex,follow">`
   })}
 ${nav("")}
+<a id="top"></a>
 <main id="main" class="wrap prose narrow">
-  <header class="pagehead"><h1>页面已迁移</h1></header>
+${pageHead("页面已迁移", `${esc(why)}`)}
   <p><code>${esc(from)}</code> 现在在 <a href="${esc(to)}">${esc(to)}</a>。</p>
-  <p class="meta">${esc(why)}</p>
 </main>
 ${foot(site)}`;
 }

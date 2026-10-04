@@ -161,8 +161,10 @@ function collectTags(articles, collections = {}) {
       name,
       items: items.sort((a, b) => (a.created < b.created ? 1 : -1)),
       count: items.length,
-      // the tag page's own one-line summary: the newest piece under it
-      blurb: items[0] ? (items[0].description || items[0].title) : ""
+      // A tag with only one piece under it has nothing to summarise: printing
+      // that piece's own description under the tag just repeats a sentence the
+      // reader is about to see again. The count already says how much is here.
+      blurb: items.length > 1 && items[0] ? (items[0].description || items[0].title) : ""
     }))
     .sort((a, b) => b.count - a.count || (a.name < b.name ? -1 : 1));
 }
@@ -488,8 +490,19 @@ function checkRendered(log) {
   const orphans = [];
   const selfLinks = [];
   const nesting = [];
+  const bareHeads = [];
   for (const f of walk(STAGE).filter((x) => x.endsWith(".html"))) {
     const body = fs.readFileSync(f, "utf8");
+    // A page head must use the component. The rule that styled a bare
+    // `.pagehead h1` was replaced by `.pagehead__title`, and six pages kept
+    // emitting the old markup — their titles silently fell back to the browser's
+    // default 32px bold. Every check still passed: there was exactly one h1 per
+    // page, and it was the right words. So the class is asserted, not the tag.
+    if (/<header class="pagehead">/.test(body) && !/class="pagehead__title"/.test(body)) {
+      bareHeads.push(rel);
+    }
+
+    // exactly one h1 per page, checked on the rendered files
     const n = (body.match(/<h1\b/g) || []).length;
     if (n !== 1) {
       worst++;
@@ -548,6 +561,11 @@ function checkRendered(log) {
     }
   }
   if (!worst) log("  ok   每页 h1      全部恰好一个");
+  if (bareHeads.length) {
+    failures.push(`这些页面的页首没有用 .pagehead__title，标题会退回浏览器默认字号：${[...new Set(bareHeads)].slice(0, 4).join(", ")}`);
+  } else {
+    log("  ok   页首         每个 .pagehead 都用统一的标题组件");
+  }
   if (themed.length) {
     failures.push(`这些页面的 HTML 里还带着主题属性：${themed.slice(0, 3).join(", ")}`);
   } else {
