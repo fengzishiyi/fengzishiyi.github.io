@@ -251,7 +251,6 @@
 
   var preview = null;
   var previewTimer = null;
-  var previewFrame = null;
 
   function ensurePreview() {
     if (preview) return preview;
@@ -271,18 +270,21 @@
     var box = anchor.getBoundingClientRect();
     p.style.left = Math.max(12, Math.min(box.left + (window.scrollX || 0), window.innerWidth - 380)) + "px";
     p.style.top = (box.bottom + (window.scrollY || window.pageYOffset || 0) + 8) + "px";
-    // `hidden` off, then `is-in` on the NEXT frame: a transition cannot run
-    // across a display change, so the two have to be separated by a frame or the
-    // popup appears instantly (which is what it used to do).
-    if (previewFrame) cancelAnimationFrame(previewFrame);
-    previewFrame = requestAnimationFrame(function () {
-      previewFrame = requestAnimationFrame(function () { p.classList.add("is-in"); });
-    });
+    // `hidden` off, then `is-in` — separated by a forced style flush, because a
+    // transition cannot run across a display change and the browser has to have
+    // computed the starting opacity before the class lands.
+    //
+    // Two nested requestAnimationFrame callbacks were the first attempt, and they
+    // are not reliable: a background tab has rAF throttled, so the fade silently
+    // never happened (the suite caught it about one run in three). Reading
+    // offsetWidth flushes styles synchronously and does not depend on the page
+    // being painted.
+    void p.offsetWidth;
+    p.classList.add("is-in");
   }
 
   function hidePreview() {
     if (!preview) return;
-    if (previewFrame) { cancelAnimationFrame(previewFrame); previewFrame = null; }
     preview.classList.remove("is-in");
     preview.hidden = true;
   }

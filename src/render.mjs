@@ -388,6 +388,7 @@ export function renderBody(article, { resolve, sectionBacklinks = new Map() } = 
 
   html = restoreRefs(html, links, resolve);
   html = linkIcons(html);
+  html = bindDashes(html);
 
   // position the headings now that the document is whole
   const collected = headingTokens(marked.lexer(text));
@@ -440,10 +441,40 @@ export function linkIcons(html) {
   });
 }
 
+/**
+ * Bind an em dash to whatever precedes it, so a line never STARTS with one.
+ *
+ * Chinese typography forbids a line beginning with —— (it belongs to the clause
+ * before it), and CSS cannot enforce this one: the break happens at the space
+ * the writer put before the dash, and `line-break: strict` governs CJK character
+ * classes, not an ordinary space. Measured: one line began with "—" because the
+ * source reads "前两次改版都在加东西 —— 加图墙".
+ *
+ * Whitespace before the dash becomes a NO-BREAK SPACE, and a dash with no space
+ * before it gets a WORD JOINER (U+2060). Either way the only thing that changes
+ * is where a line may break: the text still reads, copies and searches as
+ * written, which a `<span style="white-space:nowrap">` wrapper would not — that
+ * would put markup inside the sentence and inside the search index.
+ *
+ * A first attempt put the joiner between the space and the dash, which did
+ * nothing: the browser simply broke at the space instead, and the line still
+ * began with the dash. The break opportunity that matters is the one BEFORE the
+ * space.
+ *
+ * Code spans and blocks are left alone: a dash inside a code sample is content,
+ * not prose.
+ */
+export function bindDashes(html) {
+  return html
+    .split(/(<code[\s\S]*?<\/code>|<pre[\s\S]*?<\/pre>)/)
+    .map((part, i) => (i % 2 === 1 ? part : part
+      .replace(/(?<![\u2060])([ \t]*)——/g, (_, space) => (space ? "\u00A0——" : "\u2060——"))))
+    .join("");
+}
+
 /* ══════════════════════════════════════════════════════════════════════ */
 /* text for search / preview                                             */
 /* ══════════════════════════════════════════════════════════════════════ */
-
 /** Plain text of a rendered body, for the search index. Notes and refs are
  *  included: a note often carries the detail someone is searching for. */
 export const searchText = (html) => plain(html).slice(0, 20000);

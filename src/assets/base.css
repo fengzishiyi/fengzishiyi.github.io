@@ -27,7 +27,20 @@ body {
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* 中文断行规则。
+     `line-break: strict` 让浏览器遵守禁则：行首不许出现 。、，）」 这类标点，
+     行尾不许出现 （「 这类开引号。默认的 `auto` 在中文里会把破折号、省略号
+     甩到下一行开头 —— 这一页上真的出现过一次（`— 把站点改成纯文本…`）。
+     `text-wrap: pretty` 让段落避免只剩一两个字的尾行：审计时 100 来个段落里
+     有 8 个以「版。」「级。」这种两字尾行收尾，读起来像被截断。
+     两条都是渐进增强：不支持的浏览器忽略它们，什么也不会坏。 */
+  line-break: strict;
+  text-wrap: pretty;
 }
+
+/* 标题不用 pretty，用 balance：标题短，均分两行比留一个孤字好看。 */
+h1, h2, h3, h4 { text-wrap: balance; }
 
 img, svg { max-width: 100%; height: auto; display: block; }
 figure { margin: 0; }
@@ -211,8 +224,16 @@ a { color: var(--ink-strong); text-decoration-thickness: 1px; text-underline-off
   font-size: var(--fs-nav);
   letter-spacing: var(--tr-nav);
   color: var(--ink-muted);
+  /* `text-align: center` centres the TEXT inside this box; it says nothing about
+     where the box sits. With a max-width and no auto margins the box was pinned
+     to the left edge of the footer — 453px wide, starting at x=32 in a 1440px
+     page — so centred text sat visibly left of centre. `margin-inline: auto`
+     centres the box; the text then centres inside it, which is what "centred"
+     looked like it should mean. */
   margin: 0;
-  max-width: 60ch;
+  margin-inline: auto;
+  max-width: var(--measure-short);
+  text-wrap: pretty;
 }
 .foot__chrono {
   display: flex;

@@ -159,6 +159,32 @@ for (const [vname, w, h, cols] of (quick ? [] : VIEWPORTS)) {
     if (page === ARTICLE) {
       if (!m.fold) fail(`${page} @${w}: 找不到 +++ 折叠块`);
       else if (!m.fold.collapsed) fail(`${page} @${w}: 折叠块收起了却仍占 ${m.fold.after}px`);
+
+      // Column alignment. The head used to be centred on the PAGE while the body
+      // was centred in column 2 of the article grid, which put the back link,
+      // title, meta line and lead exactly 150px left of the text they belong to
+      // at every width from 1160 up. The rail had the mirror problem: its measure
+      // was written in `em` on a 14px element, so it stopped 33px short.
+      const near = (a, b, tol = 1.5) => Math.abs(a - b) <= tol;
+      if (m.title && m.artmain && !near(m.title.left, m.artmain.left)) {
+        fail(`${page} @${w}: 标题左缘 ${m.title.left} 与正文 ${m.artmain.left} 不齐（差 ${m.title.left - m.artmain.left}px）`);
+      }
+      if (m.artback && m.artmain && !near(m.artback.left, m.artmain.left)) {
+        fail(`${page} @${w}: 返回链接左缘 ${m.artback.left} 与正文 ${m.artmain.left} 不齐`);
+      }
+      if (m.rail && m.artmain && !near(m.rail.right, m.artmain.right)) {
+        fail(`${page} @${w}: 页下栏右缘 ${m.rail.right} 与正文 ${m.artmain.right} 不齐（差 ${m.rail.right - m.artmain.right}px）`);
+      }
+    }
+
+    // The footer note's BOX has to be centred, not just its text: with a
+    // max-width and no auto margins the box pinned itself to the left edge and
+    // the centred text sat 258px left of centre in a 1440px page.
+    if (page === "/" && m.footNote) {
+      const centre = m.footNote.left + m.footNote.w / 2;
+      if (Math.abs(centre - m.viewportCentre) > 2) {
+        fail(`首页 @${w}: 页脚说明的盒子中心在 ${Math.round(centre)}，页面中心是 ${m.viewportCentre}`);
+      }
     }
 
     // The measure promise holds wherever a desktop-width reading column exists.
@@ -343,6 +369,78 @@ if (ARTICLE) {
     else console.log(`   键盘焦点：Tab 到 ${r.tag}.${String(r.cls).split(" ")[0]} · outline ${r.width}px ${r.colour}  ✓`);
   }
 
+  // ---- CJK line breaking ------------------------------------------------
+  // CSS cannot be asked whether it obeyed 禁则 — only the rendered line boxes
+  // know. Walk every character, group them by line, and check what each line
+  // starts and ends with; also catch the one-or-two-character widow.
+  const LINE_RULES = `JSON.stringify((function(){
+    var NO_START = "。、，．！？：；）】》」』…—·%";
+    var NO_END = "（【《「『";
+    var out = { lines: 0, badStart: [], badEnd: [], widows: [] };
+    var blocks = document.querySelectorAll(".prose p, .entry__desc, .pagehead__desc, .arthead__desc, .card__body, .foot__note");
+    for (var i = 0; i < blocks.length; i++) {
+      var el = blocks[i];
+      if ((el.textContent || "").replace(/\\s/g, "").length < 12) continue;
+      var range = document.createRange();
+      range.selectNodeContents(el);
+      var rects = Array.prototype.slice.call(range.getClientRects()).filter(function (r) { return r.width > 2 && r.height > 2; });
+      var lines = [];
+      rects.forEach(function (r) {
+        var last = lines[lines.length - 1];
+        if (last && Math.abs(last.top - r.top) < 4) { last.left = Math.min(last.left, r.left); last.right = Math.max(last.right, r.right); }
+        else lines.push({ top: r.top, left: r.left, right: r.right });
+      });
+      if (lines.length < 2) continue;
+      out.lines += lines.length;
+      var walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      var chars = [], node;
+      while ((node = walker.nextNode())) {
+        for (var c = 0; c < node.data.length; c++) {
+          var rg = document.createRange();
+          rg.setStart(node, c); rg.setEnd(node, c + 1);
+          var cr = rg.getClientRects()[0];
+          if (cr) chars.push({ ch: node.data[c], top: cr.top });
+        }
+      }
+      for (var L = 1; L < lines.length; L++) {
+        var onLine = chars.filter(function (c) { return Math.abs(c.top - lines[L].top) < 6; });
+        // A line's first CHARACTER is not what the reader sees first: a break at
+        // a space leaves the space (and any word joiner) on the new line, so the
+        // first visible glyph is further in. Skipping whitespace and the
+        // zero-width characters is what makes this check honest — without it the
+        // check passed while a line still began with an em dash.
+        var first = -1, last = -1;
+        for (var a = 0; a < onLine.length; a++) {
+          if (!/^[\\s\\u00a0\\u2060\\u200b]$/.test(onLine[a].ch)) { first = a; break; }
+        }
+        for (var b = onLine.length - 1; b >= 0; b--) {
+          if (!/^[\\s\\u00a0\\u2060\\u200b]$/.test(onLine[b].ch)) { last = b; break; }
+        }
+        if (first < 0 || last < 0) continue;
+        if (NO_START.indexOf(onLine[first].ch) > -1 && out.badStart.length < 3) out.badStart.push(onLine[first].ch);
+        if (NO_END.indexOf(onLine[last].ch) > -1 && out.badEnd.length < 3) out.badEnd.push(onLine[last].ch);
+        if (L === lines.length - 1 && last - first + 1 <= 2 && out.widows.length < 3) {
+          out.widows.push(onLine.slice(first, last + 1).map(function (c) { return c.ch; }).join(""));
+        }
+      }
+    }
+    return out;
+  })())`;
+
+  {
+    let linesChecked = 0;
+    for (const [page, w] of [[ARTICLE, 1440], [ARTICLE, 390], ["/", 1440]]) {
+      const s = await browser.open({ url: BASE + page, width: w, height: 1000, settleMs: 900 });
+      const r = await s.evalJson(LINE_RULES);
+      await s.close();
+      linesChecked += r.lines;
+      if (r.badStart.length) fail(`${page} @${w}: 有行以禁则标点开头（${r.badStart.join(" ")}）`);
+      if (r.badEnd.length) fail(`${page} @${w}: 有行以开引号结尾（${r.badEnd.join(" ")}）`);
+      if (r.widows.length) fail(`${page} @${w}: 段落尾行只剩一两个字（${r.widows.join(" / ")}）`);
+    }
+    if (linesChecked) console.log(`   断行：${linesChecked} 行，无行首行尾禁则、无两字尾行  ✓`);
+  }
+
   // link previews — hover and keyboard focus both, Escape to dismiss, and a fade
   // that actually runs (`is-in` is what the transition is keyed on; the popup
   // used to appear instantly because nothing ever added it)
@@ -353,14 +451,22 @@ if (ARTICLE) {
     if (!target) return { target: "" };
     await s.evalJson(`(function(){var a=document.querySelector(".ref[data-preview]");
       a.dispatchEvent(new MouseEvent("mouseover",{bubbles:true})); return "1";})()`);
-    await new Promise((r) => setTimeout(r, 400));
-    const hover = await s.evalJson(`JSON.stringify((function(){var p=document.querySelector(".preview");
-      return {
-        shown: !!p && !p.hidden,
-        faded: !!p && p.classList.contains("is-in"),
-        transition: p ? getComputedStyle(p).transitionProperty : "",
-        text: p ? p.textContent.trim().slice(0,24) : ""
-      };})())`);
+    // Poll rather than sleep: the preview waits 120ms before showing and then
+    // two animation frames before the fade class lands, and a single fixed wait
+    // made this fail perhaps one run in ten — a flaky assertion teaches people
+    // to ignore the suite.
+    let hover = null;
+    for (let i = 0; i < 20; i++) {
+      await new Promise((r) => setTimeout(r, 120));
+      hover = await s.evalJson(`JSON.stringify((function(){var p=document.querySelector(".preview");
+        return {
+          shown: !!p && !p.hidden,
+          faded: !!p && p.classList.contains("is-in"),
+          transition: p ? getComputedStyle(p).transitionProperty : "",
+          text: p ? p.textContent.trim().slice(0,24) : ""
+        };})())`);
+      if (hover.shown && hover.faded) break;
+    }
     await s.evalJson(`(function(){document.dispatchEvent(new KeyboardEvent("keydown",{key:"Escape"})); return "1";})()`);
     const after = await s.evalJson(`JSON.stringify((function(){var p=document.querySelector(".preview");
       return { hidden: !p || p.hidden };})())`);

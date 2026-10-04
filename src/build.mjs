@@ -324,14 +324,25 @@ function checkDesign(log) {
   if (!/prefers-reduced-motion/.test(css)) failures.push("没有 prefers-reduced-motion 回退");
 
   // ---- 中文行宽：30–34 字 ----------------------------------------------
-  const measure = /--measure:\s*([\d.]+)em/.exec(css);
+  // Read in `rem`, because rem is the body size wherever the token is used and
+  // one rem is therefore one 汉字. It used to accept `em`, which meant the same
+  // number came out 33 characters wide in the prose and 29 in the 14px rail.
+  const measure = /--measure:\s*([\d.]+)rem/.exec(css);
   if (!measure) {
-    failures.push("--measure 未定义，无法校验中文行宽");
+    failures.push("--measure 未定义（或不再是 rem），无法校验中文行宽");
   } else {
     const perLine = parseFloat(measure[1]);
     const ok = perLine >= 29 && perLine <= 35;
     log(`  ${ok ? "ok  " : "FAIL"} 正文行宽 ${perLine.toFixed(1)} 字 (目标 30–34)`);
     if (!ok) failures.push(`正文行宽是 ${perLine.toFixed(1)} 字，超出 30–34 的目标区间`);
+  }
+  // `ch` is the "0" glyph's width and says nothing about a full-width 汉字, so
+  // no text width on this site may be expressed in it.
+  const chWidths = [...css.matchAll(/(?:max-)?width:\s*[\d.]+ch/g)].map((m) => m[0]);
+  if (chWidths.length) {
+    failures.push(`文字宽度又用 ch 来写了：${chWidths.slice(0, 3).join(", ")}（中文该用 rem）`);
+  } else {
+    log("  ok   宽度单位     没有用 ch 限宽（中文用 rem）");
   }
 
   // ---- contrast ---------------------------------------------------------

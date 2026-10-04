@@ -3,10 +3,12 @@
 
    Two conventions worth knowing:
 
-   1. The reading measure is set in `em` and the body size in `rem`, which means
-      one `em` ≈ one 汉字 (they are full-width). So `--measure: 33em` really does
-      mean 33 characters per line, and the build asserts it stays in 30–34.
-      `ch` would be meaningless here — it is derived from the "0" glyph.
+   1. The reading measure is set in `rem`, which is the BODY size wherever it is
+      used, so one rem is one 汉字 (they are full-width) and `--measure: 33rem`
+      really does mean 33 characters per line. It was `em` until the rail was
+      found sitting 33px short of the text above it: `em` resolves against the
+      element's own font size, so the same token meant 528px on the 16px prose
+      and 462px on the 14px rail. `ch` would be worse — it measures the "0" glyph.
 
    2. Sidenotes are <aside> elements that sit inside the prose flow and are
       absolutely positioned into the notes column. They stay in the document
@@ -62,7 +64,7 @@
   font-size: 1.125rem;
   line-height: 1.6;
   color: var(--ink-muted);
-  margin: 1rem 0 0;
+  margin: 0.75rem 0 0;
 }
 
 .status {
@@ -98,9 +100,9 @@
    page tools take the RIGHT, and the reading measure sits between them —
    the layout Tufte's books and gwern.net both use, and for this reason.
 
-   Columns: 300px rail · measure · 260px note column. Only engaged when the
-   viewport can actually hold all three; below that everything stacks and the
-   notes become inline blocks. */
+   Columns: the 260px note margin, then the text column at the reading measure.
+   Only engaged when the viewport can actually hold both; below that everything
+   stacks and the notes become inline blocks. */
 
 .artbody { position: relative; }
 .artmain {
@@ -119,16 +121,33 @@
      can never collide with it. */
   .artbody {
     display: grid;
-    grid-template-columns:
-      260px
-      minmax(0, calc(var(--measure) + var(--measure-shift)));
+    grid-template-columns: var(--note-col) minmax(0, calc(var(--measure) + var(--measure-shift)));
     justify-content: center;
-    column-gap: 2.5rem;
+    column-gap: var(--art-gap);
     align-items: start;
     max-width: none;
   }
   .artmain { grid-column: 2; grid-row: 1; margin: 0; max-width: none; }
   .rail { grid-column: 2; grid-row: 2; margin: 3rem 0 0; max-width: none; }
+
+  /* The head has to sit ABOVE its own text, not above the middle of the page.
+     It used to be centred on the page while the prose was centred in column 2 of
+     the grid, which put the title, the meta line, the lead and the back link
+     exactly 150px to the left of the body they belong to — measured at 1160,
+     1280 and 1440. Same two tracks, so the alignment is structural rather than
+     arithmetic that has to be kept in step by hand. */
+  .artback,
+  .arthead {
+    display: grid;
+    grid-template-columns: var(--note-col) minmax(0, calc(var(--measure) + var(--measure-shift)));
+    justify-content: center;
+    column-gap: var(--art-gap);
+    max-width: none;
+    margin-left: 0;
+    margin-right: 0;
+  }
+  .artback > *,
+  .arthead > * { grid-column: 2; }
 }
 
 /* ---- headings & foldable sections ------------------------------------ */
@@ -183,7 +202,7 @@ h2:hover .anchor, h3:hover .anchor, .anchor:focus-visible { opacity: 1; }
      normal bottom margin — a negative one pulled the paragraph up until the two
      overlapped, which is the opposite of a skimming aid. */
   margin: 1.6em 0 0.5rem;
-  max-width: 34ch;
+  max-width: var(--measure-short);
 }
 .marginnote + p { margin-top: 0; }
 
@@ -202,7 +221,7 @@ h2:hover .anchor, h3:hover .anchor, .anchor:focus-visible { opacity: 1; }
     border-left: 2px solid var(--rule);
     padding: 0.1rem 0 0.1rem 0.8rem;
     margin: 1rem 0 1.4rem;
-    max-width: 46ch;
+    max-width: var(--measure-short);
   }
   .note--block { margin: 1.2rem 0 1.6rem; }
   .note__body p { margin: 0 0 0.6em; }

@@ -71,9 +71,22 @@
   --fs-tiny: 0.75rem;
 
   /* The reading measure. chester.how has no such rule; this site keeps one so
-     Chinese prose does not run 80 characters wide. Set in em because one em is
-     one 汉字 — `ch` measures the "0" glyph and says nothing about CJK. */
-  --measure: 33em;
+     Chinese prose does not run 80 characters wide.
+     Set in `rem`, not `em`, and that matters: `em` resolves against the
+     ELEMENT's own font size, so the same `33em` was 528px on the 16px prose and
+     462px on the 14px rail sitting in the same column — the rail's right edge
+     stopped 33px short of the text above it at every width between 1160 and
+     1439. `rem` is always the body size, so one rem is one 汉字 wherever it is
+     used. `ch` would be worse still: it measures the "0" glyph. */
+  --measure: 33rem;
+  /* Secondary reading text — notes, card bodies, list descriptions. One step
+     narrower than the measure, same unit and same reason. */
+  --measure-short: 30rem;
+
+  /* The article's two-column geometry, named once because the head has to line
+     up with the body and the notes are positioned from the same box. */
+  --note-col: 260px;       /* the note margin, left of the text */
+  --art-gap: 2.5rem;       /* between the note column and the text column */
 
   /* ---- metrics ----------------------------------------------------------- */
   --radius-card: 8px;

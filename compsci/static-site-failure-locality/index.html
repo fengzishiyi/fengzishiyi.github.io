@@ -70,7 +70,7 @@
 <p>这意味着修好一个问题之后，你不会担心它明天从别的地方再冒出来。</p>
 </section><section class="sec" aria-labelledby="sec-2"><h2 id="sec-2"><a class="anchor" href="#sec-2" aria-label="本节链接：一个具体的例子">#</a>一个具体的例子</h2>
 <p>这个站点有一类曾反复出现的错误：front matter 里的字段拼错，导致某篇文章悄悄地少了标题。</p>
-<p>在一个动态系统里，这类错误会在发布之后被读者发现，因为写入的时候没人检查。而在这里，检查发生在构建期 —— 而且一旦写进断言，它<strong>不可能再发生一次</strong>，即使我改了很多别的东西。</p>
+<p>在一个动态系统里，这类错误会在发布之后被读者发现，因为写入的时候没人检查。而在这里，检查发生在构建期 —— 而且一旦写进断言，它<strong>不可能再发生一次</strong>，即使我改了很多别的东西。</p>
 <aside class="note note--block" id="fn1" role="doc-footnote" aria-label="脚注 1"><span class="note__n" aria-hidden="true">1</span><div class="note__body">
 
 <p>这里有一个值得注意的非对称：断言的成本是写的时候付一次，收益是每一次构建都收。所以只要一个错误发生过一次，就值得为它写一条断言。</p>
@@ -80,7 +80,7 @@
 <p><sup class="fnref"><a id="fnref1" href="#fn1" aria-describedby="fn1">[1]</a></sup></p>
 </section><section class="sec" aria-labelledby="sec-3"><h2 id="sec-3"><a class="anchor" href="#sec-3" aria-label="本节链接：反过来说">#</a>反过来说</h2>
 <p>这套做法也有明确的不适用场景。</p>
-<p>内容需要即时更新、需要多人在线协作、需要按用户做权限区分 —— 这三件事里任何一件成立，静态生成就不合适。</p>
+<p>内容需要即时更新、需要多人在线协作、需要按用户做权限区分 —— 这三件事里任何一件成立，静态生成就不合适。</p>
 <p>所以「静态」不是一个更高的技术立场，是一个<strong>匹配问题</strong>：这个站的更新频率是每周几次，读者是所有人，权限没有区分。在这个形状下，静态的收益最大、代价最小。</p>
 </section>
     </div>

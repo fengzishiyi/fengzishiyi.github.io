@@ -150,6 +150,13 @@ export class Browser {
     });
     if (!scripted) await s.send("Emulation.setScriptExecutionDisabled", { value: true });
     await s.send("Page.navigate", { url });
+    // Bring the target to the front. A background target has its
+    // requestAnimationFrame callbacks throttled — Chrome stops servicing frames
+    // for a page nobody is looking at — and anything that resolves on the next
+    // frame (the link preview's fade, for one) then never happens. The suite
+    // opens a target per page, so without this the behaviour tests are only
+    // reliable by luck.
+    try { await s.send("Page.bringToFront"); } catch { /* best effort */ }
     await sleep(settleMs);
     return s;
   }
@@ -233,13 +240,17 @@ export const MEASURE_EXPR = `(async () => {
   out.h1Count = document.querySelectorAll("h1").length;
 
   [["title", ".arthead__title"], ["pageTitle", ".pagehead__title"],
-   ["prose", ".prose p"], ["artmain", ".artmain"], ["rail", ".rail"]].forEach(function (pair) {
+   ["prose", ".prose p"], ["artmain", ".artmain"], ["rail", ".rail"],
+   ["footNote", ".foot__note"], ["artback", ".artback a"],
+   ["pageDesc", ".pagehead__desc"]].forEach(function (pair) {
     var el = document.querySelector(pair[1]);
     if (!el) return;
     var r = el.getBoundingClientRect();
-    out[pair[0]] = { w: Math.round(r.width), right: Math.round(r.right), h: Math.round(r.height),
+    out[pair[0]] = { w: Math.round(r.width), left: Math.round(r.left), right: Math.round(r.right), h: Math.round(r.height),
                      fs: getComputedStyle(el).fontSize };
   });
+
+  out.viewportCentre = Math.round(de.clientWidth / 2);
 
   // The measure, measured rather than assumed: one em is one 汉字 at body size,
   // so width ÷ font-size is characters per line.
