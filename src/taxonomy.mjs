@@ -80,11 +80,18 @@ export const CROSS_TAGS = [
 /** Card footprints in the homepage masonry. Transcribed from chester.how's
  *  real markup, which uses exactly three: a large intro block, a 2:1 wide card,
  *  and a square. Size is a front-matter override; without one it is inferred
- *  from the content (see cardSizeFor in build.mjs). */
+ *  from the content (see sizeFor in templates.mjs).
+ *
+ *  Two more values exist for pictures, also from the reference: `image` is a
+ *  photograph with a caption on it (its film tiles), and `image_and_text` puts
+ *  the photograph behind the chips and title (its plant tiles). Both require
+ *  `image:` and `image_alt:`. */
 export const CARD_SIZES = {
   intro: "首页左上角的大方卡，放站点自述",
   wide: "横向卡片，占两列",
-  square: "方卡，占一列"
+  square: "方卡，占一列",
+  image: "图片卡片：照片铺满，标题压在图上（chester 的胶片卡）",
+  image_and_text: "图片卡片：照片在后面，标签与标题压在底部的渐变上（chester 的植物卡）"
 };
 
 /** The two collections that are not writing. Both are optional directories:

@@ -121,6 +121,7 @@ console.log(`重点检查的文章：${ARTICLE}`);
 console.log(`  源文件里有 ${richest.forms} 个块级写法、${richest.notes} 个脚注标记\n`);
 
 /* ── 1. layout at every viewport ─────────────────────────────────────────── */
+let coversSeen = 0;
 if (quick) console.log("--quick：跳过 49×6 的版式实测，只跑交互行为\n");
 else console.log(`layout measurement — ${PAGES.length} pages × ${VIEWPORTS.length} viewports\n`);
 
@@ -146,6 +147,13 @@ for (const [vname, w, h, cols] of (quick ? [] : VIEWPORTS)) {
     if (m.clipped) fail(`${page} @${w}: ${m.clipped} 处文字被裁切`);
     if (!m.vars.accent) fail(`${page} @${w}: <body> 上没有 data-accent，这一页没有配色`);
 
+    // Covers: the picture must fill its card exactly, be cropped rather than
+    // squashed, carry alt text, and have actually loaded.
+    if (m.covers) {
+      if (m.covers.bad) fail(`${page} @${w}: ${m.covers.bad}/${m.covers.count} 张配图没有铺满卡片或没加载出来`);
+      coversSeen += m.covers.count;
+    }
+
     // The fold must actually hide something. Asserted on the article page at
     // every width, because "the class was added" is what let it stay broken.
     if (page === ARTICLE) {
@@ -167,6 +175,8 @@ for (const [vname, w, h, cols] of (quick ? [] : VIEWPORTS)) {
 
 /* ── 2. progressive enhancement ─────────────────────────────────────────── */
 console.log("── 关闭 JavaScript 后是否仍可读");
+if (!quick && !coversSeen) fail("所有视口下都没有量到任何卡片配图 —— 配图没有渲染");
+else if (!quick) console.log(`   配图：${coversSeen} 张在六个视口下都铺满卡片  ✓`);
 let notesSeen = 0;
 let blocksSeen = 0;
 for (const w of quick ? [] : [390, 1440]) {

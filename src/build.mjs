@@ -26,6 +26,7 @@ import { Problems, nearMiss, hexFrom, rgbaFrom, flatten, contrast, todayISO } fr
 import { DOMAINS, domainByKey, domainKeys, statusByKey } from "./taxonomy.mjs";
 import { loadSources, loadCollections, buildLinkGraph } from "./content.mjs";
 import { renderBody, searchText } from "./render.mjs";
+import { prepareImage, emitImage } from "./images.mjs";
 import { COLLECTIONS, collectionByKey } from "./taxonomy.mjs";
 import * as T from "./templates.mjs";
 
@@ -62,7 +63,7 @@ const MANAGED = [
   "reading", "hobbies",
   "tags", "series", "archive", "search", "changelog", "about",
   "articles", "contents", "images",
-  "assets", "index.html", "404.html", "rss.xml", "sitemap.xml", "robots.txt",
+  "assets", "img", "index.html", "404.html", "rss.xml", "sitemap.xml", "robots.txt",
   "favicon.svg", ".nojekyll"
 ];
 
@@ -427,10 +428,14 @@ function checkDesign(log) {
   // ---- deleted things stay deleted --------------------------------------
   // Each of these was removed for a reason recorded in DESIGN-NOTES; a selector
   // creeping back means the reason was forgotten.
+  //
+  // `.card--image`, `.card__img` and `.card__caption` were on this list and were
+  // taken off deliberately: cards carry covers again, so those rules are live.
+  // They are now spelled `.card--photo` / `.card--scrim`, and the list below
+  // keeps the OLD names gone so a half-rename cannot leave two spellings of the
+  // same component in the stylesheet.
   const GONE = {
-    "card--image": "本站没有图片",
-    "card__img": "本站没有图片",
-    "card__caption": "本站没有图片",
+    "card--image": "改名为 card--photo / card--scrim",
     "home__title": "上一代的首页版式",
     "homecols": "上一代的首页版式",
     "tagcloud": "上一代的首页版式",
@@ -606,8 +611,36 @@ function checkRendered(log) {
   const selfLinks = [];
   const nesting = [];
   const bareHeads = [];
+  const badImages = [];
+  let cardImages = 0;
+  let imageBytes = 0;
   for (const f of walk(STAGE).filter((x) => x.endsWith(".html"))) {
     const body = fs.readFileSync(f, "utf8");
+
+    // ---- card covers --------------------------------------------------
+    // Every <img> on the site is a card cover, and each one has to be local,
+    // described, lazy, and sized. Each of those has a failure mode that is
+    // invisible in a browser: a remote src is a third-party request, a missing
+    // alt is a picture nobody can hear, a missing width/height is a grid that
+    // jumps as the pictures land.
+    for (const m of body.matchAll(/<img\b([^>]*)>/g)) {
+      const attrs = m[1];
+      cardImages++;
+      const attr = (n) => (new RegExp(`${n}="([^"]*)"`).exec(attrs) || [])[1] || "";
+      const src = attr("src");
+      const file = relative(STAGE, f);
+      if (!src.startsWith("/img/")) badImages.push(`${file}: 图片不是站内的（${src.slice(0, 40)}）`);
+      else {
+        const onDisk = path.join(STAGE, src.replace(/^\//, ""));
+        if (!exists(onDisk)) badImages.push(`${file}: 图片文件不存在（${src}）`);
+        else imageBytes += fs.statSync(onDisk).size;
+      }
+      if (!attr("alt").trim()) badImages.push(`${file}: 图片没有 alt`);
+      if (attr("loading") !== "lazy") badImages.push(`${file}: 图片没有 loading="lazy"`);
+      if (!attr("width") || !attr("height")) badImages.push(`${file}: 图片没有写宽高，加载时会把版式顶开`);
+      if (!attr("srcset")) badImages.push(`${file}: 图片没有 srcset，手机也会拉大图`);
+    }
+
     // A page head must use the component. The rule that styled a bare
     // `.pagehead h1` was replaced by `.pagehead__title`, and six pages kept
     // emitting the old markup — their titles silently fell back to the browser's
@@ -700,6 +733,13 @@ function checkRendered(log) {
     failures.push(`章节嵌套有问题：${[...new Set(nesting)].slice(0, 3).join("；")}`);
   } else {
     log("  ok   章节嵌套     小节都嵌在所属章节内，标签配对");
+  }
+  if (badImages.length) {
+    badImages.slice(0, 4).forEach((b) => failures.push(`配图问题：${b}`));
+  } else if (cardImages) {
+    log(`  ok   卡片配图     ${cardImages} 张全部站内、有 alt、有宽高、懒加载（合计 ${(imageBytes / 1024).toFixed(0)}KB）`);
+  } else {
+    log("  ok   卡片配图     当前没有配图（机制已就位）");
   }
 
   return failures;
@@ -813,7 +853,11 @@ function publish(log) {
     else { ensure(path.dirname(dst)); fs.copyFileSync(src, dst); }
   }
 
-  const missing = MANAGED.filter((r) => !exists(path.join(ROOT, r)));
+  // `img` is only there when something has a cover, so it is checked separately
+  // rather than demanded: a site with no pictures is a valid site, and the
+  // absence of the folder is how "no covers" looks on disk.
+  const OPTIONAL = new Set(["assets", "img"]);
+  const missing = MANAGED.filter((r) => !OPTIONAL.has(r) && !exists(path.join(ROOT, r)));
   if (missing.length) throw new Error(`这些路径没有发布成功：${missing.join(", ")}`);
 
   const removed = prunePublished(log);
@@ -1013,6 +1057,24 @@ async function main() {
 
   const byDomain = new Map(DOMAINS.map((d) => [d.key, articles.filter((a) => a.domain === d.key)]));
 
+  /* ---- card covers ---------------------------------------------------
+   * Every entry that names an `image:` gets its derivatives written now, before
+   * any page is rendered, so the cards can carry real width/height attributes
+   * (which is what keeps the grid from reflowing as pictures arrive). Resizing
+   * is the slowest thing a build does; it is skipped entirely when nothing has
+   * a cover, which is the state this site spent its whole life in until now. */
+  const pictured = [...articles, ...Object.values(collections).flat()].filter((i) => i.image);
+  if (pictured.length) {
+    log("▸ 卡片配图");
+    let emitted = 0;
+    for (const item of pictured) {
+      const prepared = await prepareImage(item, ROOT, problems);
+      item.picture = await emitImage(prepared, ROOT);
+      if (item.picture && !item.picture.reused) emitted += prepared.widths.length;
+    }
+    log(`  ${pictured.length} 张配图 · ${emitted} 个衍生文件`);
+  }
+
   if (contentOnly) {
     problems.report(log, "✗ 内容有问题");
     log(problems.failed ? "" : "\n✓ 内容检查通过");
@@ -1182,6 +1244,21 @@ async function main() {
   };
   const cssJs = shippedFiles.reduce((n, f) => n + shippedBytes(f), 0);
 
+  // The heaviest page's covers: what a reader actually downloads for pictures.
+  const imageDir = path.join(STAGE, "img");
+  const imageSizes = exists(imageDir)
+    ? fs.readdirSync(imageDir).map((f) => [f, fs.statSync(path.join(imageDir, f)).size])
+    : [];
+  const pageImageBytes = htmlFiles.reduce((worst, f) => {
+    const body = fs.readFileSync(path.join(STAGE, f), "utf8");
+    const srcs = new Set([...body.matchAll(/<img\b[^>]*src="\/img\/([^"]+)"/g)].map((m) => m[1]));
+    const total = [...srcs].reduce((n, s) => {
+      const hit = imageSizes.find(([f2]) => f2 === s);
+      return n + (hit ? hit[1] : 0);
+    }, 0);
+    return Math.max(worst, total);
+  }, 0);
+
   log("▸ 体积");
   log(`  文章平均    ${(pageBytes / Math.max(1, htmlFiles.length) / 1024).toFixed(1)} KB`);
   log(`  最大一页    ${(biggest[1] / 1024).toFixed(1)} KB  (${biggest[0]})`);
@@ -1193,7 +1270,11 @@ async function main() {
     // 30KB, so the budget can now be tight enough to catch a regression again
     // rather than sitting slack. The rule the number protects is the same one it
     // always was: no CDN, no framework, no downloaded font.
-    ["css+js", cssJs / 1024, 64, "KB"]
+    ["css+js", cssJs / 1024, 64, "KB"],
+    // Card covers are the only binary the site ships, so they get their own
+    // ceiling: one page's worth of pictures must stay cheaper than a single
+    // icon font would have been.
+    ["单页配图", pageImageBytes / 1024, 400, "KB"]
   ];
   for (const [name, val, max, unit] of budgets) {
     if (val > max) failures.push(`${name} ${val.toFixed(1)}${unit} 超出预算 ${max}${unit}`);

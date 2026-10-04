@@ -132,4 +132,8 @@ h3:target,
   .sectionback:target { animation: none; }
   .skeleton { animation: none; background: var(--inactive-area); }
   .card:hover { transform: none; }
+  /* A cover may still change its scrim on hover — that is information about
+     where the text sits — but the picture does not move under it. */
+  .card--photo:hover .card__img,
+  .card--scrim:hover .card__img { transform: none; }
 }

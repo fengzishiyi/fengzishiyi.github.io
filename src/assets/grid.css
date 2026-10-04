@@ -238,10 +238,84 @@
   text-underline-offset: 4px;
 }
 
-/* A card that is a photograph would fill its cell with a scrim caption — the
-   reference does this for its film and plant tiles. This site has no images at
-   all by design (see /about/), so the three rules that implemented it were dead
-   weight and are gone. */
+/* ---- picture cards ------------------------------------------------------
+   Two variants, both transcribed from chester.how's markup. This block was
+   deleted a round ago as dead weight — the site had no images — and it is back
+   because the site now has card covers. The build carries a list of deleted
+   selectors that must NOT reappear, so bringing these back meant deliberately
+   taking them off that list; see the GONE table in build.mjs. */
+
+/* the photograph fills the cell in both variants */
+.card__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+
+/* `card: image` — the picture IS the card, with a caption chip at the bottom.
+   chester's film tiles: white caption at 70%, which gains a dark ground on
+   hover so it stays readable wherever the photograph is bright. */
+.card--photo .card__inner { justify-content: space-between; }
+.card--photo .card__head { position: relative; z-index: 1; }
+.card__caption {
+  position: relative;
+  z-index: 1;
+  margin: auto 0 0;
+  align-self: flex-start;
+  padding: 0.25rem 0.5rem;
+  font-size: var(--fs-nav);
+  letter-spacing: var(--tr-nav);
+  color: rgba(255, 255, 255, 0.85);
+  border-radius: var(--radius-card);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+
+/* `card: image_and_text` — the picture sits BEHIND the chips and title, under a
+   gradient scrim in the card's own ground colour, so the text has something to
+   sit on however busy the photograph is.
+
+   The text block GROWS to fill the card above it, which is what chester does
+   (`flex grow ... justify-end`): the scrim is then most of the card's height and
+   fades out gradually, instead of being a band the width of two short lines with
+   a visible top edge. */
+.card--scrim .card__inner { justify-content: space-between; }
+.card--scrim .card__head { position: relative; z-index: 1; }
+.card--scrim .card__text {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  margin-top: auto;
+  background: linear-gradient(to top, var(--card) 22%, rgba(250, 250, 250, 0.72) 52%, transparent 100%);
+}
+.card--scrim .card__title { font-size: 1.5rem; }
+@media (min-width: 1024px) { .card--scrim .card__title { font-size: 1.875rem; } }
+
+/* On hover the scrim lifts and the picture steps forward — chester's plant tiles
+   do exactly this, and it is what turns a wall of covers into something you want
+   to look at. Hover-capable pointers only; a tap should not leave a card stuck
+   in a hover state. */
+@media (hover: hover) and (pointer: fine) {
+  .card--photo .card__img {
+    transition: transform var(--dur-slow) var(--ease), opacity var(--dur) var(--ease);
+  }
+  .card--photo:hover .card__img { transform: scale(1.04); }
+  .card--photo:hover .card__caption {
+    background: rgba(0, 0, 0, 0.7);
+    color: #FFFFFF;
+    text-shadow: none;
+  }
+  .card--scrim:hover .card__img { transform: scale(1.04); }
+  .card--scrim:hover .card__text {
+    background: linear-gradient(to top, rgba(250, 250, 250, 0.9) 45%, rgba(250, 250, 250, 0.6) 75%, transparent);
+  }
+}
 
 /* ---- below the grid ---------------------------------------------------- */
 

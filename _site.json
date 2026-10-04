@@ -1,9 +1,9 @@
 {
   "title": "枫子十一",
   "subtitle": "个人写作",
-  "tagline": "一个写字的地方。纯文本，非商业，无广告、无追踪、无社交功能。",
+  "tagline": "一个写字的地方。正文纯文本，卡片可配图；非商业，无广告、无追踪、无社交功能。",
   "introH1": "枫子十一：一个写字的地方",
-  "introHtml": "<p class=\"card__intro\">写字的地方。想到哪写到哪：<a href=\"/writing/\">写作</a>、<a href=\"/reading/\">阅读</a>、<a href=\"/hobbies/\">爱好</a>。</p><p class=\"card__intro\" style=\"margin-top:1rem\">纯文本，没有图片、公式与代码高亮；也没有广告、追踪与社交功能。</p>",
+  "introHtml": "<p class=\"card__intro\">写字的地方。想到哪写到哪：<a href=\"/writing/\">写作</a>、<a href=\"/reading/\">阅读</a>、<a href=\"/hobbies/\">爱好</a>。</p><p class=\"card__intro\" style=\"margin-top:1rem\">正文是纯文本，卡片可以配一张封面图。没有广告、追踪与社交功能。</p>",
   "writingBlurb": "想到哪写到哪，不按领域分栏。要找某一类，用标签或归档。",
   "author": "fengzishiyi",
   "license": "CC BY-NC-SA 4.0",

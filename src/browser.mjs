@@ -320,11 +320,32 @@ export const MEASURE_EXPR = `(async () => {
   // Clipped card text is the failure mode of a fixed aspect ratio, and it is
   // invisible in the markup: overflow:hidden hides the evidence.
   out.clipped = 0;
-  var clipProbe = document.querySelectorAll(".card__title, .card__body, .card__sub, .card__intro");
+  var clipProbe = document.querySelectorAll(".card__title, .card__body, .card__sub, .card__intro, .card__caption");
   for (var ci = 0; ci < clipProbe.length; ci++) {
     var el = clipProbe[ci];
     if (el.scrollHeight > el.clientHeight + 1 && el.clientHeight > 0) out.clipped++;
   }
+
+  // A card cover has to fill its cell and stay behind the text. Both are things
+  // CSS says it does and only a browser can confirm.
+  out.covers = (function () {
+    var imgs = document.querySelectorAll(".card__img");
+    if (!imgs.length) return null;
+    var bad = 0, boxes = [];
+    for (var i = 0; i < imgs.length; i++) {
+      var img = imgs[i];
+      var cell = img.closest(".card");
+      if (!cell) { bad++; continue; }
+      var a = img.getBoundingClientRect(), b = cell.getBoundingClientRect();
+      // within a pixel on every side: the picture is the card
+      if (Math.abs(a.width - b.width) > 1.5 || Math.abs(a.height - b.height) > 1.5) bad++;
+      if (getComputedStyle(img).objectFit !== "cover") bad++;
+      if (!img.getAttribute("alt")) bad++;
+      if (img.complete && img.naturalWidth === 0) bad++;   // failed to load
+      boxes.push(Math.round(a.width) + "x" + Math.round(a.height));
+    }
+    return { count: imgs.length, bad: bad, boxes: boxes.slice(0, 3) };
+  })();
 
   // Overlap test for the sidenote margin.
   //

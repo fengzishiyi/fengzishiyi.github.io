@@ -21,6 +21,7 @@
  */
 
 import { esc, plain, dateDots, dateLong, accentFor } from "./lib.mjs";
+import { sizesFor } from "./images.mjs";
 import { DOMAINS, STATUSES, CONFIDENCES, statusByKey, confidenceByKey, domainByKey } from "./taxonomy.mjs";
 
 /* ══════════════════════════════════════════════════════════════════════ */
@@ -123,7 +124,7 @@ ${NAV.map((n) => `      <a href="${n.href}">${esc(n.text)}</a>`).join("\n")}
       <span class="meta">© ${new Date().getFullYear()} ${esc(site.author)}</span>
     </p>
     <p class="foot__note">
-      纯文本站点：没有图片、没有公式、没有代码高亮、没有第三方脚本、没有追踪。
+      正文是纯文本：没有图片、没有公式、没有代码高亮、没有第三方脚本、没有追踪。
     </p>
     ${prev || next ? `<nav class="foot__chrono" aria-label="相邻文章">
       ${next ? `<a rel="prev" href="${esc(next.url)}">← ${esc(next.title)}</a>` : ""}
@@ -228,6 +229,57 @@ export function card(item, size, index = 0) {
   const title = display
     ? `<h3 class="card__title">${esc(item.title)}</h3>`
     : `<h3 class="card__title"><a class="card__link stretched" href="${esc(item.url)}">${esc(item.title)}</a></h3>`;
+
+  // ---- picture cards, as chester.how draws them -------------------------
+  // Two variants, chosen by `card:` and read through `variantFor`:
+  //
+  //   card: image           a photograph with the title on it. Its film tiles:
+  //                         the picture fills the cell, the category line sits
+  //                         on top, and the title is a translucent caption at the
+  //                         bottom that gains a dark ground on hover.
+  //   card: image_and_text  a photograph BEHIND the text. Its plant tiles: the
+  //                         picture covers the cell, the chips and title sit on a
+  //                         gradient scrim, and hovering fades the scrim and
+  //                         scales the picture so it comes forward.
+  //
+  // The picture is always `loading="lazy"` with its intrinsic width and height,
+  // which is what keeps a grid of covers from reflowing as they arrive. The
+  // caption prints the TITLE, not the alt text: an alt is what a screen reader
+  // says in place of the picture, and printing it as visible copy both duplicates
+  // it and tells a sighted reader something they can already see.
+  const variant = variantFor(item);
+  const picture = item.picture
+    ? `<img class="card__img" src="${esc(item.picture.src)}" srcset="${esc(item.picture.srcset)}"
+             sizes="${esc(sizesFor(size))}" width="${item.picture.width}" height="${item.picture.height}"
+             alt="${esc(item.picture.alt || "")}" loading="lazy" decoding="async">`
+    : "";
+
+  if (variant === "photo") {
+    return `<div class="cell cell--${esc(size)}" style="--i:${Math.min(index, 6)}">
+    <div class="card card--photo${display ? " card--display" : ""}">
+      <div class="card__inner">
+        ${picture}
+        ${head}
+        <p class="card__caption">${esc(item.title)}</p>
+      </div>
+    </div>
+  </div>`;
+  }
+
+  if (variant === "scrim") {
+    return `<div class="cell cell--${esc(size)}" style="--i:${Math.min(index, 6)}">
+    <div class="card card--photo card--scrim${display ? " card--display" : ""}">
+      <div class="card__inner">
+        ${picture}
+        ${head}
+        <div class="card__text">
+          ${chips}
+          ${title}
+        </div>
+      </div>
+    </div>
+  </div>`;
+  }
 
   return `<div class="cell cell--${esc(size)}" style="--i:${Math.min(index, 6)}">
     <div class="card${display ? " card--display" : ""}">
@@ -549,7 +601,7 @@ const entryList = (items, opts) => items.length
   : `<p class="empty">这里还没有文章。</p>`;
 
 /**
- * Choose a card footprint.
+ * Choose a card footprint: which CELL it occupies.
  *
  * The first card in the grid is always the intro block — a large square holding
  * the site's own description, exactly where chester.how puts its greeting. After
@@ -557,13 +609,29 @@ const entryList = (items, opts) => items.length
  * from what the item IS: poetry and fragments are short so they read well small,
  * books and hobby notes are square, and anything explicitly marked wide gets the
  * 2:1 cell. Variation is the point — a grid of identical squares is a table.
+ *
+ * Footprint and VARIANT are separate questions, which the picture cards made
+ * obvious: `card: image` is a way of drawing the card, not a size, and treating
+ * it as one silently gave every cover the wrong variant. `variantFor` below
+ * answers the other half.
  */
 function sizeFor(item, isFirst) {
   if (isFirst) return "intro";
-  if (item.card && ["intro", "wide", "square"].includes(item.card)) return item.card;
   if (item.card === "wide") return "wide";
+  if (["intro", "wide", "square"].includes(item.card)) return item.card;
+  // A cover looks best square unless told otherwise; `image_and_text` needs the
+  // height for its scrim, `image` would happily be wide.
+  if (item.card === "image_and_text") return "square";
   return "square";
 }
+
+/** Which of the three card drawings to use: plain text, a photograph with a
+ *  caption on it (`card: image`), or a photograph behind the chips and title
+ *  (`card: image_and_text`, the default once an entry has a cover). */
+export const variantFor = (item) => {
+  if (!item.picture) return "text";
+  return item.card === "image" ? "photo" : "scrim";
+};
 
 /** Merge writing and the optional collections into one ordered card list. */
 export function buildCards(articles, collections, site) {
@@ -923,7 +991,7 @@ ${pageHead("自述", "个人站点，非商业。")}
 
   <section id="what">
     <h2 id="s1">这是什么<a class="anchor" href="#s1" aria-label="本节链接">#</a></h2>
-    <p>一个写字的地方，按三个领域组织：<a href="/literature/">文学</a>、<a href="/philosophy/">哲学</a>、<a href="/compsci/">计算机科学</a>。以纯文本为主 —— 没有图片、没有公式、没有代码高亮。文字本身是目的。</p>
+    <p>一个写字的地方，按三个领域组织：<a href="/literature/">文学</a>、<a href="/philosophy/">哲学</a>、<a href="/compsci/">计算机科学</a>。<strong>正文是纯文本</strong>：没有插图、没有公式、没有代码高亮，文字本身是目的。卡片可以配一张封面图 —— 那是版面，不是内容。</p>
     <p>目前有 ${articles.length} 篇文章、${tags.length} 个标签。</p>
   </section>
 
@@ -940,7 +1008,8 @@ ${pageHead("自述", "个人站点，非商业。")}
       <li>文章之间双向互链：你说到别人，别人页面上就会出现你；引用可以落到具体某一节，那一节里就会出现「本节被这些地方引用」。</li>
       <li>悬停站内互链会浮出目标那一篇的标题与摘要，片段在构建期就生成好，不发出任何请求。</li>
       <li>排版手法参考 <a href="https://gwern.net/design">gwern.net</a>：元信息块、边注、可折叠章节、语义缩放、双向链接；但中文字距、行宽与边注规则是重新定的，不照搬拉丁版式。</li>
-      <li>外观参考 <a href="https://chester.how/">chester.how</a>：砖石网格、卡片尺寸、字体刻度与标签配色都照它的数值来。字体不下载，用系统字体栈 —— 字号与字距一致，字形由你的机器决定。</li>
+      <li>外观参考 <a href="https://chester.how/">chester.how</a>：砖石网格、卡片尺寸、字体刻度、标签配色，以及卡片封面图的两种画法（照片压标题、照片衬底）都照它的做法来。字体不下载，用系统字体栈 —— 字号与字距一致，字形由你的机器决定。</li>
+      <li>封面图在构建期缩成三档 WebP 并写好宽高与懒加载，图片存放在本站自己的 <code>/img/</code> 下 —— 不经过任何图床，也不发出第三方请求。</li>
     </ul>
   </section>
 

@@ -278,6 +278,36 @@ try {
   if (thirdParty.length) [...new Set(thirdParty)].slice(0, 4).forEach(fail);
   else ok("没有从站外加载任何资源");
 
+  console.log("\ncard covers");
+  // Every <img> the site ships is a card cover. The build asserts these too;
+  // this pass checks the same things against the PUBLISHED bytes, including that
+  // the derivative files are actually being served (a build that wrote them to
+  // the wrong folder would look fine locally and 404 in production).
+  const imgs = Object.entries(html).flatMap(([page, body]) =>
+    [...body.matchAll(/<img\b([^>]*)>/g)].map((m) => ({ page, attrs: m[1] })));
+  if (!imgs.length) fail("全站一张卡片配图都没有 —— 机制在，但没有任何条目用上");
+  else {
+    const problems = [];
+    const files = new Set();
+    for (const { page, attrs } of imgs) {
+      const get = (n) => (new RegExp(`${n}="([^"]*)"`).exec(attrs) || [])[1] || "";
+      const src = get("src");
+      if (!src.startsWith("/img/")) problems.push(`${page}: 图不是站内的（${src.slice(0, 30)}）`);
+      else files.add(src);
+      if (!get("alt").trim()) problems.push(`${page}: 缺 alt`);
+      if (!get("width") || !get("height")) problems.push(`${page}: 缺宽高`);
+      if (get("loading") !== "lazy") problems.push(`${page}: 没有懒加载`);
+      if (!get("srcset")) problems.push(`${page}: 没有 srcset`);
+    }
+    if (problems.length) problems.slice(0, 4).forEach(fail);
+    else ok(`${imgs.length} 张配图：站内、有 alt、有宽高、懒加载`);
+    for (const f of files) {
+      const r = await get(f);
+      if (r.status !== 200) fail(`${f} → ${r.status}`);
+    }
+    ok(`${files.size} 个衍生图文件都能取到`);
+  }
+
   console.log("\nthe light-only commitment");
   if (/data-theme/.test(home)) fail("首页仍然带有 data-theme（暗色主题的残留）");
   else ok("没有暗色主题分支");
@@ -350,9 +380,16 @@ try {
   console.log("\ncollections");
   for (const c of COLLECTIONS) {
     const body = html[`/${c}/`] || "";
-    const count = collectionEntries.filter((p) => p.startsWith(`/${c}/`)).length;
-    if (count && !/class="card"/.test(body)) fail(`/${c}/ 有条目但没有渲染卡片`);
-    else ok(`/${c}/ ${count ? `${count} 条` : "空状态"}`);
+    // Count the CARDS on the page, not the directories on disk: hobbies entries
+    // deliberately have no pages of their own, so counting `/hobbies/<slug>/`
+    // reported "empty" for a collection that renders a card perfectly well.
+    const cards = (body.match(/class="cell cell--/g) || []).length;
+    const pages = collectionEntries.filter((p) => p.startsWith(`/${c}/`)).length;
+    // `class="card"` was the test until picture cards arrived, when the class
+    // became `card card--photo` and this started failing on a page that was
+    // perfectly fine. Match the class token, not the whole attribute.
+    if (cards && !/class="card[\s"]/.test(body)) fail(`/${c}/ 有格子但没有卡片`);
+    else ok(`/${c}/ ${cards} 张卡片${c === "reading" ? ` · ${pages} 个条目页` : ""}`);
   }
 
   console.log("\naccessibility spot-checks");

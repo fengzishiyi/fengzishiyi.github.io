@@ -415,6 +415,23 @@ export function loadSources(root, problems, log) {
       }
     }
 
+    // ---- the cover picture ----
+    // `image_alt` is required the moment `image` is set: a card cover that
+    // carries no text is invisible to a screen reader, and chester.how's own
+    // tiles always describe the picture. Enforced here rather than left to
+    // discipline, because the failure is silent.
+    const image = String(data.image || "").trim();
+    const imageAlt = String(data.image_alt || "").trim();
+    if (image && !imageAlt) {
+      problems.error(name, `写了 image: 就必须写 image_alt:（一句话描述这张图）`);
+    }
+    if (!image && imageAlt) {
+      problems.warn(`${name}: 写了 image_alt 但没有 image，这一行不会有任何效果`);
+    }
+    if (image && card && !["image", "image_and_text"].includes(card)) {
+      problems.error(name, `card "${card}" 与 image 不搭。带图的卡片请用 card: image 或 card: image_and_text。`);
+    }
+
     records.push({
       slug,
       url,
@@ -436,6 +453,8 @@ export function loadSources(root, problems, log) {
       source: String(data.source || "").trim(),     // 「写作地点」/「献给」等自由字段
       card,
       pin,
+      image,
+      imageAlt,
       body,
       chars: body.replace(/\s+/g, "").length
     });
@@ -531,9 +550,19 @@ export function loadCollections(root, problems, log) {
         tags: (Array.isArray(data.tags) ? data.tags : []).filter(Boolean),
         card: String(data.card || "").trim().toLowerCase(),
         pin: Number.isFinite(Number(data.pin)) && String(data.pin || "").trim() !== "" ? Number(data.pin) : 0,
+        // a cover picture, if this entry names one — same rules as an article's
+        image: String(data.image || "").trim(),
+        imageAlt: String(data.image_alt || "").trim(),
         body,
         chars: body.replace(/\s+/g, "").length
       });
+
+      if (data.image && !String(data.image_alt || "").trim()) {
+        problems.error(name, `写了 image: 就必须写 image_alt:（一句话描述这张图）`);
+      }
+      if (data.image && data.card && !["image", "image_and_text"].includes(String(data.card).trim().toLowerCase())) {
+        problems.error(name, `card "${data.card}" 与 image 不搭。带图的卡片请用 card: image 或 card: image_and_text。`);
+      }
     }
 
     items.sort((a, b) => (a.created < b.created ? 1 : a.created > b.created ? -1 : 0));
