@@ -23,12 +23,22 @@ const BUILD = path.join(ROOT, "src", "build.mjs");
 const SERVE = path.join(ROOT, "src", "serve.mjs");
 
 /** Directories and files whose changes should trigger a rebuild. */
+/**
+ * What a save has to trigger a rebuild.
+ *
+ * `src` is watched whole rather than file by file: the previous list named
+ * `src/build.mjs` and `src/assets` only, so editing a template, the taxonomy or
+ * the image pipeline changed nothing on screen, and — worse — neither did
+ * `_reading/` or `_hobbies/`, which are two of the three places content lives.
+ * A watcher that silently misses your edits is indistinguishable from a site
+ * that ignores them.
+ */
 const WATCH = [
   path.join(ROOT, "_articles"),
+  path.join(ROOT, "_reading"),
+  path.join(ROOT, "_hobbies"),
   path.join(ROOT, "_images"),
-  path.join(ROOT, "_issues"),
-  path.join(ROOT, "src", "assets"),
-  path.join(ROOT, "src", "build.mjs"),
+  path.join(ROOT, "src"),
   path.join(ROOT, "_site.json")
 ];
 
