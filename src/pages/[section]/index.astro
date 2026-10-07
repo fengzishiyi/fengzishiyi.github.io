@@ -1,0 +1,62 @@
+---
+/**
+ * /<domain>/ and /<collection>/ — one grid each.
+ *
+ * A domain index lists what the writing is about; a collection index lists what
+ * is not writing — books and hobby notes. They share this route because they are
+ * the same page shape with different accents and different empty states, and
+ * splitting them into four files is how the two drift apart.
+ */
+import Base from "../../layouts/Base.astro";
+import Masonry from "../../components/Masonry.astro";
+import PageHead from "../../components/PageHead.astro";
+import { getSiteModel, sectionFor } from "../../lib/model.mjs";
+import { sizeFor } from "../../lib/cards.mjs";
+import { DOMAINS, COLLECTIONS } from "../../lib/taxonomy.mjs";
+
+export async function getStaticPaths() {
+  const m = await getSiteModel();
+  return m.sections.map((s) => ({ params: { section: s.key }, props: { section: s.key } }));
+}
+
+const { section } = Astro.props;
+const m = await getSiteModel();
+const s = sectionFor(m, section);
+const { site } = m;
+
+const domain = s.type === "domain" ? DOMAINS.find((d) => d.key === s.key) : null;
+const collection = s.type === "collection" ? COLLECTIONS.find((c) => c.key === s.key) : null;
+
+// A collection index carries no intro block — that belongs on the homepage only —
+// so every card is an entry and the grid stays a list.
+const cards = s.type === "collection"
+  ? s.items.map((e, i) => ({ item: e, size: e.card === "wide" ? "wide" : "square", index: i }))
+  : s.items.map((a, i) => ({ item: a, size: sizeFor(a), index: i }));
+
+const kindCounts = domain
+  ? domain.kinds.map((k) => [k, s.items.filter((a) => a.kindName === k).length]).filter(([, n]) => n)
+  : [];
+---
+
+<Base
+  title={s.name}
+  desc={s.blurb}
+  canonical={`${site.origin}/${s.key}/`}
+  accent={s.accent || "neutral"}
+  active={domain ? "writing" : s.key}
+>
+  <main id="main" class="wrap">
+    {domain ? (
+      <PageHead title={s.name} desc={s.blurb}>
+        <p class="meta">{s.items.length} 篇 · {kindCounts.map(([k, n]) => `${k} ${n}`).join(" · ")}</p>
+      </PageHead>
+    ) : (
+      <PageHead title={s.name} desc={s.blurb} />
+    )}
+    {s.items.length === 0 && collection ? (
+      <p class="empty">还没有条目。在 <code>{collection.dir}/</code> 里放一个 .md 就会出现。</p>
+    ) : (
+      <Masonry cards={cards} />
+    )}
+  </main>
+</Base>

@@ -1,0 +1,95 @@
+---
+/**
+ * /<domain>/<slug>/ and /<collection>/<slug>/ — one page per piece, and one per
+ * book.
+ *
+ * A writing page gets the full treatment: the rail, the outline, the backlinks,
+ * the preview templates. A collection entry is a book with a note under it, so it
+ * gets its header and its prose and stops — hobby notes are display tiles and
+ * never reach this route at all (their `url` is empty, and taxonomy.mjs says so).
+ */
+import Article from "../../layouts/Article.astro";
+import Base from "../../layouts/Base.astro";
+import Chip from "../../components/Chip.astro";
+import { dateDots } from "../../lib/text.mjs";
+import { getSiteModel, sectionFor } from "../../lib/model.mjs";
+
+export async function getStaticPaths() {
+  const m = await getSiteModel();
+  const paths = [];
+  for (const a of m.articles) {
+    paths.push({ params: { section: a.domain, slug: a.slug }, props: { section: a.domain, slug: a.slug, kind: "article" } });
+  }
+  for (const [key, list] of Object.entries(m.collections)) {
+    for (const e of list) {
+      if (!e.url) continue;   // a display tile has no page of its own
+      paths.push({ params: { section: key, slug: e.slug }, props: { section: key, slug: e.slug, kind: "collection" } });
+    }
+  }
+  return paths;
+}
+
+const { section, slug, kind } = Astro.props;
+const m = await getSiteModel();
+const { site } = m;
+
+let article = null;
+let entry = null;
+let collection = null;
+if (kind === "article") {
+  article = m.articles.find((a) => a.slug === slug && a.domain === section);
+} else {
+  collection = sectionFor(m, section);
+  entry = (m.collections[section] || []).find((e) => e.slug === slug);
+}
+
+const index = article ? m.articles.indexOf(article) : -1;
+const prev = index > 0 ? m.articles[index - 1] : null;
+const next = index >= 0 && index < m.articles.length - 1 ? m.articles[index + 1] : null;
+---
+
+{article ? (
+  <Article
+    site={site}
+    article={article}
+    revisions={article.revisions}
+    headings={article.headings}
+    outgoing={m.outgoing.get(article.slug) || []}
+    backlinks={m.backlinks.get(article.slug) || []}
+    related={m.related.get(article.slug) || []}
+    bySlug={m.bySlug}
+    prev={prev}
+    next={next}
+  />
+) : (
+  <Base
+    title={entry.title}
+    desc={entry.description || entry.title}
+    canonical={`${site.origin}${entry.url}`}
+    type="article"
+    accent={collection.accent || "neutral"}
+    active={section}
+    jsonld={{
+      "@context": "https://schema.org",
+      "@type": section === "reading" ? "Book" : "CreativeWork",
+      name: entry.title,
+      ...(entry.author ? { author: { "@type": "Person", name: entry.author } } : {}),
+      inLanguage: site.lang
+    }}
+  >
+    <main id="main" class="wrap wrap--reading">
+      <p class="artback"><a href={`/${section}/`}><span aria-hidden="true">←</span> {collection.name}</a></p>
+      <article>
+        <header class="arthead">
+          <h1 class="arthead__title">{entry.title}</h1>
+          <p class="arthead__meta">
+            {entry.statusName && <><Chip label={entry.statusName} colour={entry.chip} /><span aria-hidden="true"> · </span></>}
+            {entry.author && <>{entry.author}<span aria-hidden="true"> · </span></>}
+            <time datetime={entry.created}>{dateDots(entry.created)}</time>
+          </p>
+        </header>
+        <div class="prose" set:html={entry.html} />
+      </article>
+    </main>
+  </Base>
+)}

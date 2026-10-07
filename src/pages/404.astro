@@ -1,0 +1,34 @@
+---
+/**
+ * The 404 page, with gwern's "did you mean" guess.
+ *
+ * gwern answers a mistyped address on the SERVER, where the request path is
+ * available. GitHub Pages serves this one static file for every missing path and
+ * has no server logic, so the guess is made in the reader's browser instead —
+ * guess404.js compares the requested path against the published slugs. Without
+ * scripting the page still offers search and the archive, which is why the
+ * fallback below is never hidden behind the guess.
+ */
+import Base from "../layouts/Base.astro";
+import PageHead from "../components/PageHead.astro";
+import { getSiteModel } from "../lib/model.mjs";
+
+const m = await getSiteModel();
+const { site } = m;
+---
+
+<Base
+  title="404"
+  desc="没有这一页。"
+  canonical={`${site.origin}/404.html`}
+>
+  <main id="main" class="wrap prose narrow">
+    <PageHead title="没有这一页" desc="这个地址下没有内容。" />
+    <div class="guess" data-guess hidden></div>
+    <p class="meta">可以试试<a href="/search/">搜索</a>，或者从<a href="/archive/">归档</a>里翻。</p>
+  </main>
+
+  <script>
+    import "../scripts/guess404.js";
+  </script>
+</Base>

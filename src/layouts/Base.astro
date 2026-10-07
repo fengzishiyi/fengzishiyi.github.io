@@ -1,0 +1,79 @@
+---
+/**
+ * Base.astro — the page shell: head, nav, slot, footer.
+ *
+ * Every page on the site wears this, which is the point: the document head, the
+ * accent attribute and the chrome used to be assembled by hand in eleven
+ * template functions, and each of them could drift. The nav labels and the
+ * stylesheet list come from site.mjs, so the design check can compare what was
+ * rendered against the one list that produced it.
+ *
+ * The stylesheets are imported here and bundled by the build; there is no
+ * stylesheet URL to keep in step by hand, and nothing is fetched from a CDN.
+ */
+import { loadSite } from "../lib/site.mjs";
+import Nav from "../components/Nav.astro";
+import Foot from "../components/Foot.astro";
+
+import "../assets/tokens.css";
+import "../assets/base.css";
+import "../assets/grid.css";
+import "../assets/prose.css";
+import "../assets/components.css";
+import "../assets/search.css";
+import "../assets/motion.css";
+
+const site = loadSite(process.cwd());
+const {
+  title,
+  desc,
+  canonical,
+  type = "website",
+  jsonld = null,
+  accent = "neutral",
+  active = "",
+  prev = null,
+  next = null
+} = Astro.props;
+
+const full = title === site.title ? title : `${title} — ${site.title}`;
+const blurb = desc || site.tagline;
+---
+
+<!doctype html>
+<html lang={site.lang}>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{full}</title>
+<meta name="description" content={blurb}>
+<link rel="canonical" href={canonical}>
+<meta name="theme-color" content="#FFFFFF">
+<meta name="color-scheme" content="light">
+<meta name="author" content={site.author}>
+<meta property="og:site_name" content={site.title}>
+<meta property="og:type" content={type}>
+<meta property="og:title" content={full}>
+<meta property="og:description" content={blurb}>
+<meta property="og:url" content={canonical}>
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="alternate" type="application/rss+xml" title={site.title} href="/rss.xml">
+{jsonld && <script type="application/ld+json" set:html={JSON.stringify(jsonld)} />}
+<slot name="head" />
+<!-- No analytics, no fonts, no CDN, no third-party script. See /about/ . -->
+</head>
+<body data-accent={accent}>
+<a class="skip" href="#main">跳到正文</a>
+<Nav active={active} />
+<a id="top"></a>
+<slot />
+<Foot prev={prev} next={next} />
+
+<script>
+  // The index pages' one behaviour. Every page gets it; it does nothing at all
+  // on a page with no `.reveal` list.
+  import "../scripts/chrome.js";
+</script>
+</body>
+</html>

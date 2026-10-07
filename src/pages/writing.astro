@@ -1,0 +1,34 @@
+---
+/**
+ * /writing/ — every piece, scattered into one grid.
+ *
+ * This page used to be three labelled blocks, one per domain, each with its own
+ * heading and list. The instruction was that writing does not need to be forced
+ * into three groups: it should just be cards. So it is the homepage's grid without
+ * the intro tile, and the three domains survive as filters you reach from a tag,
+ * an article's own header, or /archive/.
+ */
+import Base from "../layouts/Base.astro";
+import Masonry from "../components/Masonry.astro";
+import PageHead from "../components/PageHead.astro";
+import { getSiteModel } from "../lib/model.mjs";
+import { sizeFor } from "../lib/cards.mjs";
+
+const m = await getSiteModel();
+const { site } = m;
+const cards = m.articles.map((a, i) => ({ item: a, size: sizeFor(a), index: i }));
+---
+
+<Base
+  title="写作"
+  desc={site.writingBlurb || "全部文章。"}
+  canonical={`${site.origin}/writing/`}
+  active="writing"
+>
+  <main id="main" class="wrap">
+    <PageHead title="写作" desc={site.writingBlurb || "文学、哲学与计算机科学，散在一面墙上。"}>
+      <p class="meta">{m.articles.length} 篇 · <a href="/archive/">按时间</a> · <a href="/tags/">按标签</a> · <a href="/series/">系列</a></p>
+    </PageHead>
+    <Masonry cards={cards} />
+  </main>
+</Base>

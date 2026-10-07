@@ -146,7 +146,7 @@
    keeps them reading as markers rather than as fills.
 
    These double as the page accents: a domain, a collection and every tag pick
-   one of these nine pairs (see `accentFor` in lib.mjs), so the palette has one
+   one of these nine pairs (see `accentFor` in src/lib/text.mjs), so the palette has one
    definition and one contrast assertion rather than several. */
 :root {
   --chip-amber-bg: rgba(251, 191, 36, 0.4);   --chip-amber-fg: #78350F;

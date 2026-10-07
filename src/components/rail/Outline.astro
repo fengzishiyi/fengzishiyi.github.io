@@ -1,0 +1,18 @@
+---
+/**
+ * Outline.astro — the page's own table of contents.
+ *
+ * Only h2s, and only when there are at least two: a one-item "contents" list is
+ * furniture, not navigation.
+ */
+const { headings = [] } = Astro.props;
+---
+
+{headings.length >= 2 && (
+  <nav class="outline" aria-label="本篇目录">
+    <h2 class="rail__h">目录</h2>
+    <ol>
+      {headings.map((h) => <li><a href={`#${h.id}`}>{h.text}</a></li>)}
+    </ol>
+  </nav>
+)}

@@ -1,0 +1,39 @@
+---
+/**
+ * /tags/<tag>/ — one tag's grid.
+ *
+ * The tag is the page's accent as well as its subject, which is what makes the
+ * colour system worth having: a reader who arrives here from a chip sees the same
+ * tint they clicked.
+ */
+import Base from "../../layouts/Base.astro";
+import Masonry from "../../components/Masonry.astro";
+import PageHead from "../../components/PageHead.astro";
+import { getSiteModel } from "../../lib/model.mjs";
+import { sizeFor } from "../../lib/cards.mjs";
+import { accentFor, tagUrl } from "../../lib/text.mjs";
+
+export async function getStaticPaths() {
+  const m = await getSiteModel();
+  return m.tags.map((t) => ({ params: { tag: t.name }, props: { tag: t.name } }));
+}
+
+const { tag } = Astro.props;
+const m = await getSiteModel();
+const { site } = m;
+const group = m.tags.find((t) => t.name === tag);
+const cards = group.items.map((a, i) => ({ item: a, size: sizeFor(a), index: i }));
+---
+
+<Base
+  title={`标签：${tag}`}
+  desc={`${group.items.length} 篇关于「${tag}」的文章。`}
+  canonical={`${site.origin}${tagUrl(tag)}`}
+  accent={accentFor(tag)}
+  active="tags"
+>
+  <main id="main" class="wrap">
+    <PageHead title={`#${tag}`} desc={`${group.items.length} 项`} />
+    <Masonry cards={cards} />
+  </main>
+</Base>

@@ -20,6 +20,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import sharp from "sharp";
 import { Browser } from "./browser.mjs";
@@ -44,7 +45,7 @@ const VIEWPORTS = [
 ];
 
 function discoverPages() {
-  const stage = path.join(ROOT, ".build");
+  const stage = path.join(ROOT, "dist");
   const pages = ["/", "/writing/", "/archive/", "/tags/", "/series/", "/search/", "/changelog/", "/about/", "/404.html"];
   for (const group of ["literature", "philosophy", "compsci", "reading", "hobbies", "tags", "series"]) {
     const dir = path.join(stage, group);
@@ -104,16 +105,33 @@ function findRichestArticle() {
   return best;
 }
 
-// Fail with something a person can act on. Without this, a server that is not
-// running surfaces as "Uncaught" from a page evaluation twenty lines later,
-// which reads like a bug in the site rather than a missing `npm run serve`.
-try {
-  const probe = await fetch(BASE + "/", { method: "HEAD" });
-  if (!probe.ok) throw new Error(`HTTP ${probe.status}`);
-} catch (e) {
-  console.log(`✗ 连不上 ${BASE} —— 先跑 npm run serve（或 npm run dev）。(${e.message})`);
-  process.exit(1);
+// Start a server if one is not already answering. `npm run verify` promises to
+// be the one command that checks everything, and it could not keep that promise
+// while quietly requiring a server someone else had started — the failure read
+// as a broken page rather than as a missing process.
+let server = null;
+const reachable = async () => {
+  try {
+    const probe = await fetch(BASE + "/", { method: "HEAD" });
+    return probe.ok || probe.status === 404;
+  } catch { return false; }
+};
+
+if (!(await reachable())) {
+  console.log(`·  ${BASE} 上没有服务，自己起一个（等同 npm run serve）\n`);
+  server = spawn(process.execPath, [path.join(ROOT, "src", "serve.mjs"), String(PORT)],
+    { cwd: ROOT, stdio: "ignore" });
+  for (let i = 0; i < 60; i++) {
+    await new Promise((r) => setTimeout(r, 150));
+    if (await reachable()) break;
+  }
+  if (!(await reachable())) {
+    console.log(`✗ 起不来 ${BASE} —— 先手动跑 npm run serve 看看报什么错。`);
+    try { server.kill(); } catch { /* already gone */ }
+    process.exit(1);
+  }
 }
+process.on("exit", () => { try { if (server) server.kill(); } catch { /* already gone */ } });
 
 const richest = findRichestArticle();
 const ARTICLE = richest.url;

@@ -1,0 +1,65 @@
+# 构建 dist/，跑完检查，再发布到 GitHub Pages。
+#
+# 三件事值得说明：
+#
+#   · `fetch-depth: 0` —— 修订记录来自 `git log --follow`，浅克隆会让每篇文章的
+#     修订列表变空，而页面会如实显示「没有可用的 Git 历史」。检出完整历史。
+#
+#   · `npm ci --omit=dev` —— 部署只需要 astro。sharp 只在本地 `npm run images`
+#     里用，封面图的 WebP 衍生文件已经提交进仓库，CI 不需要母图，也不需要 sharp。
+#
+#   · 检查在构建之后、上传之前 —— 检查读的是 dist/，所以失败时不会部署任何东西。
+#
+# 上传的是 dist/，不是仓库根目录：根目录不再有生成产物。
+
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci --omit=dev --no-audit --no-fund
+
+      - name: Build
+        run: npm run build
+
+      - name: Check
+        run: node src/checks/run.mjs
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

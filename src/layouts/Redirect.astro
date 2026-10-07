@@ -1,0 +1,27 @@
+---
+/**
+ * Redirect.astro — a page for an address that moved.
+ *
+ * Two redesigns happened before this one, and old links are someone else's
+ * bookmarks. Each stub keeps its OLD address, points at the new one with a meta
+ * refresh (which works with scripting off), and carries `noindex,follow` so the
+ * search engines consolidate on the target instead of indexing the stub.
+ */
+import Base from "./Base.astro";
+import PageHead from "../components/PageHead.astro";
+import { loadSite } from "../lib/site.mjs";
+
+const { from, to, why } = Astro.props;
+const site = loadSite(process.cwd());
+---
+
+<Base title="页面已迁移" desc="这个地址已经迁移到新的位置。" canonical={`${site.origin}${to}`}>
+  <Fragment slot="head">
+    <meta http-equiv="refresh" content={`0; url=${to}`} />
+    <meta name="robots" content="noindex,follow" />
+  </Fragment>
+  <main id="main" class="wrap prose narrow">
+    <PageHead title="页面已迁移" desc={why} />
+    <p><code>{from}</code> 现在在 <a href={to}>{to}</a>。</p>
+  </main>
+</Base>

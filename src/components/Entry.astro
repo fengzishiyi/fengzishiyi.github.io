@@ -1,0 +1,32 @@
+---
+/**
+ * Entry.astro — one item in a list: title, kind, date, description.
+ *
+ * Mixed lists (a tag page, the archive, the changelog) hold both articles and
+ * collection entries, and the two do not carry the same fields: a book in
+ * `_reading` has no domain and no kind, it has a collection and a status of its
+ * own. Both shapes resolve to the same "which list does this belong to, and what
+ * is it" line, so each asks its own record for the answer rather than assuming
+ * one shape.
+ */
+import { dateDots } from "../lib/text.mjs";
+import { statusByKey } from "../lib/taxonomy.mjs";
+
+const { item, showDomain = false, index = 0 } = Astro.props;
+
+const owner = item.domain || item.collection || "";
+const ownerName = item.domainName || item.collectionName || "";
+const kind = item.kindName || item.statusName || "";
+const status = statusByKey(item.status);
+const statusName = (status && status.name) || item.statusName || item.status || "";
+const showStatus = item.status !== "finished" && statusName;
+---
+
+<li class="entry" style={`--i:${Math.min(index, 6)}`}>
+  <a class="entry__title" href={item.url}>{item.title}</a>
+  <p class="entry__meta meta">
+    {showDomain && owner && <><a href={`/${owner}/`}>{ownerName}</a> · </>}{kind && `${kind} · `}<time datetime={item.created}>{dateDots(item.created)}</time>
+    {showStatus && <> · <span class={`status status--${item.status}`}>{statusName}</span></>}
+  </p>
+  <p class="entry__desc">{item.description}</p>
+</li>

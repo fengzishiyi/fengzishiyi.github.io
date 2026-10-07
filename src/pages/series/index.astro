@@ -1,0 +1,34 @@
+﻿---
+/**
+ * /series/ — the groups the writer made on purpose.
+ *
+ * A series counts for more than any tag overlap in the "related" score, because
+ * it is a decision rather than a coincidence. This page is where that decision is
+ * visible.
+ */
+import Base from "../../layouts/Base.astro";
+import PageHead from "../../components/PageHead.astro";
+import { getSiteModel } from "../../lib/model.mjs";
+import { seriesUrl } from "../../lib/text.mjs";
+
+const m = await getSiteModel();
+const { site } = m;
+---
+
+<Base title="系列" desc="成组的文章。" canonical={`${site.origin}/series/`} active="writing">
+  <main id="main" class="wrap">
+    <PageHead title="系列" desc="同一主题下的多篇。" />
+    {m.series.length === 0 ? (
+      <p class="empty">还没有系列。</p>
+    ) : (
+      <ul class="seriesindex">
+        {m.series.map((s) => (
+          <li>
+            <a href={seriesUrl(s.name)}>{s.name}</a> <span class="meta">{s.items.length}</span>
+            <p class="tagindex__blurb">{s.items[0].description}</p>
+          </li>
+        ))}
+      </ul>
+    )}
+  </main>
+</Base>

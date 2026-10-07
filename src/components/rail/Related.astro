@@ -1,0 +1,24 @@
+---
+/**
+ * Related.astro — the pieces a reader is most likely to want next.
+ *
+ * The reason is named in the list rather than hidden: a suggestion the reader
+ * cannot account for is just noise, whereas "系列 · 个人站点的三次改版" is a
+ * reason they can accept or reject. The scoring is in model.mjs.
+ */
+const { related = [] } = Astro.props;
+---
+
+{related.length > 0 && (
+  <section class="railsec" id="related" aria-labelledby="related-h">
+    <h2 class="rail__h" id="related-h">相关 <span class="meta">{related.length}</span></h2>
+    <ul class="rellist">
+      {related.map((r) => (
+        <li>
+          <a href={r.url}>{r.title}</a>
+          <span class="rellist__meta meta">{r.why.join(" · ")}</span>
+        </li>
+      ))}
+    </ul>
+  </section>
+)}

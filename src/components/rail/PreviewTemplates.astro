@@ -1,0 +1,36 @@
+---
+/**
+ * PreviewTemplates.astro — one inert `<template>` per outbound link.
+ *
+ * The preview is the reason a `{{ref:}}` is worth writing instead of a bare link:
+ * the reader can see what a piece is before leaving the sentence they are
+ * reading. It is rendered here, at build time, so hovering costs no request and
+ * leaks nothing to anyone — gwern fetches the target page live, which is the one
+ * part of its preview worth not copying.
+ *
+ * `<template>` content is inert: not rendered, not announced, not indexed. The one
+ * thing that must hold is that every `data-preview="x"` has an `id="pv-x"`, which
+ * the rendered check asserts, because a missing template fails as *nothing
+ * happening on hover*, which no reader would ever report as a bug.
+ */
+import { dateDots } from "../../lib/text.mjs";
+
+const { outgoing = [], bySlug } = Astro.props;
+
+const seen = new Set();
+const targets = [];
+for (const link of outgoing) {
+  if (seen.has(link.to)) continue;
+  seen.add(link.to);
+  const target = bySlug.get(link.to);
+  if (target) targets.push(target);
+}
+---
+
+{targets.map((t) => (
+  <template id={`pv-${t.slug}`}>
+    <p class="preview__title">{t.title}</p>
+    <p class="preview__meta meta">{t.domainName} · {t.kindName} · {dateDots(t.created)}{t.chars ? ` · ${t.chars} 字` : ""}</p>
+    <p class="preview__desc">{t.description}</p>
+  </template>
+))}

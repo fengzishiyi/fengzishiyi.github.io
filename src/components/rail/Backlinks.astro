@@ -1,0 +1,27 @@
+---
+/**
+ * Backlinks.astro — the pieces that cite this one.
+ *
+ * Each carries the sentence the link sits in, because a backlink without context
+ * is a bare title list, and the context is what makes it worth showing at all.
+ * A backlink that points at a specific section also appears inside that section
+ * (see markdown.mjs), which is gwern's in-context backlink and the reason anchors
+ * are positional.
+ */
+const { backlinks = [] } = Astro.props;
+---
+
+{backlinks.length > 0 && (
+  <section class="railsec" id="backlinks" aria-labelledby="backlinks-h">
+    <h2 class="rail__h" id="backlinks-h">反向链接 <span class="meta">{backlinks.length}</span></h2>
+    <ul class="backlist">
+      {backlinks.map((b) => (
+        <li>
+          <a href={`${b.fromUrl}${b.anchor ? "#" + encodeURIComponent(b.anchor) : ""}`}>{b.fromTitle}</a>
+          <span class="backlist__meta meta">{b.fromKind}</span>
+          {b.context && <p class="backlist__ctx">{b.context}</p>}
+        </li>
+      ))}
+    </ul>
+  </section>
+)}

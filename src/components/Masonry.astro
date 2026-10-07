@@ -1,0 +1,18 @@
+---
+/**
+ * Masonry.astro — the whole grid. An empty grid says so rather than rendering
+ * nothing, because a blank page reads as a broken page.
+ */
+import Card from "./Card.astro";
+
+const { cards = [], intro = null, empty = "还没有内容。把 .md 放进 _articles/ ，或运行 npm run new。" } = Astro.props;
+---
+
+{cards.length === 0 && !intro ? (
+  <div class="masonry"><p class="masonry__empty">{empty}</p></div>
+) : (
+  <div class="masonry">
+    {intro && <Card item={intro} size="intro" />}
+    {cards.map((c) => <Card item={c.item} size={c.size} index={c.index} />)}
+  </div>
+)}

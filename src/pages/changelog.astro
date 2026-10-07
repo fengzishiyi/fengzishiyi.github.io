@@ -1,0 +1,23 @@
+---
+/**
+ * /changelog/ — what was written recently.
+ *
+ * Each article's own revision list lives on the article page; this is the site's
+ * writing order, which is the thing a returning reader actually wants.
+ */
+import Base from "../layouts/Base.astro";
+import PageHead from "../components/PageHead.astro";
+import EntryList from "../components/EntryList.astro";
+import { getSiteModel } from "../lib/model.mjs";
+
+const m = await getSiteModel();
+const { site } = m;
+const recent = [...m.articles].sort((a, b) => b.created.localeCompare(a.created));
+---
+
+<Base title="更新" desc="全站最近写了什么。" canonical={`${site.origin}/changelog/`} active="home">
+  <main id="main" class="wrap">
+    <PageHead title="更新" desc="按写作时间倒序。每篇文章自己的修订记录在文章页下方。" />
+    <EntryList items={recent} showDomain />
+  </main>
+</Base>

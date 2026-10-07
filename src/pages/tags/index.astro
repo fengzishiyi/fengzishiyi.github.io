@@ -1,0 +1,32 @@
+﻿---
+/**
+ * /tags/ — every tag, with how much is under it.
+ *
+ * A tag with a single piece under it carries no blurb: printing that piece's own
+ * description under the tag just repeats a sentence the reader is about to read
+ * again. The count already says how much is here.
+ */
+import Base from "../../layouts/Base.astro";
+import PageHead from "../../components/PageHead.astro";
+import Chip from "../../components/Chip.astro";
+import { getSiteModel } from "../../lib/model.mjs";
+import { accentFor, tagUrl } from "../../lib/text.mjs";
+
+const m = await getSiteModel();
+const { site } = m;
+---
+
+<Base title="标签" desc="全部标签及其下的文章。" canonical={`${site.origin}/tags/`} active="tags">
+  <main id="main" class="wrap">
+    <PageHead title="标签" desc="跨领域的线索靠标签串起来：同一个想法在文学、哲学与计算机里各长什么样。" />
+    <ul class="tagindex">
+      {m.tags.map((t) => (
+        <li>
+          <a class="tagindex__name" href={tagUrl(t.name)}><Chip label={t.name} colour={accentFor(t.name)} /></a>
+          <span class="meta">{t.count}</span>
+          {t.blurb && <p class="tagindex__blurb">{t.blurb}</p>}
+        </li>
+      ))}
+    </ul>
+  </main>
+</Base>

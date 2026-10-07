@@ -16,8 +16,8 @@ import fs from "node:fs";
 import path from "node:path";
 import readline from "node:readline";
 import { fileURLToPath } from "node:url";
-import { DOMAINS, CROSS_TAGS, domainByKey } from "./taxonomy.mjs";
-import { todayISO, slugify } from "./lib.mjs";
+import { DOMAINS, CROSS_TAGS, domainByKey } from "./lib/taxonomy.mjs";
+import { todayISO, slugify } from "./lib/text.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const ARTICLES = path.join(ROOT, "_articles");

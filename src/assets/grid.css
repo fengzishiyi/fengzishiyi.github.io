@@ -243,7 +243,7 @@
    deleted a round ago as dead weight — the site had no images — and it is back
    because the site now has card covers. The build carries a list of deleted
    selectors that must NOT reappear, so bringing these back meant deliberately
-   taking them off that list; see the GONE table in build.mjs. */
+   taking them off that list; see the GONE table in src/checks/design.mjs. */
 
 /* the photograph fills the cell in both variants */
 .card__img {

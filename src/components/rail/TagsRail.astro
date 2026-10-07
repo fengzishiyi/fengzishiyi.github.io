@@ -1,0 +1,23 @@
+---
+/**
+ * TagsRail.astro — an article's tags, as a rail block.
+ *
+ * They used to sit above the title, which put four separate elements between the
+ * reader and the first sentence.
+ */
+import { accentFor, tagUrl } from "../../lib/text.mjs";
+import Chip from "../Chip.astro";
+
+const { tags = [] } = Astro.props;
+---
+
+{tags.length > 0 && (
+  <section class="railsec" id="tags" aria-labelledby="tags-h">
+    <h2 class="rail__h" id="tags-h">标签</h2>
+    <ul class="taglist taglist--rail" aria-label="标签">
+      {tags.map((t) => (
+        <li><a class="taglink" href={tagUrl(t)}><Chip label={t} colour={accentFor(t)} /></a></li>
+      ))}
+    </ul>
+  </section>
+)}

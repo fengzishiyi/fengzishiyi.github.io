@@ -1,0 +1,23 @@
+---
+/**
+ * CardHead.astro — the line at the top of every card: what this is, and the
+ * arrow that says it goes somewhere.
+ *
+ * A display-only card (a hobby tile) has no link, so it gets neither a link on the
+ * category nor the arrow that promises one. A card that looks clickable but is not
+ * is worse than one that plainly is not.
+ */
+const { category, label = "", catHref = "#", display = false } = Astro.props;
+
+/* A thin arrow-up-right, stroked rather than filled — the glyph the reference
+   puts in the corner of every card. Every card here opens a page inside the
+   site, so it is a decoration, not a second link. */
+const arrow = `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 13.5 13.5 6.5"></path><path d="M7.5 6.5h6v6"></path></svg>`;
+---
+
+<div class="card__head">
+  <span>
+    {display ? category : <a class="card__cat" href={catHref}>{category}</a>}{label ? <>&nbsp;·&nbsp;{label}</> : null}
+  </span>
+  {!display && <span class="card__arrow" set:html={arrow} />}
+</div>

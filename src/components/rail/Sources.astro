@@ -1,0 +1,24 @@
+---
+/**
+ * Sources.astro — "本篇引用": what this piece links to, in the order it does.
+ *
+ * The reader sees the same links inline; this is the list form, which is what
+ * makes a piece's dependencies visible at a glance instead of only in the
+ * sentences that mention them.
+ */
+const { outgoing = [] } = Astro.props;
+---
+
+{outgoing.length > 0 && (
+  <section class="railsec" id="sources" aria-labelledby="sources-h">
+    <h2 class="rail__h" id="sources-h">本篇引用 <span class="meta">{outgoing.length}</span></h2>
+    <ol class="srclist">
+      {outgoing.map((l) => (
+        <li>
+          <a href={l.toUrl}>{l.toTitle}</a>
+          {l.anchor && <> <span class="meta">§{l.anchor}</span></>}
+        </li>
+      ))}
+    </ol>
+  </section>
+)}

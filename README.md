@@ -22,9 +22,9 @@ npm run new                        # 新建一篇（交互式选领域与类型�
 npm run verify                     # 提交前：构建 + 28 项端到端检查 + 六种视口实测
 ```
 
-`npm run dev` 会同时启动监听与本地服务（<http://127.0.0.1:4321>）。改 `_articles/`、`_reading/`、`_hobbies/`、`_site.json`、`src/assets/` 或 `src/*.mjs` 都会触发重建。
+`npm run dev` 启动 Astro 自己的开发服务器（<http://127.0.0.1:4321>），改 `_articles/`、`_reading/`、`_hobbies/`、`_site.json`、`src/` 下的任何文件都会热更新。
 
-**改坏了不影响线上。** 内容或断言不通过时，构建不发布任何文件，终端持续报错直到改好，本地与线上都停在上一版。
+**改坏了不影响线上。** 内容有问题时构建直接失败（`src/lib/model.mjs` 会在找不到被引用的文章、锚点落空、slug 冲突或封面缺衍生图时中止），部署工作流就跑不到上传那一步，线上停在上一版。
 
 ---
 
@@ -114,16 +114,16 @@ license: CC BY-NC-SA 4.0       # 可选，覆盖站点默认
 
 | 命令 | 作用 |
 |---|---|
-| `npm run dev` | 监听 + 本地服务 + 自动刷新（日常用这个） |
-| `npm run build` | 完整构建并发布到仓库根目录 |
+| `npm run dev` | Astro 开发服务器，保存即热更新（日常用这个） |
+| `npm run build` | 构建到 `dist/`，内容有错就中止 |
 | `npm run new` | 新建文章，交互式选领域与类型 |
-| `npm run check` | 风格断言 + 内容检查，不写任何文件 |
-| `npm run check:content` | 只检查内容与分类 |
-| `npm run check:links` | 列出全部可用 slug、报死链与孤岛文章 |
-| `npm run smoke` | 起服务，28 项端到端检查 |
+| `npm run images` | 按 front matter 重新生成卡片封面的 WebP 衍生图（加 `--prune` 顺手清掉没人引用的） |
+| `npm run serve` | 起服务托管 `dist/`（<http://127.0.0.1:4321>），与线上产物一致 |
+| `npm run check` | 构建，再跑设计契约 + 产物断言 + 体积预算（读 `src/` 与 `dist/`） |
+| `npm run smoke` | 起服务，28 项端到端检查（走真实 HTTP） |
 | `npm run layout` | 无头浏览器在 6 个视口下量版式、验交互并截图到 `.shots/`（加 `--quick` 只跑交互，几秒） |
-| `npm run verify` | 构建 + 冒烟 + 版式实测，提交前跑这个 |
-| `npm run clean` | 清掉构建产物与截图 |
+| `npm run verify` | 构建 + check + smoke + 版式实测，提交前跑这个 |
+| `npm run clean` | 清掉 `dist/` 与截图 |
 
 ---
 
@@ -150,7 +150,7 @@ license: CC BY-NC-SA 4.0       # 可选，覆盖站点默认
 /rss.xml  /sitemap.xml
 ```
 
-导航固定六项：**首页 · 写作 · 阅读 · 爱好 · 标签 · 关于**。这串标签只定义在 `src/templates.mjs` 一处，构建与端到端测试都会逐字比对。
+导航固定六项：**首页 · 写作 · 阅读 · 爱好 · 标签 · 关于**。这串标签只定义在 `src/lib/site.mjs` 一处，导航组件读它，端到端检查逐字比对渲染结果。
 
 **除首页、搜索、关于这类纯文字页，其余索引页都是同一套**：页首一个很大的细体衬线标题（56px，宽屏 80px）加一句灰色导语，下面直接铺同一种砖石网格。
 
@@ -161,6 +161,35 @@ license: CC BY-NC-SA 4.0       # 可选，覆盖站点默认
 **打错地址不会撞上死胡同。** 404 页面会拿地址里的最后一段和全部 slug 比编辑距离，给出最接近的一篇。
 gwern 在服务端做这件事；GitHub Pages 对每个不存在的地址只回同一个静态文件、没有服务端逻辑，所以这一步在浏览器里完成。
 **没有 JavaScript 时这一步不会发生** —— 页面仍然给出搜索与归档两条退路，但猜测本身没有了。这是全站唯一一个需要脚本才能工作的功能。
+
+---
+
+## 代码在哪里
+
+站点用 **Astro** 静态构建：内容集合负责读取与校验 front matter，页面是组件，输出到 `dist/`，GitHub Actions 部署。**本站特有的写作语法仍然由少量独立模块处理**，没有塞进框架里。
+
+```
+src/
+  content.config.ts     front matter 的 schema（Astro 内容集合）
+  lib/
+    model.mjs           ★ 唯一的内容模型：链接图、节级反链、目录、相关、封面、搜索索引
+    sitetext.mjs        ★ 本站写作语法（提示块 / 折叠 / 题词 / 多栏 / 脚注 / 引用 / 互链）
+    markdown.mjs        ★ 文本 → Markdown AST → HTML，锚点、章节、节级反链在这里
+    taxonomy.mjs        三个领域、类型、状态、两个收藏夹
+    text.mjs fsx.mjs colour.mjs site.mjs cards.mjs images.mjs revisions.mjs
+  components/ layouts/  页壳、卡片、索引行、文章栏（每个部件一个文件）
+  pages/                路由：URL 由文件名决定，和站点结构一一对应
+  scripts/              chrome.js（索引页）/ article.js / search.js / guess404.js，按页加载
+  checks/               design.mjs（读源码）· rendered.mjs（读 dist/）· run.mjs
+  assets/*.css          样式源码，由构建打包压缩
+public/                 favicon、robots.txt、卡片封面的 WebP 衍生图
+```
+
+三条规则：
+
+- **一个模型。** 目录、互链、节级反链、相关内容、预览片段、搜索索引、订阅源全部由 `src/lib/model.mjs` 算一次，页面只读结果。以前这些分散在构建脚本和每个页模板里，各自重新推导同一批 slug/url/类型，两份页面就可能对同一件事给出不同答案。
+- **文本层管块，AST 层管树。** `sitetext.mjs` 在解析前重写块级标记（它们包裹的是一整段普通 Markdown）；`markdown.mjs` 在 Markdown AST 上做锚点、章节包裹、节级反链、链接分类。脚本只增强已经可用的默认行为，所以关闭 JavaScript 什么都不缺。
+- **产物与发布分开。** 构建只写 `dist/`，检查读 `dist/`，工作流上传 `dist/`。仓库根目录里没有生成文件，`dist/` 也不进版本库。
 
 ---
 
@@ -236,7 +265,7 @@ card: image_and_text     # 可选，见下
 | 标签 | 名字哈希到八色之一，**全站恒定**：同一个标签在标签页、文章页与搜索结果里永远同色 |
 | 提示框 | note 中性、tip lime、warn amber、aside sky |
 
-新增一处颜色意味着 `taxonomy.mjs` 里加一个 `accent:`，或者引用已有的九对标签色 —— **全站没有任何地方写新的色值**，它们全部定义在 `src/assets/tokens.css`。
+新增一处颜色意味着 `src/lib/taxonomy.mjs` 里加一个 `accent:`，或者引用已有的九对标签色 —— **全站没有任何地方写新的色值**，它们全部定义在 `src/assets/tokens.css`。
 
 **动效三条纪律**：隐藏态只写在 keyframe 里（动画被关掉时最坏是「没有动画」，绝不是「没有内容」）；一切都短（控件 120ms、颜色 180ms、入场 400ms，一页最长 520ms）；动效不碰会被测量的几何（卡片只淡入，上浮只留给列表行）。全部尊重 `prefers-reduced-motion`，包括把延迟也归零。
 
@@ -259,15 +288,17 @@ card: image_and_text     # 可选，见下
 
 ## 上线
 
-构建产物直接落在仓库根目录，GitHub Pages 的 legacy 构建可以直接托管，不需要 CI。
+站点由 Astro 静态构建到 `dist/`，GitHub Actions 构建并部署到 Pages（`.github/workflows/deploy.yml`）。仓库根目录**不再有生成产物**。
 
-```bash
-npm run verify
-git add -A && git commit -m "新的一篇"
-git push
+工作流做三件事，顺序不能换：
+
+```yaml
+npm ci --omit=dev      # 部署只需要 astro；sharp 只在本地 npm run images 用
+npm run build          # 内容有问题就中止
+node src/checks/run.mjs # 设计契约 + 产物断言 + 体积预算，不过就不上传
 ```
 
-推送后 Pages 会自动重建（约一分钟）。
+检出用 `fetch-depth: 0`：每篇文章的修订记录来自 `git log --follow`，浅克隆会让它变空（页面会如实显示「没有可用的 Git 历史」）。上传的是 `dist/`，所以在检查通过之前不会部署任何东西。
 
 ---
 

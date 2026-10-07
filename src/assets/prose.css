@@ -477,8 +477,8 @@ mark { background: var(--mark); color: var(--ink); }
 
 /* ==========================================================================
    block extensions — all five are plain markup, so all five survive with
-   scripting off. See render.mjs for why they are preprocessed rather than
-   added as a marked extension.
+   scripting off. See src/lib/sitetext.mjs for why they are rewritten on the text
+   rather than added as a parser extension.
    ========================================================================== */
 
 /* ---- admonition ------------------------------------------------------- */

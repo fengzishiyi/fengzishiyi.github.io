@@ -1,0 +1,77 @@
+---
+/**
+ * Article.astro — the writing page: header, prose, rail, preview templates.
+ *
+ * The page is a two-column grid: a narrow rail for the outline and backlinks, and
+ * the reading measure beside it. Sidenotes float into the rail from inside the
+ * prose via CSS, so the note text lives in the document where it belongs and
+ * never needs JavaScript to be readable.
+ *
+ * There is no fixed navbar. On a long-form reading site a sticky chrome bar is a
+ * permanent tax on attention, so the header scrolls away.
+ */
+import Base from "./Base.astro";
+import Rail from "../components/Rail.astro";
+import PreviewTemplates from "../components/rail/PreviewTemplates.astro";
+import { dateDots } from "../lib/text.mjs";
+import { domainByKey, statusByKey } from "../lib/taxonomy.mjs";
+
+const { site, article: a, revisions = [], headings = [], outgoing = [], backlinks = [],
+  related = [], bySlug, prev = null, next = null } = Astro.props;
+
+const domain = domainByKey(a.domain);
+const status = statusByKey(a.status);
+
+const jsonld = {
+  "@context": "https://schema.org",
+  "@type": a.domain === "literature" ? "CreativeWork" : "ScholarlyArticle",
+  headline: a.title,
+  abstract: a.description,
+  datePublished: a.created,
+  ...(a.modified ? { dateModified: a.modified } : {}),
+  inLanguage: site.lang,
+  author: { "@type": "Person", name: site.author },
+  url: `${site.origin}${a.url}`,
+  ...(a.tags.length ? { keywords: a.tags.join(", ") } : {}),
+  license: a.license || site.license
+};
+---
+
+<Base
+  title={a.title}
+  desc={a.description}
+  canonical={`${site.origin}${a.url}`}
+  type="article"
+  accent={domain ? domain.accent : "neutral"}
+  active="writing"
+  prev={prev}
+  next={next}
+  jsonld={jsonld}
+>
+  <main id="main" class="wrap wrap--reading article">
+    <p class="artback"><a href="/writing/"><span aria-hidden="true">←</span> 写作</a></p>
+    <header class="arthead">
+      <h1 class="arthead__title">{a.title}</h1>
+      <p class="arthead__meta">
+        <a href={`/${a.domain}/`}>{a.domainName}</a>
+        <span aria-hidden="true"> · </span>{a.kindName}
+        <span aria-hidden="true"> · </span><time datetime={a.created}>{dateDots(a.created)}</time>
+        {status && <><span aria-hidden="true"> · </span><span class={`status status--${a.status}`}>{status.name}</span></>}
+      </p>
+      <p class="arthead__desc">{a.description}</p>
+    </header>
+
+    <div class="artbody">
+      <div class="artmain prose" set:html={a.html} />
+      <Rail site={site} article={a} revisions={revisions} headings={headings}
+        outgoing={outgoing} backlinks={backlinks} related={related} />
+    </div>
+
+    <PreviewTemplates outgoing={outgoing} bySlug={bySlug} />
+  </main>
+
+  <script>
+    // Folding, the rail's copy buttons, sidenote placement and the hover preview.
+    import "../scripts/article.js";
+  </script>
+</Base>

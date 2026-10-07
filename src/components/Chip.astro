@@ -1,0 +1,15 @@
+---
+/**
+ * Chip.astro — one tag or status chip.
+ *
+ * Colour is a decoration and never the only carrier of meaning: the status name
+ * is always printed next to it. The colour is a hash of the name (see
+ * `accentFor`), so 纯文本 is the same tint on the tag index, on the article rail
+ * and in the search results — the point of colour here is that a reader can
+ * recognise a tag before reading it, and that only works if the mapping never
+ * moves.
+ */
+const { label, colour = "neutral" } = Astro.props;
+---
+
+<span class={`chip chip--${colour}`}>{label}</span>

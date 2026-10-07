@@ -1,0 +1,38 @@
+---
+/**
+ * /series/<name>/ — one series, in the order it was written.
+ *
+ * Reverse-chronological everywhere else on this site; a series is the one place
+ * where reading order is the writing order, so it is the one place that is not.
+ */
+import Base from "../../layouts/Base.astro";
+import Masonry from "../../components/Masonry.astro";
+import PageHead from "../../components/PageHead.astro";
+import { getSiteModel } from "../../lib/model.mjs";
+import { sizeFor } from "../../lib/cards.mjs";
+import { accentFor, seriesUrl } from "../../lib/text.mjs";
+
+export async function getStaticPaths() {
+  const m = await getSiteModel();
+  return m.series.map((s) => ({ params: { series: s.name }, props: { series: s.name } }));
+}
+
+const { series } = Astro.props;
+const m = await getSiteModel();
+const { site } = m;
+const group = m.series.find((s) => s.name === series);
+const cards = [...group.items].reverse().map((a, i) => ({ item: a, size: sizeFor(a), index: i }));
+---
+
+<Base
+  title={`系列：${series}`}
+  desc={`${group.items.length} 篇的系列。`}
+  canonical={`${site.origin}${seriesUrl(series)}`}
+  accent={accentFor(series)}
+  active="writing"
+>
+  <main id="main" class="wrap">
+    <PageHead title={series} desc={`${group.items.length} 篇，按写作时间排列。`} />
+    <Masonry cards={cards} />
+  </main>
+</Base>

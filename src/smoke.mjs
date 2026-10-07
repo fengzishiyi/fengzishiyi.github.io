@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 /**
- * smoke.mjs — serve the PUBLISHED tree and pull it apart like a browser would.
+ * smoke.mjs — serve the built site and pull it apart like a browser would.
  *
- * Requires `npm run build` first. It serves the REPO ROOT, not `.build/`: the
- * build writes to a staging directory and mirrors a fixed list of paths into the
- * root, so a page written to the stage but missing from that list is absent in
- * production while a stage-based check stays green. That happened three times.
+ * Requires `npm run build` first. It serves `dist/`, which is exactly what the
+ * deploy workflow uploads: a page the build writes somewhere else, or an asset
+ * the build forgets to emit, is absent here while a stage-based check stays
+ * green. That happened three times before this suite existed.
  *
  * Checks, against real HTTP responses:
  *   · every page 200, HTML, exactly one <h1>
@@ -14,9 +14,13 @@
  *   · the homepage grid is a grid: cells, three footprints, no nested anchors
  *   · articles keep the promises: inline notes, the five block forms, no two
  *     stylesheets disagreeing, one h1 each
- *   · the link graph is consistent in both directions
+ *   · the link graph is consistent in both directions, including section anchors
  *   · the collections render, or say so when empty
  *   · legacy magazine URLs still redirect
+ *
+ * What is NOT here: the design contract and the size budgets. Those read the
+ * sources and the artefacts directly and live in src/checks/ — this file only
+ * knows what a server says.
  */
 
 import { spawn } from "node:child_process";
@@ -25,33 +29,34 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const DIST = path.join(ROOT, "dist");
 const PORT = 4399;
 const BASE = `http://127.0.0.1:${PORT}`;
 
 const EXPECTED_NAV = ["首页", "写作", "阅读", "爱好", "标签", "关于"];
+const DOMAINS = ["literature", "philosophy", "compsci"];
+const COLLECTIONS = ["reading", "hobbies"];
 
 let failures = 0;
 let checks = 0;
 const fail = (m) => { console.log("  ✗ " + m); failures++; };
 const ok = (m) => { checks++; console.log("  " + m + "  ✓"); };
 
-if (!fs.existsSync(path.join(ROOT, "index.html"))) {
-  console.error("仓库根目录没有构建产物 —— 先运行 npm run build");
+if (!fs.existsSync(path.join(DIST, "index.html"))) {
+  console.error("dist/ 里没有构建产物 —— 先运行 npm run build");
   process.exit(2);
 }
 
-/* ---- discover, from the PUBLISHED tree -------------------------------- */
+/* ---- discover, from the built tree ------------------------------------ */
 const dirsIn = (p) => fs.existsSync(p)
   ? fs.readdirSync(p, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name)
   : [];
 
-const DOMAINS = ["literature", "philosophy", "compsci"];
-const COLLECTIONS = ["reading", "hobbies"];
-const articles = DOMAINS.flatMap((d) => dirsIn(path.join(ROOT, d)).map((s) => `/${d}/${s}/`));
-const collectionEntries = COLLECTIONS.flatMap((c) => dirsIn(path.join(ROOT, c)).map((s) => `/${c}/${s}/`));
-const tagPages = dirsIn(path.join(ROOT, "tags")).map((t) => `/tags/${t}/`);
-const seriesPages = dirsIn(path.join(ROOT, "series")).map((s) => `/series/${s}/`);
-const legacyArticles = dirsIn(path.join(ROOT, "articles")).map((s) => `/articles/${s}/`);
+const articles = DOMAINS.flatMap((d) => dirsIn(path.join(DIST, d)).map((s) => `/${d}/${s}/`));
+const collectionEntries = COLLECTIONS.flatMap((c) => dirsIn(path.join(DIST, c)).map((s) => `/${c}/${s}/`));
+const tagPages = dirsIn(path.join(DIST, "tags")).map((t) => `/tags/${t}/`);
+const seriesPages = dirsIn(path.join(DIST, "series")).map((s) => `/series/${s}/`);
+const legacyArticles = dirsIn(path.join(DIST, "articles")).map((s) => `/articles/${s}/`);
 
 const pages = [
   "/", "/writing/", "/archive/", "/tags/", "/series/", "/search/", "/changelog/", "/about/", "/404.html",
@@ -61,8 +66,8 @@ const pages = [
   ...tagPages, ...seriesPages, ...articles, ...collectionEntries, ...legacyArticles
 ];
 
-/* ---- boot the server on the published tree ---------------------------- */
-const child = spawn(process.execPath, [path.join(ROOT, "src/serve.mjs"), "--published", String(PORT)], {
+/* ---- boot the server on the built tree -------------------------------- */
+const child = spawn(process.execPath, [path.join(ROOT, "src/serve.mjs"), String(PORT)], {
   cwd: ROOT, stdio: "inherit"
 });
 
@@ -94,16 +99,21 @@ try {
   ok(`${Object.keys(html).length} pages return 200 with exactly one h1`);
 
   console.log("\nassets");
-  const mustExist = [
-    "/search/index.json", "/rss.xml", "/sitemap.xml", "/robots.txt", "/favicon.svg",
-    ...["tokens", "base", "grid", "prose", "components", "search", "motion"].map((n) => `/assets/${n}.css`),
-    "/assets/site.js", "/assets/guess404.js"
-  ];
-  for (const p of mustExist) {
+  // The stylesheets and scripts are discovered from the pages rather than listed
+  // by hand: the build names them with a content hash, and a hand-written list
+  // would go on passing while pointing at files that no longer exist.
+  const stylesheets = new Set();
+  const scripts = new Set();
+  for (const body of Object.values(html)) {
+    for (const m of body.matchAll(/<link[^>]+rel="stylesheet"[^>]+href="([^"]+)"/g)) stylesheets.add(m[1]);
+    for (const m of body.matchAll(/<script[^>]+src="([^"]+)"/g)) scripts.add(m[1]);
+  }
+  const mustExist = ["/search/index.json", "/rss.xml", "/sitemap.xml", "/robots.txt", "/favicon.svg"];
+  for (const p of [...mustExist, ...stylesheets, ...scripts]) {
     const r = await get(p);
     if (r.status !== 200) fail(`${p} → ${r.status}`);
   }
-  ok(`${mustExist.length} required assets resolve`);
+  ok(`${mustExist.length} required assets + ${stylesheets.size} 个样式表 + ${scripts.size} 个脚本都能取到`);
 
   console.log("\nreferenced urls resolve");
   const seen = new Set();
@@ -129,10 +139,10 @@ try {
 
   // The guess runs in the browser, because GitHub Pages serves this one static
   // file for every missing path. What can be checked here is that the page is
-  // wired for it and that the script is actually published — the guess itself is
-  // exercised in layout.mjs, against a real typo.
+  // wired for it and that a script is actually shipped with it — the guess itself
+  // is exercised in layout.mjs, against a real typo.
   if (!/data-guess/.test(missing.body)) fail("404 页面没有「是不是想找」的容器");
-  else if (!/src="\/assets\/guess404\.js"/.test(missing.body)) fail("404 页面没有引入 guess404.js");
+  else if (!/<script/.test(missing.body)) fail("404 页面没有引入 guess404 脚本");
   else ok("404 页面接好了「是不是想找」的脚本");
 
   console.log("\nlegacy magazine URLs");
@@ -182,11 +192,17 @@ try {
   if (nested.length) fail(`${nested.length} 张卡片里有嵌套 <a>`);
   else ok(`${cardBlocks.length} 张卡片均无嵌套锚点`);
 
-  // The current page is marked in the markup, with no script involved: chester
-  // colours the link and rings it. An earlier revision slid a pill along behind
-  // it, which looked good and was not what the reference does.
-  const navCss = (await get("/assets/base.css")).body;
-  if (!/\.nav__link\[aria-current="page"\]/.test(navCss)) {
+  console.log("\nthe colour system");
+  const allCss = (await Promise.all([...stylesheets].map((s) => get(s)))).map((r) => r.body).join("\n");
+
+  // The current page is marked in the markup, with no script involved: the
+  // reference colours the link and rings it.
+  //
+  // The attribute selector is matched with OPTIONAL quotes: the CSS minifier
+  // drops them where they are not needed, so `[aria-current="page"]` ships as
+  // `[aria-current=page]`, and a check that demanded the quotes would fail a
+  // stylesheet that is perfectly correct.
+  if (!/\.nav__link\[aria-current=["']?page["']?\]/.test(allCss)) {
     fail("导航没有给当前页写样式");
   } else if (!/<a class="nav__link" href="\/" aria-current="page">/.test(home)) {
     fail("首页没有把当前页标成 aria-current");
@@ -194,7 +210,6 @@ try {
     ok("导航当前页由 aria-current 标记，无需脚本");
   }
 
-  console.log("\nthe colour system");
   // Every page states its accent, and the stylesheet has a rule for it — one
   // without the other means the page silently renders neutral.
   const accented = Object.entries(html).filter(([, b]) => /<body data-accent="[a-z]+"/.test(b));
@@ -203,7 +218,7 @@ try {
   } else {
     const kinds = new Set(Object.values(html).map((b) => /<body data-accent="([a-z]+)"/.exec(b)[1]));
     for (const k of kinds) {
-      if (!new RegExp(`body\\[data-accent="${k}"\\]`).test((await get("/assets/tokens.css")).body)) {
+      if (!new RegExp(`body\\[data-accent=["']?${k}["']?\\]`).test(allCss)) {
         fail(`样式表里没有 body[data-accent="${k}"] 的规则`);
       }
     }
@@ -229,9 +244,7 @@ try {
     if (!page) { tagProblems.push(`标签「${name}」没有页面`); continue; }
     const accent = /<body data-accent="([a-z]+)"/.exec(page);
     if (!accent) tagProblems.push(`标签页「${name}」没有强调色`);
-    else if (accent[1] !== colour) {
-      tagProblems.push(`标签「${name}」在文章页是 ${colour}，在标签页是 ${accent[1]}`);
-    }
+    else if (accent[1] !== colour) tagProblems.push(`标签「${name}」在文章页是 ${colour}，在标签页是 ${accent[1]}`);
   }
   if (tagProblems.length) tagProblems.slice(0, 3).forEach(fail);
   else if (!chipByTag.size) fail("文章页的标签没有上色");
@@ -260,29 +273,11 @@ try {
   if (leaked) fail("块级写法的 HTML 被转义了，说明空行不足");
   else ok("块级写法的 HTML 没有被转义");
 
-  const thirdParty = [];
-  for (const [page, body] of Object.entries(html)) {
-    for (const m of body.matchAll(/<(\w+)([^>]*)>/g)) {
-      const [tag, attrs] = [m[1].toLowerCase(), m[2]];
-      if (tag === "a") continue;
-      for (const attr of ["src", "srcset", "data-src", "poster"]) {
-        const v = new RegExp(`${attr}="([^"]*)"`, "i").exec(attrs);
-        if (v && /^https?:\/\//i.test(v[1])) thirdParty.push(`${page} <${tag} ${attr}>`);
-      }
-      if (tag === "link" && /rel="stylesheet"/i.test(attrs)) {
-        const v = /href="([^"]*)"/i.exec(attrs);
-        if (v && /^https?:\/\//i.test(v[1])) thirdParty.push(`${page} <link>`);
-      }
-    }
-  }
-  if (thirdParty.length) [...new Set(thirdParty)].slice(0, 4).forEach(fail);
-  else ok("没有从站外加载任何资源");
-
   console.log("\ncard covers");
-  // Every <img> the site ships is a card cover. The build asserts these too;
-  // this pass checks the same things against the PUBLISHED bytes, including that
-  // the derivative files are actually being served (a build that wrote them to
-  // the wrong folder would look fine locally and 404 in production).
+  // Every <img> the site ships is a card cover. The build asserts these too; this
+  // pass checks the same things against the SERVED bytes, including that the
+  // derivative files are actually reachable (a build that wrote them to the wrong
+  // folder would look fine locally and 404 in production).
   const imgs = Object.entries(html).flatMap(([page, body]) =>
     [...body.matchAll(/<img\b([^>]*)>/g)].map((m) => ({ page, attrs: m[1] })));
   if (!imgs.length) fail("全站一张卡片配图都没有 —— 机制在，但没有任何条目用上");
@@ -290,14 +285,14 @@ try {
     const problems = [];
     const files = new Set();
     for (const { page, attrs } of imgs) {
-      const get = (n) => (new RegExp(`${n}="([^"]*)"`).exec(attrs) || [])[1] || "";
-      const src = get("src");
+      const attr = (n) => (new RegExp(`${n}="([^"]*)"`).exec(attrs) || [])[1] || "";
+      const src = attr("src");
       if (!src.startsWith("/img/")) problems.push(`${page}: 图不是站内的（${src.slice(0, 30)}）`);
       else files.add(src);
-      if (!get("alt").trim()) problems.push(`${page}: 缺 alt`);
-      if (!get("width") || !get("height")) problems.push(`${page}: 缺宽高`);
-      if (get("loading") !== "lazy") problems.push(`${page}: 没有懒加载`);
-      if (!get("srcset")) problems.push(`${page}: 没有 srcset`);
+      if (!attr("alt").trim()) problems.push(`${page}: 缺 alt`);
+      if (!attr("width") || !attr("height")) problems.push(`${page}: 缺宽高`);
+      if (attr("loading") !== "lazy") problems.push(`${page}: 没有懒加载`);
+      if (!attr("srcset")) problems.push(`${page}: 没有 srcset`);
     }
     if (problems.length) problems.slice(0, 4).forEach(fail);
     else ok(`${imgs.length} 张配图：站内、有 alt、有宽高、懒加载`);
@@ -313,20 +308,21 @@ try {
   else ok("没有暗色主题分支");
 
   console.log("\nmarkup integrity");
+  let dupes = 0;
   for (const [page, body] of Object.entries(html)) {
     const ids = [...body.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1]);
-    const dupes = ids.filter((id, i) => ids.indexOf(id) !== i);
-    if (dupes.length) fail(`${page} has duplicate ids: ${[...new Set(dupes)].slice(0, 4).join(", ")}`);
+    const seenIds = ids.filter((id, i) => ids.indexOf(id) !== i);
+    if (seenIds.length) { fail(`${page} has duplicate ids: ${[...new Set(seenIds)].slice(0, 4).join(", ")}`); dupes++; }
   }
-  ok("no duplicate ids");
+  if (!dupes) ok("no duplicate ids");
 
   console.log("\nthe link graph");
   const index = JSON.parse((await get("/search/index.json")).body);
   if (index.length !== articles.length) fail(`搜索索引 ${index.length} 条，文章 ${articles.length} 篇`);
   else ok(`搜索索引覆盖全部 ${index.length} 篇文章`);
 
-  let backlinkChecks = 0;
   const broken = [];
+  let backlinkChecks = 0;
   for (const a of index) {
     const page = html[a.url];
     if (!page) continue;
@@ -345,25 +341,22 @@ try {
   else ok(`${backlinkChecks} 条反向链接与正向链接双向一致`);
 
   // Section-level backlinks: the referring page must actually link into THAT
-  // section of the target, and the block must sit inside that section rather
-  // than anywhere on the page. A fragment that resolves to nothing looks fine
-  // to every link checker ever written, so check it here.
+  // section of the target, and the block must sit inside that section rather than
+  // anywhere on the page. A fragment that resolves to nothing looks fine to every
+  // link checker ever written, so check it here.
   const sectionBack = [];
   const sectionProblems = [];
   for (const [page, body] of Object.entries(html)) {
     for (const m of body.matchAll(/<div class="sectionback">([\s\S]*?)<\/div>/g)) {
-      const sectionId = (() => {
-        const before = body.slice(0, m.index);
-        const headings = [...before.matchAll(/<section class="sec" aria-labelledby="([^"]+)"/g)];
-        return headings.length ? headings[headings.length - 1][1] : "";
-      })();
+      const before = body.slice(0, m.index);
+      const headings = [...before.matchAll(/<section class="sec" aria-labelledby="([^"]+)"/g)];
+      const sectionId = headings.length ? headings[headings.length - 1][1] : "";
       for (const h of m[1].matchAll(/href="([^"]+)"/g)) {
         const [url, frag] = h[1].split("#");
         sectionBack.push(`${page}#${sectionId} ← ${h[1]}`);
         if (!frag) { sectionProblems.push(`${page} 的节级反向链接没有锚点：${h[1]}`); continue; }
         const source = html[url];
         if (!source) { sectionProblems.push(`${page} 的节级反向链接指向不存在的页面：${url}`); continue; }
-        // the source page must carry a link INTO this very section
         if (!source.includes(`#${frag}`)) {
           sectionProblems.push(`${url} 没有链到 #${frag}，但 ${page} 说它引用了那一节`);
         }
@@ -375,7 +368,7 @@ try {
   }
   if (sectionProblems.length) sectionProblems.slice(0, 3).forEach(fail);
   else if (sectionBack.length) ok(`${sectionBack.length} 条节级反向链接落在被引用的那一节里`);
-  else ok("节级反向链接：当前没有指向具体章节的引用（机制已就位）");
+  else fail("节级反向链接一条都没有 —— 机制没有生效");
 
   console.log("\ncollections");
   for (const c of COLLECTIONS) {
@@ -384,12 +377,11 @@ try {
     // deliberately have no pages of their own, so counting `/hobbies/<slug>/`
     // reported "empty" for a collection that renders a card perfectly well.
     const cards = (body.match(/class="cell cell--/g) || []).length;
-    const pages = collectionEntries.filter((p) => p.startsWith(`/${c}/`)).length;
-    // `class="card"` was the test until picture cards arrived, when the class
-    // became `card card--photo` and this started failing on a page that was
-    // perfectly fine. Match the class token, not the whole attribute.
-    if (cards && !/class="card[\s"]/.test(body)) fail(`/${c}/ 有格子但没有卡片`);
-    else ok(`/${c}/ ${cards} 张卡片${c === "reading" ? ` · ${pages} 个条目页` : ""}`);
+    const empty = /class="masonry__empty"|class="empty"/.test(body);
+    const entryPages = collectionEntries.filter((p) => p.startsWith(`/${c}/`)).length;
+    if (!cards && !empty) fail(`/${c}/ 既没有卡片也没有空态说明`);
+    else if (cards && !/class="card[\s"]/.test(body)) fail(`/${c}/ 有格子但没有卡片`);
+    else ok(`/${c}/ ${cards} 张卡片${entryPages ? ` · ${entryPages} 个条目页` : " · 无条目页"}`);
   }
 
   console.log("\naccessibility spot-checks");
@@ -404,35 +396,22 @@ try {
     let m;
     while ((m = re.exec(body))) {
       if (/aria-hidden="true"/.test(m[1])) continue;
-      const text = m[2].replace(/<[^>]+>/g, "").trim();
-      if (!text && !/aria-label="[^"]+"/.test(m[1])) unlabelled.push(`${page}: ${m[1].trim().slice(0, 46)}`);
+      const label = m[2].replace(/<[^>]+>/g, "").trim();
+      if (!label && !/aria-label="[^"]+"/.test(m[1])) unlabelled.push(`${page}: ${m[1].trim().slice(0, 46)}`);
     }
   }
   if (unlabelled.length) unlabelled.slice(0, 5).forEach((u) => fail("unlabelled button → " + u));
   else ok("skip link, main landmark, labelled nav and buttons everywhere");
 
-  console.log("\nfeeds & size");
+  console.log("\nfeeds");
   const rss = await get("/rss.xml");
   if (!/<rss/.test(rss.body) || !/<item>/.test(rss.body)) fail("RSS feed is empty or malformed");
   else ok(`RSS 有 ${(rss.body.match(/<item>/g) || []).length} 条`);
 
-  const walkSize = (d) => fs.readdirSync(d, { withFileTypes: true })
-    .reduce((n, e) => n + (e.isDirectory() ? walkSize(path.join(d, e.name)) : fs.statSync(path.join(d, e.name)).size), 0);
-  const shipped = ["tokens", "base", "grid", "prose", "components", "search", "motion"].map((n) => `/assets/${n}.css`)
-    .concat(["/assets/site.js"]);
-  const cssJs = shipped.reduce((n, p) => n + fs.statSync(path.join(ROOT, p)).size, 0);
-  const biggest = Object.entries(html)
-    .map(([p, b]) => [p, Buffer.byteLength(b, "utf8")])
-    .sort((a, b) => b[1] - a[1])[0];
-
-  for (const [name, val, max, unit] of [
-    ["css + js", cssJs / 1024, 64, "KB"],
-    ["最大单页", biggest[1] / 1024, 120, "KB"]
-  ]) {
-    if (val > max) fail(`${name} 是 ${val.toFixed(1)}${unit}，超出预算 ${max}${unit}`);
-    else ok(`${name} ${val.toFixed(1)}${unit} / ${max}${unit}  (${biggest[0]})`);
-  }
-  void walkSize;
+  const sitemap = await get("/sitemap.xml");
+  const locs = (sitemap.body.match(/<loc>/g) || []).length;
+  if (!locs) fail("sitemap is empty");
+  else ok(`sitemap 有 ${locs} 条`);
 
   code = failures ? 1 : 0;
   console.log("");

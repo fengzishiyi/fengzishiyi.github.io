@@ -1,132 +1,97 @@
+#!/usr/bin/env node
 /**
- * images.mjs — the card-cover pipeline.
+ * images.mjs — `npm run images`: regenerate the committed card covers.
  *
- * Masters live in `_images/` (gitignored: originals are large and easy to lose,
- * and the build only ever needs the derivatives) or beside the entry that names
- * them. This module turns a front-matter `image:` into the small, local,
- * responsive set of files a card actually loads.
+ *   node src/images.mjs           regenerate what the content asks for
+ *   node src/images.mjs --prune   also delete derivatives nothing references
  *
- * Three decisions worth stating:
+ * This is the ONLY thing that writes to `public/img/`. The site never generates
+ * a picture while building: the WebP files are committed, so a fresh clone and CI
+ * both build a complete site without the masters, which are gitignored and large.
  *
- *  1. **Nothing is loaded from anywhere else.** chester.how serves its covers
- *     from an image CDN; this site serves them from its own `img/` folder,
- *     because "no third-party requests" is a promise the rest of the site is
- *     built around.
+ * Sharp is imported lazily, from inside the image module, so `npm ci
+ * --omit=dev` — which is what the deploy workflow runs — never needs it.
  *
- *  2. **WebP only, with intrinsic dimensions in the markup.** Every browser that
- *     can run the rest of this site reads WebP, so a JPEG fallback would double
- *     the file count to serve nobody. Width and height come from the file that
- *     was actually written, which is what stops the grid reflowing as pictures
- *     arrive.
- *
- *  3. **Derivatives outlive a missing master.** A fresh clone has no `_images/`
- *     — it is gitignored — but it does have the built site committed. When the
- *     master is gone and the derivative is there, reuse it and say so, rather
- *     than failing a build over a file the repository was never meant to hold.
+ * Reading the content here is deliberately shallow: front matter only, no
+ * Markdown pipeline, no Astro runtime. This is a maintenance command, and it
+ * should keep working even when something else in the site is broken.
  */
 
 import fs from "node:fs";
 import path from "node:path";
-import sharp from "sharp";
+import { fileURLToPath } from "node:url";
 
-/**
- * Display widths the grid can ask for.
- *
- * The four-column grid caps at a 1536px wrap, so a square cell is about 370px
- * wide and a `wide` one about 740px; doubled for a retina screen that is 740 and
- * 1480. 1200 is the compromise for the wide cell — a 1480px file costs more
- * bytes than the difference is worth — and the `sizes` attribute tells the
- * browser which one it is getting.
- */
-export const WIDTHS = [400, 800, 1200];
+import { generateFor, WIDTHS, derivativeName, imgDir } from "./lib/images.mjs";
+import { walk, relative } from "./lib/fsx.mjs";
+import { slugify } from "./lib/text.mjs";
 
-/** The crop every derivative shares. Cards draw pictures with `object-fit:
- *  cover`, so the file's aspect only decides how much is thrown away; 3:2 keeps
- *  a photo readable at cell size and costs fewer bytes than the master's shape. */
-const RATIO = 2 / 3;
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
-const EXT = /\.(jpe?g|png|webp|avif|tiff?)$/i;
-
-export const derivativeName = (slug, width) => `${slug}-${width}.webp`;
-
-/** Where a master might be: beside the entry that names it, or in `_images/`.
- *  Both are legitimate — one entry's cover is easier to keep beside it, a pile
- *  of pictures is easier to keep in one folder. */
-export function findMaster(name, contentFile, root) {
-  const candidates = [
-    path.join(path.dirname(contentFile), name),
-    path.join(root, "_images", name)
-  ];
-  return candidates.find((p) => fs.existsSync(p) && EXT.test(p)) || null;
+/** `key: value` front matter, as far as this command needs it. */
+function frontMatter(file) {
+  const text = fs.readFileSync(file, "utf8").replace(/^\uFEFF/, "");
+  const m = /^---\r?\n([\s\S]*?)\r?\n---/.exec(text);
+  const data = {};
+  for (const line of (m ? m[1] : "").split(/\r?\n/)) {
+    const kv = /^([A-Za-z0-9_-]+)\s*:\s*(.*)$/.exec(line);
+    if (kv) data[kv[1]] = kv[2].replace(/^["']|["']$/g, "").trim();
+  }
+  return data;
 }
 
-/** Resolve one entry's image and work out which widths it needs.
- *
- *  Always async and always the same shape, so the caller has one thing to handle.
- *  Problems are recorded rather than thrown: the build collects every content
- *  problem in a run so a writer can fix them in one pass. */
-export async function prepareImage(item, root, problems) {
-  const name = String(item.image || "").trim();
-  if (!name) return null;
-
-  const { slug } = item;
-  const publishedAt = (w) => path.join(root, "img", derivativeName(slug, w));
-  const master = findMaster(name, item.file, root);
-
-  if (!master) {
-    const kept = WIDTHS.filter((w) => fs.existsSync(publishedAt(w)));
-    if (!kept.length) {
-      problems.error(item.name, `image: ${name} 找不到。放在条目旁边，或放进 _images/。`);
-      return null;
-    }
-    problems.warn(`${item.name}: 找不到母图 ${name}，沿用上次生成的 ${kept.length} 个衍生图`);
-    return { slug, alt: item.imageAlt, master: null, widths: kept, reused: true };
+const entries = [];
+for (const dir of ["_articles", "_reading", "_hobbies"]) {
+  for (const file of walk(path.join(ROOT, dir)).filter((f) => /\.(md|markdown)$/i.test(f))) {
+    if (!/image\s*:/.test(fs.readFileSync(file, "utf8"))) continue;
+    const data = frontMatter(file);
+    const base = path.basename(file).replace(/\.(md|markdown)$/i, "");
+    const slug = slugify(data.slug || base.replace(/^\d{4}-\d{2}-\d{2}[-_]/, "") || base);
+    entries.push({ slug, image: data.image, image_alt: data.image_alt, file: relative(ROOT, file), name: relative(ROOT, file) });
   }
-
-  const info = await sharp(master).metadata();
-  if (!info.width || !info.height) {
-    problems.error(item.name, `image: ${name} 不是能读的图片`);
-    return null;
-  }
-  // Never upscale: a 500px master asked for 1200 would only get blurrier.
-  const widths = WIDTHS.filter((w) => w <= info.width);
-  return { slug, alt: item.imageAlt, master, widths: widths.length ? widths : [WIDTHS[0]], reused: false };
 }
 
-/** Write the derivatives into the staging tree, and return what the card needs.
- *
- *  Only ever writes into `.build/`: `publish()` mirrors that into the published
- *  `img/` folder and prunes what is no longer produced, so there is exactly one
- *  path by which files reach the site. */
-export async function emitImage(prepared, root) {
-  if (!prepared) return null;
-  const { slug, alt, widths, master, reused } = prepared;
-
-  if (!reused) {
-    const out = path.join(root, ".build", "img");
-    fs.mkdirSync(out, { recursive: true });
-    for (const w of widths) {
-      await sharp(master)
-        .resize({ width: w, height: Math.round(w * RATIO), fit: "cover", position: "attention" })
-        .webp({ quality: 78, effort: 4 })
-        .toFile(path.join(out, derivativeName(slug, w)));
-    }
-  }
-
-  const largest = widths[widths.length - 1];
-  return {
-    srcset: widths.map((w) => `/img/${derivativeName(slug, w)} ${w}w`).join(", "),
-    src: `/img/${derivativeName(slug, largest)}`,
-    width: largest,
-    height: Math.round(largest * RATIO),
-    alt,
-    reused
-  };
+if (!entries.length) {
+  console.log("没有任何条目写了 image: —— 没有要生成的图。");
+  process.exit(0);
 }
 
-/** The `sizes` attribute for a card footprint: how wide the picture is drawn, per
- *  breakpoint. Without it the browser assumes 100vw and downloads the largest
- *  file on every phone. */
-export const sizesFor = (footprint) => (footprint === "wide"
-  ? "(min-width: 1280px) 45vw, 92vw"
-  : "(min-width: 1280px) 23vw, (min-width: 1024px) 31vw, (min-width: 640px) 46vw, 92vw");
+console.log(`▸ 读取 ${entries.length} 条配图`);
+let written = 0;
+let reused = 0;
+const problems = [];
+const used = new Set();
+
+for (const item of entries) {
+  const result = await generateFor(item, ROOT);
+  if (result.missing || result.unreadable) {
+    problems.push(`${item.name}: image: ${item.image} 找不到可读的母图，也没有已生成的衍生图`);
+    continue;
+  }
+  if (result.reused) { reused++; console.log(`  ·  ${item.slug.padEnd(28)} 沿用已有衍生图`); continue; }
+  for (const w of WIDTHS) used.add(derivativeName(item.slug, w));
+  written += result.written;
+  console.log(`  ✓  ${item.slug.padEnd(28)} ${result.widths.join(" / ")}px`);
+}
+
+const out = imgDir(ROOT);
+
+/* ── prune ─────────────────────────────────────────────────────────────── */
+// A derivative whose entry was deleted is dead weight in the repository and in
+// every clone. Pruning is opt-in so that a run without the masters present — a
+// fresh checkout — cannot delete the pictures the site depends on.
+let pruned = 0;
+if (process.argv.includes("--prune")) {
+  for (const file of fs.readdirSync(out)) {
+    if (!file.endsWith(".webp")) continue;
+    const slug = file.replace(/-\d+\.webp$/, "");
+    const referenced = entries.some((e) => e.slug === slug);
+    if (!referenced) { fs.rmSync(path.join(out, file)); pruned++; console.log(`  −  ${file}（没有条目引用）`); }
+  }
+}
+
+console.log(`\n${written} 个衍生文件写入 public/img/，${reused} 条沿用已有${pruned ? `，清理 ${pruned} 个` : ""}`);
+if (problems.length) {
+  console.log("\n✗ 有问题：");
+  for (const p of problems) console.log("   · " + p);
+  process.exit(1);
+}

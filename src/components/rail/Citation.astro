@@ -1,0 +1,51 @@
+---
+/**
+ * Citation.astro — four ways to cite this page, each copyable in one click.
+ *
+ * gwern gives every page a permalink and a stable version; a writer needs to be
+ * able to point at their own text, so the formats ship together. The copy button
+ * carries its own text in `data-copy`, so the script never has to reconstruct it.
+ */
+import { dateLong } from "../../lib/text.mjs";
+
+const { site, article: a, revisions = [] } = Astro.props;
+
+const version = revisions.length ? revisions[0].hash : "";
+const accessed = new Date().toISOString().slice(0, 10);
+const permalink = `${site.origin}${a.url}`;
+
+const bibtex = `@misc{${a.slug.replace(/[^a-zA-Z0-9]/g, "") || "entry"}${a.created.slice(0, 4)},
+  author = {${site.author}},
+  title  = {{${a.title}}},
+  year   = {${a.created.slice(0, 4)}},
+  note   = {${a.domainName} · ${a.kindName}},
+  url    = {${permalink}}${version ? `,\n  version = {${version}}` : ""}
+}`;
+const chicago = `${site.author}. 「${a.title}」. ${dateLong(a.created)}. ${permalink}.`;
+const gbt = `${site.author}. ${a.title}[EB/OL]. ${a.created}. ${permalink}.`;
+const markdown = `[${a.title}](${permalink}) — ${site.author}，${a.created}`;
+
+const rows = [
+  ["BibTeX", bibtex],
+  ["GB/T 7714", gbt],
+  ["Chicago", chicago],
+  ["Markdown", markdown]
+];
+---
+
+<section class="railsec" id="cite" aria-labelledby="cite-h">
+  <h2 class="rail__h" id="cite-h">引用</h2>
+  <p class="cite__perm">
+    永久链接 <a href={a.url} data-permalink>{permalink}</a>
+    {version && <> <span class="meta">· 修订 {version}</span></>}
+    {" "}<span class="meta">· 访问 {accessed}</span>
+  </p>
+  {rows.map(([label, value]) => (
+    <div class="cite__row">
+      <span class="cite__label">{label}</span>
+      <code class="cite__code">{value}</code>
+      <button type="button" class="cite__copy" data-copy={value}>复制</button>
+    </div>
+  ))}
+  <p class="cite__status" role="status" aria-live="polite" data-copy-status></p>
+</section>

@@ -1,0 +1,23 @@
+---
+/**
+ * PageHead.astro — the header every sub-page wears.
+ *
+ * The reference sets its section titles at `text-6xl md:text-8xl` — 60px, then
+ * 96px — in the lightest weight the serif has, over one grey lead paragraph. That
+ * is the whole header: no eyebrow line, no tags, no controls. It is also the
+ * clearest statement of the site's hierarchy, because a page title that large
+ * needs no decoration to read as one.
+ *
+ * `desc` is text and is escaped; `html` is the rare case that carries markup (the
+ * archive's two inline links), and is deliberately a second prop rather than a
+ * flag, so a caller passing markup has to say so.
+ */
+const { title, desc = "", html = "" } = Astro.props;
+---
+
+<header class="pagehead">
+  <h1 class="pagehead__title">{title}</h1>
+  {desc && <p class="pagehead__desc">{desc}</p>}
+  {html && <p class="pagehead__desc" set:html={html} />}
+  <slot />
+</header>

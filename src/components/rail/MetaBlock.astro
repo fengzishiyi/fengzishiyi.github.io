@@ -1,0 +1,27 @@
+---
+/**
+ * MetaBlock.astro — what the piece is, how finished it is, and how long it is.
+ *
+ * gwern's metadata block, kept because it answers the question a reader actually
+ * has about an unfamiliar page: is this finished, do I trust it, and how much of
+ * my evening is it.
+ */
+import { dateLong } from "../../lib/text.mjs";
+import { statusByKey, confidenceByKey } from "../../lib/taxonomy.mjs";
+
+const { article: a, revisions = [] } = Astro.props;
+const status = statusByKey(a.status);
+const confidence = confidenceByKey(a.confidence);
+---
+
+<dl class="meta-block">
+  <div class="meta-block__row"><dt>领域</dt><dd>{a.domainName} · {a.kindName}</dd></div>
+  <div class="meta-block__row"><dt>始作</dt><dd><time datetime={a.created}>{dateLong(a.created)}</time></dd></div>
+  {a.modified && <div class="meta-block__row"><dt>改订</dt><dd><time datetime={a.modified}>{dateLong(a.modified)}</time></dd></div>}
+  {status && <div class="meta-block__row"><dt>状态</dt><dd><span class={`status status--${a.status}`}>{status.name}</span></dd></div>}
+  {confidence && <div class="meta-block__row"><dt>把握</dt><dd>{confidence.name}</dd></div>}
+  {a.importance > 0 && <div class="meta-block__row"><dt>重要度</dt><dd>{a.importance} / 10</dd></div>}
+  {a.series && <div class="meta-block__row"><dt>系列</dt><dd><a href={`/series/${encodeURIComponent(a.series)}/`}>{a.series}</a></dd></div>}
+  <div class="meta-block__row"><dt>篇幅</dt><dd>{a.chars} 字</dd></div>
+  <div class="meta-block__row"><dt>修订</dt><dd>{revisions.length ? `第 ${revisions.length} 版` : "—"}</dd></div>
+</dl>

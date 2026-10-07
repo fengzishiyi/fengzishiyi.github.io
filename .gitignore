@@ -1,14 +1,25 @@
 # ---- source images (never published, never committed) ----
-# Drop originals into _images/ ; the build reads them and emits derivatives to images/.
+# Drop originals into _images/ ; `npm run images` reads them and writes the WebP
+# derivatives into public/img/, which ARE committed — a fresh clone and CI both
+# build a complete site without the masters.
 # Copy the masters to the cloud first — this folder is easy to lose.
 _images/*
 !_images/metadata.json
 !_images/rows.json
 !_images/.gitkeep
 
-# ---- build internals ----
-.build/
+# ---- build output ----
+# dist/ is what GitHub Actions uploads. It is never committed: the site is built
+# from source, and a committed copy of the output is what this migration removed.
+dist/
+.astro/
+
+# ---- scratch ----
 .shots/
+.baseline/
+.probe/
+
+# ---- dependencies ----
 node_modules/
 npm-debug.log*
 

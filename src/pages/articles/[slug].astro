@@ -1,0 +1,19 @@
+---
+/**
+ * /articles/<slug>/ — where the magazine put individual pieces.
+ *
+ * One stub per article, generated from the same model the article pages come
+ * from, so a piece cannot gain a redirect without gaining a page.
+ */
+import Redirect from "../../layouts/Redirect.astro";
+import { getSiteModel } from "../../lib/model.mjs";
+
+export async function getStaticPaths() {
+  const m = await getSiteModel();
+  return m.articleRedirects.map((r) => ({ params: { slug: r.from.split("/")[2] }, props: { to: r.to } }));
+}
+
+const { to } = Astro.props;
+---
+
+<Redirect from={`/articles/${Astro.params.slug}/`} to={to} why="杂志形态已取消，文章现在按领域归档。" />

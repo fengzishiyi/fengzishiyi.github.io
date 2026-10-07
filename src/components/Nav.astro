@@ -1,0 +1,22 @@
+---
+/**
+ * Nav.astro — the six-label pill.
+ *
+ * There is no script here. The current page is marked in the markup with
+ * `aria-current` and the CSS does the rest, so the nav looks the same whether or
+ * not any script ever runs.
+ */
+import { NAV } from "../lib/site.mjs";
+
+const { active = "" } = Astro.props;
+---
+
+<div class="wrap">
+  <nav class="nav" aria-label="主导航">
+    <div class="nav__pill" data-nav-pill>
+      {NAV.map((n) => (
+        <a class="nav__link" href={n.href} aria-current={active === n.key ? "page" : undefined}>{n.text}</a>
+      ))}
+    </div>
+  </nav>
+</div>

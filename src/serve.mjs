@@ -2,16 +2,13 @@
 /**
  * serve.mjs — zero-dependency static server for local preview.
  *
- *   npm run serve                  → the STAGE (.build/), for development
- *   node src/serve.mjs --published → the repo ROOT, which is what Pages serves
- *   npm run dev                    → the same server, plus watch + live reload
+ *   npm run serve   → http://127.0.0.1:4321
+ *   npm run dev     → astro dev, which serves and rebuilds on its own
  *
- * The two trees matter more than they look. `.build/` is written atomically, so
- * a request during a rebuild can never read a half-written page — that is what
- * development wants. But `.build/` is NOT what visitors get: `publish()` mirrors
- * it to the repo root, and a page written to the stage but left out of the
- * publish list is missing in production while every local check stays green.
- * That happened once, so the smoke suite now serves the ROOT.
+ * It serves `dist/` and nothing else, which is the point: `dist/` is byte for
+ * byte what the deploy workflow uploads. There is no separate staging tree to
+ * serve, because Astro writes the output atomically itself, and there is no
+ * path here that could hand out a source file — the tree contains only output.
  *
  * Live reload is an in-memory revision counter plus polling, because piped stdio
  * is restricted here and a second port would be more surface than the job needs.
@@ -23,16 +20,9 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const USE_PUBLISHED = process.argv.includes("--published");
-const SERVE_ROOT = USE_PUBLISHED ? ROOT : path.join(ROOT, ".build");
+const SERVE_ROOT = path.join(ROOT, "dist");
 const PORT = Number(process.argv.find((a) => /^\d+$/.test(a)) || process.env.PORT || 4321);
 const HOST = "127.0.0.1";
-
-/** Paths that exist in the repo root but are sources, not output. Serving the
- *  root means these are reachable by URL, so they are refused explicitly —
- *  otherwise this would happily hand out `_articles/*.md` as plain text. */
-const BLOCKED = /^(?:\.git|\.build|\.shots|node_modules|src|_articles|_images|_issues)(?:\/|$)/;
-const BLOCKED_FILES = /^(?:package(?:-lock)?\.json|README\.md|DESIGN-NOTES\.md)$/;
 
 const TYPES = {
   ".html": "text/html; charset=utf-8",
@@ -94,10 +84,6 @@ const server = http.createServer((req, res) => {
 
   const rel = path.normalize(urlPath).replace(/^([/\\])+/, "").split(path.sep).join("/");
 
-  if (USE_PUBLISHED && (BLOCKED.test(rel) || BLOCKED_FILES.test(rel))) {
-    return send(res, 403, "forbidden");
-  }
-
   if (!fs.existsSync(SERVE_ROOT) || !fs.existsSync(path.join(SERVE_ROOT, "index.html"))) {
     return send(res, 503, "还没有构建产物。先运行：npm run build");
   }
@@ -133,7 +119,7 @@ const server = http.createServer((req, res) => {
 server.listen(PORT, HOST, () => {
   const ready = fs.existsSync(path.join(SERVE_ROOT, "index.html"));
   console.log(`serving   ${SERVE_ROOT}`);
-  console.log(`mode      ${USE_PUBLISHED ? "published（仓库根目录，与线上一致）" : "stage（开发用）"}`);
+  console.log(`mode      built output（与部署产物一致）`);
   console.log(`built     ${ready ? "yes" : "NO — 先运行 npm run build"}`);
   console.log(`  →  http://${HOST}:${PORT}/`);
 });

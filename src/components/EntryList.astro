@@ -1,0 +1,16 @@
+---
+/**
+ * EntryList.astro — a list of entries, or the sentence that says there are none.
+ */
+import Entry from "./Entry.astro";
+
+const { items = [], showDomain = false, empty = "这里还没有文章。" } = Astro.props;
+---
+
+{items.length === 0 ? (
+  <p class="empty">{empty}</p>
+) : (
+  <ol class="entries reveal">
+    {items.map((a, i) => <Entry item={a} showDomain={showDomain} index={i} />)}
+  </ol>
+)}

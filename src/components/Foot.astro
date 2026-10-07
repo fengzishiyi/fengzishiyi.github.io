@@ -1,0 +1,40 @@
+---
+/**
+ * Foot.astro — the footer, plus the chronological pair on an article.
+ *
+ * `prev`/`next` are the neighbouring pieces in the writing order the site is
+ * sorted by, so a reader who finishes something can keep going without going
+ * back to an index.
+ */
+import { loadSite, NAV } from "../lib/site.mjs";
+
+const site = loadSite(process.cwd());
+const { prev = null, next = null } = Astro.props;
+const year = new Date().getFullYear();
+---
+
+<footer class="foot">
+  <div class="wrap">
+    <nav class="foot__nav" aria-label="页脚导航">
+      {NAV.map((n) => <a href={n.href}>{n.text}</a>)}
+      <a href="/archive/">归档</a>
+      <a href="/changelog/">更新</a>
+      <a href="/series/">系列</a>
+      <a href="/rss.xml">RSS</a>
+    </nav>
+    <p class="foot__note">
+      {site.title} · {site.subtitle} ·
+      <a href="/about/#license">{site.license}</a> ·
+      <span class="meta">© {year} {site.author}</span>
+    </p>
+    <p class="foot__note">
+      正文是纯文本：没有图片、没有公式、没有代码高亮、没有第三方脚本、没有追踪。
+    </p>
+    {(prev || next) && (
+      <nav class="foot__chrono" aria-label="相邻文章">
+        {next && <a rel="prev" href={next.url}>← {next.title}</a>}
+        {prev && <a rel="next" href={prev.url}>{prev.title} →</a>}
+      </nav>
+    )}
+  </div>
+</footer>

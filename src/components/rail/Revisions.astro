@@ -1,0 +1,30 @@
+---
+/**
+ * Revisions.astro — the page's history, from Git.
+ *
+ * When there is no history the block says so rather than disappearing: "no
+ * revisions" and "we could not read the history" are different facts, and a
+ * reader who came looking for the version list deserves the difference.
+ */
+import { dateDots } from "../../lib/text.mjs";
+
+const { revisions = [] } = Astro.props;
+---
+
+<section class="railsec" id="revisions" aria-labelledby="rev-h">
+  <h2 class="rail__h" id="rev-h">修订记录{revisions.length > 0 && <> <span class="meta">{revisions.length}</span></>}</h2>
+  {revisions.length === 0 ? (
+    <p class="meta">没有可用的 Git 历史。</p>
+  ) : (
+    <ol class="revlist">
+      {revisions.map((r, i) => (
+        <li>
+          <time datetime={r.date}>{dateDots(r.date)}</time>
+          <code class="revlist__hash" title={r.hash}>{r.hash.slice(0, 7)}</code>
+          <span class="revlist__msg">{r.subject}</span>
+          {i === 0 && <span class="revlist__now meta">当前</span>}
+        </li>
+      ))}
+    </ol>
+  )}
+</section>

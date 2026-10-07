@@ -1,6 +1,6 @@
 {
   "name": "fengzishiyi.github.io",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "private": true,
   "description": "个人写作站：文学、哲学与计算机科学的纯文本笔记",
   "type": "module",
@@ -9,20 +9,22 @@
     "node": ">=20"
   },
   "scripts": {
-    "dev": "node src/dev.mjs",
-    "build": "node src/build.mjs",
-    "new": "node src/new.mjs",
+    "dev": "astro dev",
+    "build": "astro build",
     "serve": "node src/serve.mjs",
-    "check": "node src/build.mjs --check-only",
-    "check:content": "node src/build.mjs --content-only",
-    "check:links": "node src/build.mjs --links-only",
+    "new": "node src/new.mjs",
+    "images": "node src/images.mjs",
+    "check": "npm run build && node src/checks/run.mjs",
     "smoke": "node src/smoke.mjs",
     "layout": "node src/layout.mjs",
-    "verify": "node src/build.mjs && node src/smoke.mjs && node src/layout.mjs --measure",
-    "clean": "node src/build.mjs --clean && node -e \"require('fs').rmSync('.shots',{recursive:true,force:true})\""
+    "verify": "npm run build && node src/checks/run.mjs && node src/smoke.mjs && node src/layout.mjs --measure",
+    "clean": "node -e \"fs.rmSync('dist',{recursive:true,force:true});fs.rmSync('.shots',{recursive:true,force:true})\""
+  },
+  "dependencies": {
+    "@astrojs/markdown-satteri": "^0.4.3",
+    "astro": "^7.3.6"
   },
   "devDependencies": {
-    "marked": "^15.0.7",
     "sharp": "0.35.5"
   }
 }

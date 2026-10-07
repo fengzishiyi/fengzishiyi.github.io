@@ -1,0 +1,31 @@
+---
+/**
+ * Rail.astro — the article's tool rail.
+ *
+ * Order is deliberate and is the reader's order of need: what this is, where you
+ * are in it, what it is about, what it depends on, who points back at it, what to
+ * read next, and only then how to cite and how it changed.
+ */
+import MetaBlock from "./rail/MetaBlock.astro";
+import Outline from "./rail/Outline.astro";
+import TagsRail from "./rail/TagsRail.astro";
+import Sources from "./rail/Sources.astro";
+import Backlinks from "./rail/Backlinks.astro";
+import Related from "./rail/Related.astro";
+import Citation from "./rail/Citation.astro";
+import Revisions from "./rail/Revisions.astro";
+
+const { site, article: a, revisions = [], headings = [], outgoing = [], backlinks = [], related = [] } = Astro.props;
+---
+
+<aside class="rail" aria-label="页面工具" data-rail>
+  <MetaBlock article={a} revisions={revisions} />
+  <Outline headings={headings} />
+  <TagsRail tags={a.tags} />
+  <Sources outgoing={outgoing} />
+  <Backlinks backlinks={backlinks} />
+  <Related related={related} />
+  <Citation site={site} article={a} revisions={revisions} />
+  <Revisions revisions={revisions} />
+  <p class="railsec lic"><span class="meta">许可</span> {a.license || site.license}</p>
+</aside>

@@ -1,0 +1,70 @@
+---
+/**
+ * /search/ — full-text search, entirely in the browser.
+ *
+ * The index is generated at build time and fetched once; every keystroke is
+ * matched locally. There is no server, no query leaves the page, and no analytics
+ * sees what was searched for. The page is usable without scripting by falling
+ * back to the archive and the tag index, which is why the `<noscript>` block is
+ * never hidden behind the results.
+ */
+import Base from "../../layouts/Base.astro";
+import PageHead from "../../components/PageHead.astro";
+import { getSiteModel } from "../../lib/model.mjs";
+import { DOMAINS } from "../../lib/taxonomy.mjs";
+
+const m = await getSiteModel();
+const { site } = m;
+const kinds = DOMAINS.flatMap((d) => d.kinds);
+---
+
+<Base
+  title="搜索"
+  desc="全文检索，按领域、类型、标签与年份筛选。"
+  canonical={`${site.origin}/search/`}
+  active="home"
+>
+  <main id="main" class="wrap">
+    <PageHead title="搜索" desc="索引在构建时生成，检索完全在浏览器里完成 —— 没有服务端，也没有请求发出去。" />
+
+    <form class="searchbox" role="search" data-search-form>
+      <label class="visually-hidden" for="q">关键词</label>
+      <input id="q" name="q" type="search" autocomplete="off" spellcheck="false"
+        placeholder="关键词，空格分隔，全部命中才算匹配…" data-search-input />
+      <button type="submit">搜索</button>
+    </form>
+
+    <div class="searchfilters">
+      <label>领域
+        <select data-filter="domain">
+          <option value="">全部</option>
+          {DOMAINS.map((d) => <option value={d.key}>{d.name}</option>)}
+        </select>
+      </label>
+      <label>类型
+        <select data-filter="kind">
+          <option value="">全部</option>
+          {kinds.map((k) => <option value={k}>{k}</option>)}
+        </select>
+      </label>
+      <label>标签
+        <select data-filter="tag"><option value="">全部</option></select>
+      </label>
+      <label>年份
+        <select data-filter="year"><option value="">全部</option></select>
+      </label>
+    </div>
+
+    <p class="searchstatus" role="status" aria-live="polite" data-search-status>
+      <span class="searchstatus__text">载入索引后就能检索。</span>
+    </p>
+    <ol class="entries searchresults" data-search-results></ol>
+    <noscript>
+      <p class="empty">搜索需要 JavaScript。没有它也能用：<a href="/tags/">按标签</a>或<a href="/archive/">按时间</a>浏览全部文章。</p>
+    </noscript>
+  </main>
+
+  <script>
+    import "../../scripts/search.js";
+  </script>
+</Base>

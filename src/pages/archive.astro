@@ -1,0 +1,59 @@
+---
+/**
+ * /archive/ — everything, by year, with the two axes you can slice it by.
+ *
+ * A personal site's archive is the only page guaranteed to stay useful as it
+ * grows: tags multiply until the tag index is unusable, but a year is a year.
+ */
+import Base from "../layouts/Base.astro";
+import PageHead from "../components/PageHead.astro";
+import EntryList from "../components/EntryList.astro";
+import { getSiteModel } from "../lib/model.mjs";
+import { DOMAINS } from "../lib/taxonomy.mjs";
+
+const m = await getSiteModel();
+const { site } = m;
+
+const byYear = new Map();
+for (const a of m.articles) {
+  const y = a.created.slice(0, 4);
+  if (!byYear.has(y)) byYear.set(y, []);
+  byYear.get(y).push(a);
+}
+const years = [...byYear.keys()].sort().reverse();
+const kinds = DOMAINS.flatMap((d) => d.kinds)
+  .map((k) => [k, m.articles.filter((a) => a.kindName === k).length])
+  .filter(([, n]) => n);
+---
+
+<Base
+  title="归档"
+  desc="全部文章，按时间、领域、类型与年份。"
+  canonical={`${site.origin}/archive/`}
+  active="home"
+>
+  <main id="main" class="wrap">
+    <PageHead title="归档" html={`全部 ${m.articles.length} 篇。也可以按<a href="/tags/">标签</a>或<a href="/search/">检索</a>找。`} />
+
+    <nav class="filters" aria-label="按领域浏览">
+      <span class="filters__label meta">领域</span>
+      {DOMAINS.map((d) => (
+        <a href={`/${d.key}/`}>{d.name} <span class="meta">{m.byDomain.get(d.key).length}</span></a>
+      ))}
+    </nav>
+
+    <nav class="filters" aria-label="按类型浏览">
+      <span class="filters__label meta">类型</span>
+      {kinds.map(([k, n]) => (
+        <a href={`/search/?kind=${encodeURIComponent(k)}`}>{k} <span class="meta">{n}</span></a>
+      ))}
+    </nav>
+
+    {years.map((y) => (
+      <section class="yearblock">
+        <h2 class="rail__h">{y} <span class="meta">{byYear.get(y).length}</span></h2>
+        <EntryList items={byYear.get(y)} showDomain />
+      </section>
+    ))}
+  </main>
+</Base>

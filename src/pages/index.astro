@@ -1,0 +1,43 @@
+---
+/**
+ * The homepage: the site's own description in the opening tile, then every piece
+ * and book and hobby note in one grid.
+ *
+ * The grid is the whole page on purpose. There is no hero, no featured block and
+ * no "latest three" — a personal site's front page is an index of the writing,
+ * and the writing is the argument.
+ */
+import Base from "../layouts/Base.astro";
+import Masonry from "../components/Masonry.astro";
+import { getSiteModel } from "../lib/model.mjs";
+import { orderedCards, introFor } from "../lib/cards.mjs";
+
+const m = await getSiteModel();
+const { site } = m;
+const cards = orderedCards(m.articles, m.collections);
+const total = m.articles.length + Object.values(m.collections).reduce((n, list) => n + list.length, 0);
+
+const jsonld = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: site.title,
+  url: site.origin,
+  inLanguage: site.lang,
+  description: site.tagline
+};
+---
+
+<Base title={site.title} desc={site.tagline} canonical={`${site.origin}/`} active="home" jsonld={jsonld}>
+  <main id="main" class="wrap">
+    <Masonry cards={cards} intro={introFor(site)} />
+    <p class="home__more">
+      <a href="/writing/">全部写作（{m.articles.length}）</a>
+      {m.collections.reading.length > 0 && <> · <a href="/reading/">阅读（{m.collections.reading.length}）</a></>}
+      {m.collections.hobbies.length > 0 && <> · <a href="/hobbies/">爱好（{m.collections.hobbies.length}）</a></>}
+      {" "}· <a href="/archive/">归档</a>
+      {m.tags.length > 0 && <> · <a href="/tags/">标签（{m.tags.length}）</a></>}
+      {m.series.length > 0 && <> · <a href="/series/">系列（{m.series.length}）</a></>}
+      <span class="meta">共 {total} 项</span>
+    </p>
+  </main>
+</Base>

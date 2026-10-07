@@ -1,0 +1,116 @@
+---
+/**
+ * Card.astro — one cell of the masonry grid.
+ *
+ * Every card links to a page inside this site. chester.how's cards point at
+ * external projects, and that is the part being replaced.
+ *
+ * The card is NOT one big `<a>`. Its header carries a link of its own, and an
+ * anchor inside an anchor is invalid HTML: the parser closes the outer one, the
+ * DOM comes out restructured, and the card breaks its own layout — measured at
+ * 883px wide inside a 390px grid, with the overflow hidden by the page. So the
+ * card is a plain block holding TWO sibling links: the title link, and an
+ * overlay pseudo-element on it that stretches over the whole card, so the click
+ * target is still the card rather than the words alone.
+ *
+ * Three drawings: plain text, a photograph with the title on it (`card: image`),
+ * and a photograph behind the chips and title (`card: image_and_text`, the
+ * default once an entry has a cover). Which of the three is `variantFor`'s
+ * question and is answered here; which CELL the card occupies is cards.mjs's.
+ */
+import { accentFor } from "../lib/text.mjs";
+import { sizesFor } from "../lib/images.mjs";
+import Chip from "./Chip.astro";
+import CardHead from "./CardHead.astro";
+
+const { item, size = "square", index = 0 } = Astro.props;
+
+const display = !item.url;
+const category = item.collectionName || item.domainName || "";
+const label = item.collectionName ? (item.statusName || item.kindName || "") : (item.kindName || "");
+const catHref = item.collection ? `/${item.collection}/` : `/${item.domain}/`;
+const variant = !item.picture ? "text" : (item.card === "image" ? "photo" : "scrim");
+
+// Chips only where the reference has them. Its Writing cards carry no chips at
+// all — header, title, date, text — while its Reading and Hobbies cards open with
+// coloured ones. A collection card gets its status in the collection's own accent
+// plus up to two of its tags in the tag's own accent, which is what gives the
+// reference's coffee tiles their two differently-coloured chips.
+const chips = [];
+if (item.collection && item.statusName) chips.push({ label: item.statusName, colour: item.chip });
+if (item.collection && Array.isArray(item.tags)) {
+  for (const t of item.tags.slice(0, 2)) chips.push({ label: t, colour: accentFor(t) });
+}
+
+const sub = item.author
+  ? `${item.author}${item.created ? ` · ${item.created.slice(0, 4)}` : ""}`
+  : (item.created || "");
+const bodyText = item.note || item.description || "";
+
+// `--i` drives the staggered fade-in; the index is capped in CSS (six steps) so a
+// fifty-card grid does not end with a two-second queue.
+const style = `--i:${Math.min(index, 6)}`;
+const head = { category, label, catHref, display };
+---
+
+{size === "intro" ? (
+  <div class="cell cell--intro" style="--i:0">
+    <div class="card card--intro">
+      <div class="card__inner">
+        <div class="card__text">
+          {item.h1 && <h1 class="card__h1">{item.h1}</h1>}
+          {item.introHtml && <Fragment set:html={item.introHtml} />}
+        </div>
+      </div>
+    </div>
+  </div>
+) : variant === "photo" ? (
+  <div class={`cell cell--${size}`} style={style}>
+    <div class={`card card--photo${display ? " card--display" : ""}`}>
+      <div class="card__inner">
+        {item.picture && (
+          <img class="card__img" src={item.picture.src} srcset={item.picture.srcset}
+            sizes={sizesFor(size)} width={item.picture.width} height={item.picture.height}
+            alt={item.picture.alt} loading="lazy" decoding="async" />
+        )}
+        <CardHead {...head} />
+        <p class="card__caption">{item.title}</p>
+      </div>
+    </div>
+  </div>
+) : variant === "scrim" ? (
+  <div class={`cell cell--${size}`} style={style}>
+    <div class={`card card--photo card--scrim${display ? " card--display" : ""}`}>
+      <div class="card__inner">
+        {item.picture && (
+          <img class="card__img" src={item.picture.src} srcset={item.picture.srcset}
+            sizes={sizesFor(size)} width={item.picture.width} height={item.picture.height}
+            alt={item.picture.alt} loading="lazy" decoding="async" />
+        )}
+        <CardHead {...head} />
+        <div class="card__text">
+          {chips.length > 0 && <div class="card__chips">{chips.map((c) => <Chip label={c.label} colour={c.colour} />)}</div>}
+          {display
+            ? <h3 class="card__title">{item.title}</h3>
+            : <h3 class="card__title"><a class="card__link stretched" href={item.url}>{item.title}</a></h3>}
+        </div>
+      </div>
+    </div>
+  </div>
+) : (
+  <div class={`cell cell--${size}`} style={style}>
+    <div class={`card${display ? " card--display" : ""}`}>
+      <div class="card__inner">
+        <CardHead {...head} />
+        <div class="card__text">
+          {chips.length > 0 && <div class="card__chips">{chips.map((c) => <Chip label={c.label} colour={c.colour} />)}</div>}
+          {display
+            ? <h3 class="card__title">{item.title}</h3>
+            : <h3 class="card__title"><a class="card__link stretched" href={item.url}>{item.title}</a></h3>}
+          <span class="card__sub">{sub}</span>
+          {bodyText && <p class="card__body">{bodyText}</p>}
+        </div>
+      </div>
+    </div>
+  </div>
+)}
