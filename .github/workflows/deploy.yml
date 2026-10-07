@@ -50,6 +50,14 @@ jobs:
       - name: Check
         run: node src/checks/run.mjs
 
+      # Required before the artefact is uploaded: it reads the Pages site's
+      # configuration and fails here, with a readable message, if the repository
+      # is still publishing from a branch instead of from Actions. Without it the
+      # failure surfaces later, out of the deploy job, as an API error that says
+      # nothing about the setting that caused it.
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
