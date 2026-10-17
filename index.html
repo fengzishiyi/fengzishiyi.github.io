@@ -157,7 +157,8 @@ p{margin:0}
 .readout dd small{font-size:11px;font-weight:400;letter-spacing:.04em;margin-left:.3em}
 
 /* ── 章节页 ── */
-.head{padding:clamp(36px,6vw,72px) 0 0}
+.head{padding:clamp(36px,6vw,72px) 0 0;position:relative;overflow:hidden}
+.head .ghostno{position:absolute;right:0;top:-.06em;font-size:clamp(110px,17vw,230px);font-weight:500;line-height:.9;letter-spacing:-.05em;color:rgba(0,0,0,.055);pointer-events:none;user-select:none}
 .head .no{grid-column:1 / span 2;font-size:var(--t-title);font-weight:500;line-height:1;letter-spacing:-.03em}
 .head .ttl{grid-column:3 / span 10}
 .head h1{font-size:var(--t-title);font-weight:500;line-height:1.1;letter-spacing:-.02em}
@@ -585,7 +586,7 @@ const SECTIONS = [
       <em>H1 · margin</em><strong>05</strong><em>M99 · bleed</em>
     </div>
   </div>
-  <div class="note">全站只保留两处：章节页左上角的 margin 标记、页脚右下角的页码。</div>
+  <div class="note">全站只在两处出现：章节页标题右上角的节号（当作底纹），以及页脚最右一格的当前页码。</div>
 </div>`
 },
 {
@@ -757,6 +758,7 @@ function viewSection(s, i){
   return `
   <div class="wrap">
     <div class="grid head">
+      <span class="ghostno" aria-hidden="true">${s.no}</span>
       <div class="no">${s.no}</div>
       <div class="ttl"><h1>${s.title}</h1><div class="en">${s.en}</div></div>
       <p class="lede">${s.lede}</p>
