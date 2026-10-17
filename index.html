@@ -3,348 +3,328 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>NOVA · 设计、工程与太空</title>
-<meta name="description" content="一个按 1976 年 NASA Graphics Standards Manual（NHB 1430.2）的原则排版的个人博客：两种颜色、一个字体家族、一张 12 栏网格。">
-<meta name="author" content="林一">
+<title>NOVA · NHB 1430.2 的网页转译</title>
+<meta name="description" content="把《NASA Graphics Standards Manual》（NHB 1430.2，1976）的版面规则翻成网页：两种专色、一个字体家族、一张 12 栏网格，以及从参考片里取出的八个图版构件。">
 <meta name="color-scheme" content="light">
 <meta name="theme-color" content="#ffffff">
 <link rel="canonical" href="https://fengzishiyi.github.io/">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-0 -10 460 120'%3E%3Cg fill='none' stroke='%23FC3D21' stroke-width='18'%3E%3Cpath d='M9 100V40a22 22 0 0 1 44 0v20a22 22 0 0 0 44 0V0'/%3E%3Crect x='133' y='9' width='90' height='82' rx='41'/%3E%3Cpath d='M259 0L298 91L337 0' stroke-linejoin='round'/%3E%3Cpath d='M373 100L412 9L451 100' stroke-linejoin='round'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 460 120'%3E%3Cg fill='none' stroke='%23FC3D21' stroke-width='18'%3E%3Cpath d='M9 100V40a22 22 0 0 1 44 0v20a22 22 0 0 0 44 0V0'/%3E%3Crect x='133' y='9' width='90' height='82' rx='41'/%3E%3Cpath d='M259 0L298 91L337 0' stroke-linejoin='round'/%3E%3Cpath d='M373 100L412 9L451 100' stroke-linejoin='round'/%3E%3C/g%3E%3C/svg%3E">
 <meta property="og:site_name" content="NOVA">
 <meta property="og:type" content="website">
-<meta property="og:title" content="NOVA · 设计、工程与太空">
-<meta property="og:description" content="一个按 1976 年 NASA Graphics Standards Manual 的原则排版的个人博客。">
+<meta property="og:title" content="NOVA · NHB 1430.2 的网页转译">
+<meta property="og:description" content="两种专色、一个字体家族、一张 12 栏网格，以及从参考片里取出的八个图版构件。">
 <meta property="og:url" content="https://fengzishiyi.github.io/">
 <meta property="og:locale" content="zh_CN">
-<meta name="twitter:card" content="summary">
 <style>
 /* ─────────────────────────────────────────────
-   Token 系统，依据 NHB 1430.2（1976）
-   1.3 / 1.5  色彩：NASA Red + Warm Gray，红色只用于白/浅色背景，不与其他饱和色并用
-   5.3        字体：Helvetica Light 正文与识别，Helvetica Medium 标题，大小写混排
-   5.14       网格：先有网格，再决定边距、栏距、页码位置；页码放外侧
+   依据 NHB 1430.2（1976）
+   1.1 字标   1.3/1.5 色彩   1.4 深色/浅色背景
+   5.3 字体   5.5 层级靠字号与留白   5.14 网格与页码
    ───────────────────────────────────────────── */
 :root{
   color-scheme: light;
-  --red:#FC3D21;          /* NASA Red，仅用于字标与非文字图形 */
-  --gray:#A39C93;         /* NASA Warm Gray，用于大面积色块/字标 */
-  --gray-ink:#6B655E;     /* 暖灰加深版，用于小字，保证 ≥4.5:1 对比度 */
+  --red:#FC3D21;         /* NASA Red：只做状态与非文字记号，只在白色或浅底上（1.3 / 1.4） */
+  --gray:#A39C93;        /* NASA Warm Gray：大面积色块（1.5） */
+  --gray-ink:#6B655E;    /* 加深版，用于小字：对白底 5.76:1（实测） */
   --black:#000;
   --white:#fff;
-  --paper:#F7F6F4;        /* 极浅中性色，手册允许的「very light value」背景 */
-  --rule:#000;
+  --paper:#F7F6F4;
   --hair:#d8d4ce;
 
-  --sans: "Helvetica Neue", Helvetica, "Nimbus Sans", Arial,
-          "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei Light",
-          "Source Han Sans SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
-  --light:300; --medium:500; --bold:700;
+  --sans:"Helvetica Neue", Helvetica, "Nimbus Sans", Arial,
+         "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei Light",
+         "Source Han Sans SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+
+  /* 字阶 8 : 4 : 2.3 : 1 —— 四档，没有第五档 */
+  --t-display:clamp(56px, 10.5vw, 132px);
+  --t-title:clamp(28px, 4vw, 52px);
+  --t-sub:22px;
+  --t-body:17px;
+  --t-micro:12px;
+  --t-tiny:10px;
 
   --cols:12; --gutter:24px; --margin:clamp(20px,5vw,72px); --max:1320px;
 }
 *,*::before,*::after{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%}
+html{-webkit-text-size-adjust:100%;scroll-behavior:auto}
 body{
   margin:0;background:var(--white);color:var(--black);
-  font-family:var(--sans);font-weight:var(--light);
-  font-size:17px;line-height:1.75;
-  -webkit-font-smoothing:antialiased;
-  font-kerning:normal;
-  /* 短页面（归档只有几行）也要把页脚压到视口底部 */
-  min-height:100vh;min-height:100dvh;
-  display:flex;flex-direction:column;
+  font-family:var(--sans);font-weight:300;font-size:var(--t-body);line-height:1.7;
+  -webkit-font-smoothing:antialiased;font-kerning:normal;
+  min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;
 }
 main{flex:1 0 auto}
+#app:focus,#app:focus-visible{outline:none}
 a{color:inherit;text-decoration-thickness:1px;text-underline-offset:.22em}
 a:hover{text-decoration-thickness:2px}
 ::selection{background:var(--black);color:var(--white)}
 :focus-visible{outline:2px solid var(--black);outline-offset:3px}
-h1,h2,h3,h4{font-weight:var(--medium);margin:0;line-height:1.2;letter-spacing:-.01em}
+h1,h2,h3,h4{font-weight:500;margin:0;line-height:1.2;letter-spacing:-.01em}
 p{margin:0}
 .wrap{max-width:var(--max);margin:0 auto;padding:0 var(--margin)}
 .grid{display:grid;grid-template-columns:repeat(var(--cols),minmax(0,1fr));column-gap:var(--gutter)}
-.hair{border:0;border-top:1px solid var(--rule);margin:0}
+.hair{border:0;border-top:1px solid #000;margin:0}
+.redline{border:0;border-top:1px solid var(--red);margin:0}
 .muted{color:var(--gray-ink)}
-.small{font-size:13px;line-height:1.5}
-.skip{
-  position:absolute;left:8px;top:-100px;z-index:60;
-  background:#000;color:#fff;padding:8px 14px;font-size:14px;text-decoration:none;
-  transition:top .15s ease;
-}
+.skip{position:absolute;left:8px;top:-100px;z-index:60;background:#000;color:#fff;padding:8px 14px;font-size:14px;text-decoration:none}
 .skip:focus{top:8px}
-/* #app 是脚本移焦点的容器，不是可交互控件：给它画 focus 框，会在页眉下面多出一条全宽黑线 */
-#app:focus,#app:focus-visible{outline:none}
-/* ── 页眉：字标 + 识别文字（1.2 Agency and Center Identification） ── */
-.mast{padding:28px 0 0}
-.mast .grid{align-items:end;padding-bottom:20px}
-.brand{grid-column:1 / span 3;display:flex;align-items:flex-end;gap:16px;text-decoration:none;color:var(--red)}
-.brand svg{width:132px;height:auto;display:block}
-.ident{grid-column:4 / span 4;font-size:13px;line-height:1.35;color:var(--black)}
-.ident b{font-weight:var(--medium);display:block}
-.nav{grid-column:8 / span 5;display:flex;justify-content:flex-end;gap:28px;font-size:15px}
-.nav a{text-decoration:none;padding:4px 0;border-bottom:1px solid transparent}
-.nav a:hover{border-bottom-color:#000}
-.nav a[aria-current="page"]{font-weight:var(--medium);border-bottom-color:#000}
 
-/* ── 章节页眉：手册每一页的「标题左栏 + 说明右栏 + 细线」 ── */
-.sect{padding:56px 0 20px}
-.sect h1,.sect h2{grid-column:1 / span 3;font-size:15px;line-height:1.35}
-.sect .lede{grid-column:4 / span 5;font-size:15px;line-height:1.6}
-.sect + .hair{margin-bottom:40px}
+/* ── 微注：9–12px 全大写，字距 +.08em，全站同一个样式（参考片里每一张图版都有） ── */
+.micro{font-size:var(--t-micro);line-height:1.45;letter-spacing:.02em;color:var(--gray-ink)}
+.tiny{font-size:var(--t-tiny);line-height:1.4;letter-spacing:.08em;text-transform:uppercase;color:var(--gray-ink)}
+.dot::before{content:"";display:inline-block;width:5px;height:5px;background:var(--red);margin-right:.5em;vertical-align:.12em}
 
-/* ── 首页 hero：大号 Light，大小写混排，左对齐 ── */
-.hero{padding-top:clamp(56px,10vw,128px);padding-bottom:clamp(40px,6vw,72px)}
-.hero h1{
-  grid-column:1 / span 11;font-weight:var(--light);
-  font-size:clamp(48px,9.5vw,148px);line-height:1.02;letter-spacing:-.035em;
-  text-wrap:balance;
+/* ── 页眉：字标 + 识别文字（1.2）+ 页签（参考片 00:01:52） ── */
+.mast{padding:26px 0 0}
+.mast .top{align-items:end;padding-bottom:18px}
+.brand{grid-column:1 / span 3;color:var(--red);text-decoration:none;display:flex;align-items:flex-end}
+.brand svg{width:128px;height:auto;display:block}
+.ident{grid-column:4 / span 4;font-size:11px;line-height:1.5;letter-spacing:.06em;text-transform:uppercase;color:var(--gray-ink)}
+.ident b{color:#000;font-weight:500;display:block;letter-spacing:.02em;font-size:12px}
+.mast .stamp{grid-column:9 / span 4;justify-self:end;text-align:right;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--gray-ink)}
+.tabs{display:flex;flex-wrap:wrap;gap:0;border-top:1px solid #000;border-bottom:1px solid #000}
+.tabs a{
+  flex:0 0 auto;padding:9px 14px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;
+  text-decoration:none;border-right:1px solid var(--hair);color:var(--gray-ink);
+  border-bottom:2px solid transparent;
 }
-.hero .note{grid-column:4 / span 5;margin-top:40px;font-size:15px;line-height:1.6}
-.hero .note cite{font-style:normal;display:block;margin-top:8px}
+.tabs a:first-child{padding-left:0}
+.tabs a b{font-weight:500;color:#000;margin-right:.55em;letter-spacing:.04em}
+.tabs a:hover{color:#000}
+.tabs a[aria-current="page"]{color:#000;background:var(--paper);border-bottom-color:var(--red)}
+.tabs a[aria-current="page"] b{color:#000}
 
-/* ── 头条：黑底封面 + 被裁切的超大字，取自 5.12 Press Kits/Directories 的封面样张 ── */
-.lead{padding-bottom:72px}
-.cover{
-  grid-column:1 / span 7;background:#000;color:#fff;aspect-ratio:4/3;
-  position:relative;overflow:hidden;text-decoration:none;display:block;
+/* ── 运行头：滚过标题后停在顶部，回答「我在哪一节」（5.14 的页码规则搬到屏幕上） ── */
+.runhead{position:sticky;top:0;z-index:20;background:var(--white);border-bottom:1px solid #000}
+.runhead .wrap{display:flex;align-items:baseline;gap:16px;padding-top:7px;padding-bottom:7px}
+.runhead .n{font-size:11px;font-weight:500;letter-spacing:.08em}
+.runhead .t{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--gray-ink)}
+.runhead .f{margin-left:auto;font-size:11px;font-weight:500;letter-spacing:.06em}
+
+/* ── 进度：红色填充 + 节刻度。刻度就是「还剩几节」，不是装饰（6 节时共 6 格） ── */
+.progress{position:fixed;left:0;top:0;height:2px;width:100%;background:transparent;z-index:40;pointer-events:none}
+.progress i{position:absolute;left:0;top:0;height:2px;width:0;background:var(--red)}
+.progress b{position:absolute;top:0;width:1px;height:5px;background:rgba(0,0,0,.32);transform:translateX(-.5px)}
+
+/* ── hero：出血显示字 + 一句定位 ── */
+/* 注意：这里只能用 padding-top/bottom，用 padding 简写会把 .wrap 的左右边距清零，
+   首页 hero 就会比页眉、卡片左移一个边距宽度 */
+.hero{padding-top:clamp(40px,7vw,88px);padding-bottom:clamp(24px,4vw,48px)}
+.hero .eyebrow{grid-column:1 / span 5;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--gray-ink)}
+.hero h1{grid-column:1 / span 10;font-size:var(--t-title);font-weight:300;line-height:1.12;letter-spacing:-.02em;margin-top:14px}
+.hero .lede{grid-column:4 / span 6;font-size:16px;line-height:1.7;margin-top:28px}
+/* 出血显示字：从版心左缘起排，被下边缘切掉一截（参考片 00:02:23 的做法） */
+.bleed{margin-top:clamp(20px,4vw,40px);overflow:hidden;height:clamp(72px,16.5vw,216px)}
+.bleed span{
+  display:block;font-weight:500;letter-spacing:-.05em;line-height:.98;
+  font-size:clamp(96px,26vw,340px);white-space:nowrap;
 }
-.cover .big{
-  position:absolute;left:-.04em;bottom:-.2em;font-weight:var(--bold);
-  font-size:clamp(140px,20vw,320px);line-height:1;letter-spacing:-.05em;
+
+/* ── 图版：状态卡牌（参考片 00:00:31 / 00:02:23） ── */
+.cards{row-gap:0;padding:0 0 8px}
+.card{
+  grid-column:span 4;border-top:1px solid #000;padding:14px 0 0;text-decoration:none;
+  display:block;position:relative;
 }
-.cover .tag{position:absolute;left:24px;top:20px;font-size:13px;font-weight:var(--medium)}
-.cover .mark{position:absolute;right:24px;top:22px;width:72px;color:#fff}
-.lead .txt{grid-column:9 / span 4;display:flex;flex-direction:column;justify-content:flex-end}
-.lead h3{font-size:clamp(26px,2.6vw,36px);line-height:1.2;margin:10px 0 18px;text-wrap:balance}
-.lead h3 a{text-decoration:none}
-.lead h3 a:hover{text-decoration:underline}
+.card + *{border-left:0}
+.card .no{font-size:var(--t-title);font-weight:500;line-height:1;letter-spacing:-.03em}
+.card .nm{font-size:15px;font-weight:500;margin-top:12px}
+.card .en{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--gray-ink);margin-top:4px}
+.card p{font-size:13px;line-height:1.6;color:var(--gray-ink);margin-top:12px;min-height:3.2em}
+.card .band{border-top:1px solid var(--hair);margin-top:12px;padding-top:8px}
+.card:hover .no{text-decoration:underline;text-decoration-thickness:1px}
+.card[aria-current="page"]{background:var(--paper)}
 
-/* ── 文章列表：三栏，顶部细线，章节编号在左上 ── */
-.cards{row-gap:56px;padding-bottom:96px}
-.card{grid-column:span 4;border-top:1px solid #000;padding-top:14px}
-.card .no{font-size:13px;font-weight:var(--medium)}
-.card h3{font-size:22px;line-height:1.3;margin:28px 0 12px;text-wrap:balance}
-.card h3 a{text-decoration:none}
-.card h3 a:hover{text-decoration:underline}
-.card p{font-size:15px;line-height:1.65}
-.meta{display:flex;flex-wrap:wrap;column-gap:1.4em;font-size:13px;line-height:1.5;color:var(--gray-ink);margin-top:16px}
+/* ── 微注带：一张图版的底边，永远有这一行 ── */
+.metaband{
+  display:flex;flex-wrap:wrap;gap:0 1.6em;padding-top:10px;border-top:1px solid #000;
+  font-size:var(--t-tiny);letter-spacing:.08em;text-transform:uppercase;color:var(--gray-ink);
+}
+.metaband b{font-weight:500;color:#000;letter-spacing:.06em}
 
-/* ── 归档：表格式，年份只出现一次 ── */
-.arch{padding-bottom:96px}
-.arch .yr{grid-column:1 / span 3;font-size:44px;font-weight:var(--light);letter-spacing:-.02em;line-height:1;padding-top:14px;border-top:1px solid #000}
-.arch ol{grid-column:4 / span 9;list-style:none;margin:0;padding:0;border-top:1px solid #000}
-.arch li{display:grid;grid-template-columns:5em 7em 1fr 6em;gap:var(--gutter);padding:14px 0;border-bottom:1px solid var(--hair);font-size:15px;align-items:baseline}
-.arch li a{text-decoration:none;font-size:17px}
-.arch li a:hover{text-decoration:underline}
-.arch .cat{text-align:right}
+/* ── 黑色标签块：参考片里放图标与分类的那一块 ── */
+.labelblock{display:inline-flex;align-items:stretch;background:#000;color:#fff;font-size:12px;letter-spacing:.04em}
+.labelblock .ic{display:flex;align-items:center;justify-content:center;width:34px;border-right:1px solid #4a4a4a;font-size:11px;font-weight:500}
+.labelblock .tx{padding:6px 12px;display:flex;flex-direction:column;justify-content:center}
+.labelblock .tx small{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#a9a9a9}
 
-/* ── 文章页 ── */
-.progress{position:fixed;left:0;top:0;height:3px;width:0;background:var(--red);z-index:40;transition:width .1s linear}
-.post-head{padding:64px 0 32px}
-.post-head .no{grid-column:1 / span 3;font-size:15px;font-weight:var(--medium)}
-.post-head h1{grid-column:4 / span 8;font-size:clamp(34px,4.6vw,64px);line-height:1.12;letter-spacing:-.025em;text-wrap:balance}
-.post-head .deck{grid-column:4 / span 6;font-size:19px;line-height:1.6;margin-top:24px}
-.post-body{padding:40px 0 80px}
-.side{grid-column:1 / span 3;font-size:13px;line-height:1.55}
-.side .sticky{position:sticky;top:32px}
-.side dl{margin:0 0 28px}
-.side dt{color:var(--gray-ink)}
-.side dd{margin:0 0 10px}
-.side .toc{list-style:none;margin:0;padding:12px 0 0;border-top:1px solid #000}
-.side .toc a{display:block;padding:3px 0;text-decoration:none}
-.side .toc a:hover{text-decoration:underline}
-.prose{grid-column:4 / span 6;font-size:18px;line-height:1.85}
-.prose > * + *{margin-top:1.1em}          /* 3.3 Typing Style：用行距代替首行缩进 */
+/* ── 读数带：标签 + 数值，一行一个事实（参考 UI 片 00:00:22） ── */
+.readout{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));border-top:1px solid #000;border-bottom:1px solid #000}
+.readout div{padding:12px 12px 14px 0;border-right:1px solid var(--hair)}
+.readout div:last-child{border-right:0}
+.readout dt{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--gray-ink)}
+.readout dd{margin:6px 0 0;font-size:26px;font-weight:500;line-height:1;letter-spacing:-.01em}
+.readout dd small{font-size:11px;font-weight:400;letter-spacing:.04em;margin-left:.3em}
+
+/* ── 章节页 ── */
+.head{padding:clamp(36px,6vw,72px) 0 0}
+.head .no{grid-column:1 / span 2;font-size:var(--t-title);font-weight:500;line-height:1;letter-spacing:-.03em}
+.head .ttl{grid-column:3 / span 10}
+.head h1{font-size:var(--t-title);font-weight:500;line-height:1.1;letter-spacing:-.02em}
+.head .en{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--gray-ink);margin-top:8px}
+.head .lede{grid-column:3 / span 7;font-size:16px;line-height:1.72;margin-top:22px}
+.head .cite{grid-column:10 / span 3;font-size:10px;line-height:1.5;letter-spacing:.06em;text-transform:uppercase;color:var(--gray-ink);margin-top:22px}
+.body{padding:clamp(28px,4vw,48px) 0 64px}
+.side{grid-column:1 / span 2;font-size:11px;line-height:1.6}
+.side .sticky{position:sticky;top:52px}
+.side ol{list-style:none;margin:0;padding:0;border-top:1px solid #000}
+.side li a{display:block;padding:7px 0;text-decoration:none;color:var(--gray-ink);border-bottom:1px solid var(--hair)}
+.side li a b{font-weight:500;color:#000;display:inline-block;min-width:2.4em;font-size:10px;letter-spacing:.06em}
+.side li a[aria-current="true"]{color:#000;border-bottom-color:var(--red);box-shadow:inset 0 -1px 0 var(--red)}
+.side li a[aria-current="true"] b{color:var(--red)}
+.prose{grid-column:3 / span 7;font-size:16px;line-height:1.78;max-width:34em}
+.prose > * + *{margin-top:1.1em}          /* 3.3：用行距代替首行缩进 */
+.prose h2{font-size:21px;line-height:1.3;margin-top:2.2em;scroll-margin-top:56px}
+.prose h3{font-size:15px;font-weight:500;margin-top:1.8em;letter-spacing:0}
 .prose p{text-wrap:pretty}
-.prose h2{font-size:22px;line-height:1.3;margin-top:2.4em;scroll-margin-top:24px;text-wrap:balance}
-.prose blockquote{margin:2em 0;padding:0 0 0 22px;border-left:1px solid #000;font-size:22px;line-height:1.55}
-.prose code{font-family:inherit;font-weight:var(--medium);background:var(--paper);padding:.1em .35em}
-.prose pre{background:var(--paper);padding:20px 22px;overflow:auto;font-size:14px;line-height:1.6;font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:400}
-.prose pre code{background:none;padding:0;font-weight:inherit;font-family:inherit}
-.prose ul{padding-left:1.1em}
-.fig{margin:2.2em 0}
-.fig .plate{background:#000;color:#fff;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center}
-.fig .plate svg{width:46%;color:#fff}
-.fig figcaption{font-size:13px;line-height:1.5;color:var(--gray-ink);margin-top:10px}
-.pager{padding:0 0 96px}
-.pager a{grid-column:span 6;border-top:1px solid #000;padding-top:14px;text-decoration:none;font-size:20px;line-height:1.35;font-weight:var(--medium)}
-.pager a small{display:block;font-size:13px;font-weight:var(--light);color:var(--gray-ink);margin-bottom:6px}
-.pager a:hover span{text-decoration:underline}
-.pager .next{text-align:right}
+.prose ul{padding-left:1.15em}
+.prose li + li{margin-top:.4em}
+.prose code{font-family:inherit;font-weight:500;background:var(--paper);padding:.08em .32em}
+.prose blockquote{margin:1.8em 0;padding:0 0 0 20px;border-left:1px solid #000}
+.prose blockquote p{font-size:15px;line-height:1.7}
+.prose blockquote cite{display:block;margin-top:8px;font-style:normal;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--gray-ink)}
+.prose table{width:100%;border-collapse:collapse;font-size:13px;line-height:1.5}
+.prose th,.prose td{text-align:left;vertical-align:top;padding:8px 12px 8px 0;border-bottom:1px solid var(--hair)}
+.prose th{font-weight:500;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--gray-ink);border-bottom-color:#000}
+.gutter{grid-column:10 / span 3;font-size:11px;line-height:1.55;color:var(--gray-ink)}
+.gutter .sticky{position:sticky;top:52px}
+.gutter b{display:block;font-weight:500;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#000;margin-bottom:6px}
+.gutter .gblock + .gblock{margin-top:22px}
 
-/* ── 关于：信笺格式（3.1 HQ Letterhead、3.2 Center Letterheads、3.3 Typing Style） ── */
-.letter{padding-top:24px;padding-bottom:96px}
-.letter .head{grid-column:1 / span 3;color:var(--red)}
-.letter .head svg{width:120px;display:block}
-.letter .addr{grid-column:4 / span 3;font-size:13px;line-height:1.45}
-.letter .addr + .addr{grid-column:7 / span 3}
-.letter .addr b{font-weight:var(--medium);display:block}
-.letter .body{grid-column:4 / span 6;margin-top:72px;font-size:18px;line-height:1.85}
-.letter .body > * + *{margin-top:1.1em}
-.letter .sig{margin-top:2.4em}
+/* ── 标本 ── */
+.spec{border:1px solid #000;padding:0;margin-top:1.6em}
+.spec .hd{display:flex;justify-content:space-between;gap:12px;padding:7px 12px;background:#000;color:#fff;
+  font-size:10px;letter-spacing:.1em;text-transform:uppercase}
+.spec .hd em{font-style:normal;color:#c9c9c9}
+.spec .bd{padding:18px 12px 16px}
+.spec .bd > * + *{margin-top:14px}
+.spec .note{font-size:10px;line-height:1.5;letter-spacing:.06em;text-transform:uppercase;color:var(--gray-ink);padding:0 12px 10px}
+.scale i{display:block;font-style:normal;line-height:1.1;letter-spacing:-.02em;white-space:nowrap;overflow:hidden}
+.scale .d{font-size:52px;font-weight:300}
+.scale .t{font-size:30px;font-weight:500}
+.scale .s{font-size:22px;font-weight:300}
+.scale .b{font-size:17px;font-weight:300}
+.scale .m{font-size:12px;letter-spacing:.02em;color:var(--gray-ink)}
+.scale .x{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--gray-ink)}
+.sw{display:grid;grid-template-columns:repeat(4,1fr);border:0}
+.sw > div{display:flex;flex-direction:column}
+.sw .chip{height:88px;margin-bottom:8px}
+.sw .nm{font-size:11px;font-weight:500}
+.sw .vl{font-size:10px;letter-spacing:.06em;color:var(--gray-ink);margin-top:2px}
+.bars{display:grid;grid-template-columns:repeat(12,1fr);gap:10px;height:96px}
+.bars i{background:rgba(0,0,0,.06);border-left:1px solid rgba(0,0,0,.28);border-right:1px solid rgba(0,0,0,.28)}
+.ruler{display:flex;align-items:flex-end;gap:0;height:22px;border-bottom:1px solid #000}
+.ruler span{flex:1;border-left:1px solid #000;height:6px;position:relative;font-size:9px;letter-spacing:.06em;color:var(--gray-ink);padding-left:3px;line-height:22px}
+.ruler span:last-child{border-right:0}
+.donot{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.donot figure{margin:0}
+.donot .box{height:84px;display:flex;align-items:center;justify-content:center;border:1px solid var(--hair);background:#fff;padding:12px;overflow:hidden}
+.donot .box svg{width:64%}
+.donot figcaption{font-size:10px;line-height:1.45;letter-spacing:.06em;text-transform:uppercase;color:var(--gray-ink);margin-top:6px}
+.donot figcaption b{color:#000}
+.tabdemo{display:flex;border-bottom:1px solid #000}
+.tabdemo span{padding:8px 14px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--gray-ink);border-bottom:2px solid transparent}
+.tabdemo span.on{color:#000;border-bottom-color:var(--red);background:var(--paper)}
+.readdemo{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid #000;border-bottom:1px solid #000}
+.readdemo div{padding:10px 10px 12px 0;border-right:1px solid var(--hair)}
+.readdemo div:last-child{border-right:0}
+.readdemo dt{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--gray-ink)}
+.readdemo dd{margin:5px 0 0;font-size:20px;font-weight:500;line-height:1}
+.ghostdemo{position:relative;height:96px;overflow:hidden;border:1px solid var(--hair)}
+.ghostdemo span{position:absolute;right:-.06em;bottom:-.24em;font-size:150px;font-weight:500;letter-spacing:-.05em;color:rgba(0,0,0,.07);line-height:1}
+.ghostdemo em{position:absolute;left:10px;top:10px;font-style:normal;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--gray-ink)}
+.bleeddemo{overflow:hidden;line-height:.8;border:1px solid var(--hair);padding:0}
+.bleeddemo span{display:block;font-size:74px;font-weight:500;letter-spacing:-.05em;white-space:nowrap;transform:translateX(-.06em)}
+.edgedemo{border:1px solid var(--hair);padding:10px 12px;display:flex;justify-content:space-between;align-items:flex-start;min-height:96px}
+.edgedemo em{font-style:normal;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--gray-ink)}
+.edgedemo strong{font-size:26px;font-weight:500;letter-spacing:-.01em;line-height:1}
 
-/* ── 规范页 ── */
-.std{padding-bottom:80px}
-.std .lab{grid-column:1 / span 3;font-size:15px;font-weight:var(--medium);padding-top:14px;border-top:1px solid #000}
-.std .cont{grid-column:4 / span 9;padding-top:14px;border-top:1px solid #000}
-.std .cont p + p{margin-top:1em}
-.sw{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--gutter)}
-.sw .chip{aspect-ratio:1/1;margin-bottom:12px}
-.sw p{font-size:13px;line-height:1.5}
-.sw b{font-weight:var(--medium);display:block;font-size:15px}
-.spec{font-size:clamp(30px,4.2vw,60px);line-height:1.15;letter-spacing:-.03em}
-.spec + .spec{margin-top:12px}
-.spec-note{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--gutter);margin-top:32px;font-size:13px;line-height:1.55}
-.spec-note b{font-weight:var(--medium);display:block}
-.uses{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--gutter)}
-.use .tile{aspect-ratio:3/2;display:flex;align-items:center;justify-content:center;background:var(--white);border:1px solid #e3e0db;padding:12px;overflow:hidden}
-.use .tile svg{width:58%}
-.use p{font-size:13px;line-height:1.5;margin-top:10px}
-.use.bad p::before{content:"不可";font-weight:var(--medium);margin-right:.5em}
-.use.ok p::before{content:"可以";font-weight:var(--medium);margin-right:.5em}
-.mini-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:6px;height:120px;margin-top:20px}
-.mini-grid i{background:rgba(252,61,33,.14);border-left:1px solid rgba(252,61,33,.4);border-right:1px solid rgba(252,61,33,.4)}
-
-/* ── 页脚：黑底白字标（1.4 深色背景上一律白色） ── */
-.foot{background:#000;color:#fff}
-.foot .grid{padding:48px 0 40px;align-items:end}
+/* ── 页脚：黑底白字标（1.4：深色背景上一律白色） ── */
+.foot{background:#000;color:#fff;margin-top:auto}
+.foot .grid{padding:44px 0 36px;align-items:end}
 .foot .fbrand{grid-column:1 / span 3;color:#fff}
-.foot .fbrand svg{width:110px;display:block}
-.foot .fident{grid-column:4 / span 4;font-size:13px;line-height:1.45;color:#cfcac3}
-.foot .fident b{color:#fff;font-weight:var(--medium);display:block}
-.foot .fmeta{grid-column:8 / span 4;font-size:13px;line-height:1.5;color:#cfcac3}
+.foot .fbrand svg{width:104px;display:block}
+.foot .fident{grid-column:4 / span 4;font-size:11px;line-height:1.6;letter-spacing:.04em;color:#cfcac3}
+.foot .fident b{color:#fff;font-weight:500;display:block;letter-spacing:.06em;text-transform:uppercase;font-size:10px;margin-bottom:6px}
+.foot .fmeta{grid-column:8 / span 4;font-size:10px;line-height:1.7;letter-spacing:.06em;text-transform:uppercase;color:#cfcac3}
 .foot a{color:#fff}
 .foot :focus-visible{outline-color:#fff}
-.foot .folio{grid-column:12 / span 1;text-align:right;font-size:15px;font-weight:var(--medium)}
-.gbtn{font:inherit;font-size:13px;color:#fff;background:none;border:1px solid #fff;padding:4px 10px;margin-top:10px;cursor:pointer}
-.gbtn[aria-pressed="true"]{background:#fff;color:#000}
+.foot .folio{grid-column:12 / span 1;text-align:right;font-size:13px;font-weight:500;letter-spacing:.04em}
 
-/* ── 网格叠加层，按 G 键切换（5.14 The Grid） ── */
+/* ── 网格叠加层（5.14）：带栏号，是工具不是装饰 ── */
 .overlay{position:fixed;inset:0;pointer-events:none;z-index:30;display:none}
 .overlay.on{display:block}
 .overlay .wrap,.overlay .grid{height:100%}
-.overlay i{background:rgba(252,61,33,.09);border-left:1px solid rgba(252,61,33,.35);border-right:1px solid rgba(252,61,33,.35)}
-
-/* ── 页面载入：只有一个动作，字标上的红色从左向右「推进」 ── */
-@keyframes thrust{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
-.brand svg{animation:thrust .9s cubic-bezier(.2,.7,.1,1) both}
-
-/* ── 插图：施工图、轨迹、字范。全部内联 SVG，零外部请求；只用细线、黑、暖灰 ── */
-.art{margin:1.2em 0 2.4em}
-.art svg{display:block;width:100%;height:auto}
-.art svg text{font-family:var(--sans);font-weight:var(--light);letter-spacing:.04em}
-.art figcaption{font-size:13px;line-height:1.55;color:var(--gray-ink);margin-top:12px}
-.art figcaption b{font-weight:var(--medium);color:var(--black)}
-/* 描绘动效：pathLength="1" 归一化长度之后，只动 stroke-dashoffset，一个字都不多画 */
-[data-draw]{stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset .85s cubic-bezier(.2,.7,.1,1);transition-delay:calc(var(--i,0)*60ms)}
-[data-fade]{opacity:0;transition:opacity .5s ease;transition-delay:calc(240ms + var(--i,0)*60ms)}
-.art.in [data-draw],.art.always [data-draw]{stroke-dashoffset:0}
-.art.in [data-fade],.art.always [data-fade]{opacity:1}
-
-/* ── 头条封面：黑底上先描施工线，再压上被裁切的数字（5.12 的封面做法） ── */
-.cover .frame{position:absolute;inset:0;color:#fff}
-.cover .frame svg{width:100%;height:100%;display:block}
-.cover .frame [data-draw]{animation:draw 1.15s cubic-bezier(.2,.7,.1,1) both;animation-delay:calc(var(--i,0)*80ms)}
-@keyframes draw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
-.cover .big{animation:press .45s cubic-bezier(.2,.7,.1,1) both;animation-delay:.42s}
-@keyframes press{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-
-/* ── 换页只有一个动作：透明度。卡片经过时顶线上再压一条细线（印刷里的双线） ── */
-@keyframes pagein{from{opacity:0}to{opacity:1}}
-#app.pagein > *{animation:pagein .2s ease both}
-.card{position:relative}
-.card::after{content:"";position:absolute;left:0;top:3px;width:100%;height:1px;background:#000;transform:scaleX(0);transform-origin:left;transition:transform .35s cubic-bezier(.2,.7,.1,1)}
-.card:hover::after{transform:scaleX(1)}
-
-/* ── 音效开关：全部由 Web Audio 合成，没有音频文件 ── */
-.sbtn{font:inherit;font-size:13px;color:#fff;background:none;border:1px solid #fff;padding:4px 10px;margin:10px 0 0 8px;cursor:pointer}
-.sbtn[aria-pressed="true"]{background:#fff;color:#000}
-
-@media (prefers-reduced-motion:reduce){
-  .brand svg{animation:none}
-  .progress{transition:none}
-  .skip{transition:none}
-  [data-draw]{stroke-dashoffset:0!important;transition:none!important}
-  [data-fade]{opacity:1!important;transition:none!important}
-  .cover .frame [data-draw],.cover .big,#app.pagein > *{animation:none}
-  .card::after{transition:none;transform:scaleX(0)}
-}
+.overlay i{background:rgba(252,61,33,.07);border-left:1px solid rgba(252,61,33,.4);border-right:1px solid rgba(252,61,33,.4);
+  position:relative;font-size:9px;letter-spacing:.04em;color:rgba(252,61,33,.75);padding-top:2px;padding-left:2px}
+.gbtn{font:inherit;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#fff;background:none;border:1px solid #fff;padding:4px 9px;margin-top:10px;cursor:pointer}
+.gbtn[aria-pressed="true"]{background:#fff;color:#000}
 
 /* ── 平板 ── */
 @media (max-width:1020px){
+  .brand{grid-column:1 / span 3}
   .ident{grid-column:4 / span 5}
-  .nav{grid-column:1 / -1;justify-content:flex-start;margin-top:20px}
-  .lead .txt{grid-column:8 / span 5}
+  .mast .stamp{grid-column:1 / -1;justify-self:start;text-align:left;margin-top:12px}
   .card{grid-column:span 6}
-  .prose{grid-column:4 / span 9}
-  .post-head h1,.post-head .deck{grid-column:4 / span 9}
-  .uses{grid-template-columns:repeat(2,1fr)}
+  .prose,.head .lede{grid-column:3 / span 8}
+  .head h1{font-size:clamp(26px,4.6vw,44px)}
+  .gutter{grid-column:3 / span 8;margin-top:8px}
+  .readout{grid-template-columns:repeat(3,1fr)}
+  .readout div:nth-child(3n){border-right:0}
+  .prose table{font-size:12px}
 }
-/* ── 手机：网格收为 4 栏，所有块占满 ── */
+/* ── 手机：网格收 4 栏 ── */
 @media (max-width:720px){
-  :root{--cols:4;--gutter:16px}
-  body{font-size:16px}
+  :root{--cols:4;--gutter:16px;--t-body:16px}
   .grid > *{grid-column:1 / -1!important}
-  .ident{margin-top:14px}
-  .nav{gap:20px;font-size:14px}
-  .sect .lede{margin-top:10px}
-  .hero .note{margin-top:28px}
-  .lead .txt{margin-top:20px}
-  .cards{row-gap:40px}
-  .arch .yr{border-top:0;padding:0 0 10px;font-size:32px}
-  .arch ol{border-top:0}
-  .arch li{grid-template-columns:3em 1fr;row-gap:2px}
-  .arch li .d{grid-column:2}
-  .arch li a{grid-column:1 / -1;order:-1}
-  .arch .cat{display:none}
-  .side .sticky{position:static}
-  .side{margin-bottom:28px}
-  .prose{font-size:17px}
-  .post-head .deck{font-size:17px}
-  .pager a{margin-top:12px}
-  .pager .next{text-align:left}
-  .letter .body{margin-top:40px}
-  .std .cont{border-top:0;padding-top:16px}
-  .sw{grid-template-columns:repeat(2,1fr)}
-  .spec-note{grid-template-columns:1fr}
-  .foot .fident,.foot .fmeta{margin-top:20px}
-  .foot .folio{text-align:left;margin-top:20px}
+  .tabs a{padding:8px 10px;font-size:11px}
+  .tabs a b{margin-right:.4em}
+  .hero{padding-top:32px}
+  .hero h1{font-size:clamp(26px,7.4vw,38px)}
+  .card{grid-column:1 / -1!important;border-top:1px solid #000}
+  .card p{min-height:0}
+  .card{grid-column:span 4}
+  .side{display:none}
+  .prose{font-size:15px}
+  .head .no{font-size:44px}
+  .head h1{font-size:clamp(24px,7vw,34px)}
+  .head .lede,.head .cite{margin-top:14px}
+  .sw{grid-template-columns:repeat(2,1fr);gap:16px}
+  .donot{grid-template-columns:repeat(2,1fr)}
+  .readout{grid-template-columns:repeat(2,1fr)}
+  .readout div:nth-child(2n){border-right:0}
+  .scale .d{font-size:40px}
+  .scale .t{font-size:26px}
+  .foot .fident,.foot .fmeta{margin-top:18px}
+  .foot .folio{text-align:left;margin-top:18px}
   .overlay i:nth-child(n+5){display:none}
+  .runhead .t{display:none}
+  .progress b{display:none}
 }
-
-/* ── 打印：正文回到单栏，去掉交互控件 ── */
+/* ── 打印 ── */
 @media print{
-  body{font-size:11pt;line-height:1.7}
-  .mast .nav,.progress,.overlay,.gbtn,.pager,.skip{display:none}
-  .foot{background:#fff;color:#000;border-top:1px solid #000}
-  .foot .fident,.foot .fmeta{color:#000}
-  .foot a{color:#000}
+  .mast .stamp,.tabs,.progress,.overlay,.gbtn,.side,.gutter,.runhead{display:none}
+  body{font-size:11pt}
   .wrap{max-width:none;padding:0}
   .grid{display:block}
-  .prose,.letter .body{font-size:11pt;column-count:1}
-  .prose h2{break-after:avoid}
-  .cover .big{font-size:120pt}
+  .foot{background:#fff;color:#000;border-top:1px solid #000}
+  .foot .fident,.foot .fmeta{color:#000}
   a{text-decoration:none}
 }
 </style>
 </head>
 <body>
 <a class="skip" href="#app">跳到正文</a>
-<div class="progress" id="progress" aria-hidden="true"></div>
+<div class="progress" id="progress" aria-hidden="true"><i id="pfill"></i></div>
 
 <header class="mast">
   <div class="wrap">
-    <div class="grid">
+    <div class="grid top">
       <a class="brand" href="#/" aria-label="NOVA 首页" data-mark></a>
-      <div class="ident"><b><span data-site="author">林一</span>的个人博客</b>关于设计、工程与太空的笔记</div>
-      <nav class="nav" aria-label="主导航">
-        <a href="#/" data-nav="home">文章</a>
-        <a href="#/archive" data-nav="archive">归档</a>
-        <a href="#/about" data-nav="about">关于</a>
-        <a href="#/standards" data-nav="standards">设计规范</a>
-      </nav>
+      <div class="ident"><b>NOVA · 视觉规范</b>NHB 1430.2 的网页转译</div>
+      <div class="stamp">1976 年 1 月生效<br>本页 2026</div>
     </div>
-    <hr class="hair">
+    <nav class="tabs" aria-label="章节" id="tabs"></nav>
   </div>
 </header>
 
@@ -354,670 +334,620 @@ p{margin:0}
   <div class="wrap">
     <div class="grid">
       <div class="fbrand" data-mark></div>
-      <div class="fident"><b><span data-site="author">林一</span>的个人博客</b>设计、工程与太空<br>上海</div>
+      <div class="fident"><b>NOVA</b>把 NHB 1430.2（1976）的版面规则翻成网页。个人练习，与 NASA 无关；NASA 的 Worm 字标受法规保护，本站未使用。</div>
       <div class="fmeta">
-        版式依据 NASA Graphics Standards Manual（NHB 1430.2，1976）排版，是与 NASA 无关的个人练习。
-        <br><span id="year">2026</span> · <a href="https://github.com/fengzishiyi" rel="me noopener">GitHub</a>
-        <br><button class="gbtn" id="gbtn" type="button" aria-pressed="false">显示网格（G）</button><button class="sbtn" id="sbtn" type="button" aria-pressed="false">音效：关（S）</button>
+        单文件 · 零外部请求 · 无依赖<br>
+        <a href="https://github.com/fengzishiyi" rel="me noopener">GitHub</a><br>
+        <button class="gbtn" id="gbtn" type="button" aria-pressed="false">显示网格（G）</button>
       </div>
-      <div class="folio" id="folio" aria-label="页码">1.0</div>
+      <div class="folio" id="folio" aria-label="当前章节页码">—</div>
     </div>
   </div>
 </footer>
 
 <div class="overlay" id="overlay" aria-hidden="true">
-  <div class="wrap"><div class="grid"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="wrap"><div class="grid" id="ovcols"></div></div>
 </div>
 
-<noscript>
-  <div class="wrap" style="padding-bottom:64px">
-    <p class="small muted">这个站点用 JavaScript 渲染文章，关掉脚本时只剩这一行字。所有文章都是纯文本，源码里可读：查看本页的 <code>POSTS</code> 数组。</p>
-  </div>
-</noscript>
-
 <script>
-/* ── 站点信息。改名字、联系方式和标题只改这里 ── */
+/* ── 站点事实。改名字只改这里 ── */
 const SITE = {
-  name: 'NOVA',
-  author: '林一',
-  role: '设计师，前端工程师',
-  place: '上海',
-  contact: 'https://github.com/fengzishiyi',
-  contactLabel: 'github.com/fengzishiyi',
-  origin: 'https://fengzishiyi.github.io',
-  desc: '一个按 1976 年 NASA Graphics Standards Manual（NHB 1430.2）的原则排版的个人博客：两种颜色、一个字体家族、一张 12 栏网格。'
+  name:'NOVA',
+  origin:'https://fengzishiyi.github.io',
+  desc:'把《NASA Graphics Standards Manual》（NHB 1430.2，1976）的版面规则翻成网页：两种专色、一个字体家族、一张 12 栏网格，以及从参考片里取出的八个图版构件。'
 };
 
-/* 字标 NOVA：原创单线字，等宽笔画、无横杠、水平基线——遵循 1.1 的造字原则，但不复制 NASA 字标本身。
-   viewBox 在四边各留 10 个单位，否则 18 宽的笔画在两端的平头上会被切掉一半。 */
-function mark(label){
-  const a = label ? `role="img" aria-label="${label}"` : 'aria-hidden="true" focusable="false"';
-  return `<svg viewBox="0 -10 460 120" ${a} fill="none" stroke="currentColor" stroke-width="18">
+/* 字标：单线字形，等宽笔画、无横杠、坐水平基线（1.1 的三条原则） */
+function mark(){
+  return `<svg viewBox="0 0 460 120" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="18">
     <path d="M9 100V40a22 22 0 0 1 44 0v20a22 22 0 0 0 44 0V0"/>
     <rect x="133" y="9" width="90" height="82" rx="41"/>
     <path d="M259 0L298 91L337 0" stroke-linejoin="round"/>
     <path d="M373 100L412 9L451 100" stroke-linejoin="round"/>
   </svg>`;
 }
-function hydrateMarks(root){
-  root.querySelectorAll('[data-mark]:not([data-done])').forEach(el=>{
-    el.insertAdjacentHTML('afterbegin', mark(el.tagName==='A' ? null : 'NOVA 字标'));
-    el.dataset.done='1';
-  });
-}
-function hydrateSite(root){
-  root.querySelectorAll('[data-site]').forEach(el=>{
-    const v = SITE[el.dataset.site];
-    if (v != null) el.textContent = v;
-  });
-}
-hydrateMarks(document);
-hydrateSite(document);
-document.getElementById('year').textContent = new Date().getFullYear();
-
-/* ── 文章数据。编号沿用手册的「章.节」体例：1.x 为文章 ── */
-const POSTS = [
-{ slug:'graphics-standards-1976', no:'1.6', cat:'设计', date:'2026-10-12', read:9, cover:'1976',
-  title:'重读 1976 年的 NASA 图形标准手册',
-  deck:'Danne & Blackburn 为 NASA 制定的这本手册，用两种颜色、一套字体和一张网格，管住了一个机构的全部视觉输出。这个博客就是照着它做的。',
-  body:`
-<p>手册的编号是 NHB 1430.2，1976 年 1 月生效。它的核心是那个后来被叫作「Worm」的字标：N、A、S、A 四个字母被简化到只剩一种笔画宽度，两个 A 去掉了横杠，整个字标获得一种向上的推力。</p>
-<p>手册对这个字标的保护近乎严苛：不能重画，只能用制版原稿翻拍；不能放进圆形、方框；不能描边、加阴影、竖排。这些规定今天读来依然有效，因为它们讲的是同一件事：识别靠的是一致，而一致只能靠约束。</p>
-<h2 id="color">两种颜色，以及红色的使用条件</h2>
-<p>手册只定义了两种专色：NASA Red 和 NASA Warm Gray。红色被描述为「一种非常活跃的颜色，给字母带来动感」，但它的使用条件写得很清楚：只在有第二色可用时使用，只用在白色或浅色背景上，不与其他鲜艳色或中深色同时出现，否则红色会被稀释。</p>
-<blockquote>NASA red should not be used with other bright saturated colors, or medium and dark value colors, as they will dilute the effectiveness and impact of the NASA red.</blockquote>
-<p>所以这个博客里，红色只出现在页眉字标、阅读进度条、网格叠加层，以及每张插图里那一个记号上——最后两项是给排版看的工具，不是阅读内容。正文、链接、按钮全部是黑白与暖灰。</p>
-<h2 id="type">Helvetica Light 与 Medium</h2>
-<p>Helvetica 是整个系统里「最重要的字体家族」。Light 和字标一起构成识别的基础，标题用 Medium，并且使用大小写混排而不是全大写。手册在 Garamond 一页里还有一条很实用的话：粗体不够重时，靠加大字号或在标题周围留空来补偿，而不是换更粗的字重。</p>
-<p>中文没有 Helvetica，但原则可以翻译：正文用细体，标题用中等字重，用尺寸和空白而不是粗细建立层级。</p>
-<figure class="fig"><div class="plate" data-mark></div><figcaption>图 1.6b　本站字标 NOVA，按手册 1.1 的原则绘制：单一笔画宽度、无横杠、水平基线。白色字标用于深色背景（1.4）。</figcaption></figure>
-<h2 id="grid">网格先于内容</h2>
-<p>5.14 节把网格的用法写成三步：先分析出版物的尺寸和内容类型，再把网格应用到对开页上，由它决定边距、栏距和页码位置，最后才把标题、正文、图片和图注放进去。还有一个细节：页码永远放在外侧边距。</p>
-<p>网页没有对开页，但有视口。把 CSS Grid 当成印刷网格用，每个元素就有了确定的位置，而不是靠一次次调 margin。本站用 12 栏，按 G 键可以看到它。</p>
-<h2 id="after">后来</h2>
-<p>1992 年 NASA 恢复了圆形的「Meatball」徽标，Worm 退役。2020 年它又回到了猎鹰 9 号的箭体上。好的系统会被重新发现，因为它解决的问题一直都在。</p>`},
-{ slug:'css-grid-as-print-grid', no:'1.5', cat:'工程', date:'2026-09-28', read:6,
-  title:'把 CSS Grid 当作印刷网格来用',
-  deck:'手册 5.14 节的三步法，换成 CSS 只需要几行。难的是先决定栏数，而不是写代码。',
-  body:`
-<p>印刷设计里，网格是一种「预先决定的结构」，它在内容到来之前就存在。网页开发里我们常常反过来：先放内容，再用间距把它们推到看起来对的地方。</p>
-<h2 id="define">先定义，再放置</h2>
-<p>本站的整个版面只有一个网格定义：</p>
-<pre><code>.grid{
-  display:grid;
-  grid-template-columns:repeat(12,minmax(0,1fr));
-  column-gap:24px;
-}</code></pre>
-<p>此后所有元素只做一件事：声明自己从第几栏开始、跨几栏。标题栏永远是 1–3，正文永远从第 4 栏开始。这对应手册里「标题挂在左栏、正文在右」的页面结构。</p>
-<h2 id="mobile">小屏幕</h2>
-<p>手机上网格收为 4 栏，所有块占满整行。规则没有变，只是栏数变了，这比为每个组件写一套断点样式要稳定得多。</p>`},
-{ slug:'voyager-49', no:'1.4', cat:'太空', date:'2026-09-05', read:5,
-  title:'旅行者 1 号的第 49 年',
-  deck:'1977 年 9 月 5 日发射，2012 年进入星际空间。它离我们越来越远，但信号还在。',
-  body:`
-<p>旅行者 1 号是目前距离地球最远的人造物体。它在 2012 年 8 月穿过日球层顶，成为第一个进入星际空间的探测器。</p>
-<p>为了节省逐年衰减的核电池电力，工程师们这些年陆续关闭了它的部分仪器和加热器。每一次关闭都是一次取舍：保留哪些数据，放弃哪些。</p>
-<h2 id="restraint">克制也是一种工程</h2>
-<p>这让我想到图形手册里对红色的限制。资源有限时，你必须决定把它用在哪里。旅行者的电力和一个品牌的注意力，本质上是同一种问题。</p>`},
-{ slug:'helvetica-light-cjk', no:'1.3', cat:'字体', date:'2026-08-17', read:7,
-  title:'Helvetica Light 与中文正文',
-  deck:'西文用细体做正文很常见，中文却很少。原因不在审美，而在字体回退。',
-  body:`
-<p>手册把 Helvetica Light 定为识别与正文的基础字重。在网页上复现这一点，西文部分很容易，中文部分取决于用户系统里有什么。</p>
-<h2 id="fallback">回退顺序</h2>
-<p>本站的字体栈是 Helvetica Neue、Helvetica、Arial，然后是苹方、冬青黑体、微软雅黑 Light 与思源黑体。macOS 和 iOS 上苹方有完整的细体；Windows 上要注意「微软雅黑 Light」是一个独立的家族名，只写「微软雅黑」再设 300 字重是选不到细体的。</p>
-<h2 id="size">字号与行距</h2>
-<p>细体中文需要更大的字号和行距才能保持可读：正文 18px，行高 1.85。13px 的小字用加深过的暖灰 #6B655E，对白底的对比度保持在 4.5:1 以上；手册原色 Warm Gray 只用于大面积色块。</p>`},
-{ slug:'zero-dependency-blog', no:'1.2', cat:'工程', date:'2026-07-30', read:4,
-  title:'一个零依赖的小博客',
-  deck:'一个 HTML 文件，没有构建步骤，没有框架，没有外部字体，也没有一次第三方请求。',
-  body:`
-<p>这个博客是一个单独的 HTML 文件。文章是一段 JavaScript 数组，路由用 URL 的 hash，样式全部写在一个 style 标签里。</p>
-<p>它的缺点很明显：文章多了以后不好维护，也不利于搜索引擎，而且关掉 JavaScript 就什么都看不见。作为一个设计系统的样张，它足够把规则讲清楚。真正要长期写下去，把同一套 CSS 放进任何静态站点生成器即可。</p>`},
-{ slug:'less-after-more', no:'1.1', cat:'随笔', date:'2026-07-02', read:3,
-  title:'先有很多，才能减少',
-  deck:'简化是结果，不是起点。',
-  body:`
-<p>Worm 字标看起来简单，但那种简单是拿掉东西之后的结果。两个 A 的横杠就是被拿掉的东西，拿掉以后，字标才有了向上的推力。</p>
-<p>写作也一样。我现在的习惯是先写得很长，然后删掉一半。</p>`}
-];
-
-/* ── 工具 ── */
-const $ = s => document.querySelector(s);
-const app = $('#app');
-const bar = $('#progress');
-const rm = matchMedia('(prefers-reduced-motion: reduce)');
-const fmt = d => { const [y,m,dd]=d.split('-'); return `${y} 年 ${+m} 月 ${+dd} 日`; };
-/* 章节页眉。page=true 时用 h1：每个页面必须正好有一个一级标题 */
-const sect = (title, lede, page=false) => `
-  <div class="wrap"><div class="grid sect"><${page?'h1':'h2'}>${title}</${page?'h1':'h2'}><p class="lede">${lede}</p></div><hr class="hair"></div>`;
-const card = p => `
-  <article class="card">
-    <div class="no">${p.no}</div>
-    <h3><a href="#/post/${p.slug}">${p.title}</a></h3>
-    <p class="muted">${p.deck}</p>
-    <div class="meta"><span>${p.cat}</span><time datetime="${p.date}">${fmt(p.date)}</time><span>${p.read} 分钟</span></div>
-  </article>`;
+document.querySelectorAll('[data-mark]').forEach(el=>{
+  el.insertAdjacentHTML('afterbegin', mark());
+});
 
 /* ─────────────────────────────────────────────
-   插图：六张原创施工图，全部是内联 SVG。
-   规则照手册来：只有细线；不用照片、不用渐变、不用第三种颜色；
-   每张图里红色只允许出现一处，作为唯一的「动点」。
+   内容：七节，全部是可核对的事实。
+   每一条引文都注了手册页码；没有一条是举例。
    ───────────────────────────────────────────── */
-const n1 = v => Math.round(v * 10) / 10;
-const gridPath = (x0, y0, x1, y1, step) => {
-  let d = '';
-  for (let x = x0; x <= x1; x += step) d += `M${n1(x)} ${y0}V${y1}`;
-  for (let y = y0; y <= y1; y += step) d += `M${x0} ${n1(y)}H${x1}`;
-  return d;
-};
-const colBands = (x0, total, n, gap, y, h) => {
-  const w = (total - gap * (n - 1)) / n;
-  let s = '';
-  for (let i = 0; i < n; i++) s += `<rect x="${n1(x0 + i * (w + gap))}" y="${y}" width="${n1(w)}" height="${h}"/>`;
-  return s;
-};
-const T = (x, y, size, txt, opt='') =>
-  `<text x="${x}" y="${y}" fill="currentColor" stroke="none" font-size="${size}" ${opt}>${txt}</text>`;
+const SECTIONS = [
+{
+  id:'logotype', no:'01', title:'字标', en:'Logotype', folio:'1.1',
+  brief:'不是画出来的，是量出来的。',
+  lede:'手册把字标放在第一章，不是因为它是门面，而是因为它是唯一不能改的东西：其他规则都在描述它如何被使用。',
+  cite:'NHB 1430.2 · 1.1 The NASA Logotype（p.5）· 1.6 错误用法（p.10）· 1.7 网格施工图（p.11）',
+  html:`
+<h2 id="t1">1.1　三条不可让的规则</h2>
+<p>手册原文（p.5）：</p><blockquote><p>In the logotype, the letters N-A-S-A are reduced to their most simplified form. The strokes are all of one width, evoking the qualities of unity and technical precision. Elimination of cross-strokes in the two “A” letters imparts a vertical thrust to the logotype.</p><cite>1.1 The NASA Logotype</cite></blockquote>
+<p>本站的字标 NOVA 按同样三条画出来：<b>笔画同宽</b>、<b>去掉横杠</b>、<b>坐在一条水平基线上</b>。第三条最容易被破坏——把字标旋转、竖排、或者为了塞进方框而缩放，都是在改变它与基线的关系。</p>
+<p>第二条规矩更硬（p.5）：</p><blockquote><p>The logotype should never be altered or distorted in any way. It must not be re-drawn, but rather reproduced photographically from reproduction artwork included in Section 2 of this manual.</p><cite>1.1 The NASA Logotype</cite></blockquote>
+<p>这条说的是：字标不能被“重画”，只能用制版原稿翻拍。网页上没有制版稿，能对应的是——<b>字标只有一个矢量源</b>，全站引用同一个，不按页面尺寸重新描一遍。本站的做法是把字形写成一段函数，页眉、页脚、出现三处，永远同一个。</p>
 
-const PLATES = {
-/* 1.6 手册：1.7 节的大字标施工图。字先上网格，笔画再落位；横杠是后来被拿掉的那一笔。 */
-'graphics-standards-1976': {
-  caption:'<b>图 1.6a</b>　字标的施工图。手册 1.7 节要求大字标按网格绘制、经得起翻拍：先有网格和基线，笔画才有落点。两个 A 的横杠是后来拿掉的那一笔——拿掉之后，字才有了向上的推力。',
-  art:`<svg viewBox="0 0 480 270" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1">
-    <path d="${gridPath(24, 30, 456, 234, 24)}" opacity=".13"/>
-    <path d="M24 54H456" stroke-dasharray="3 5" opacity=".5" data-draw pathLength="1"/>
-    <path d="M24 198H456" stroke-dasharray="3 5" opacity=".5" data-draw pathLength="1"/>
-    <path d="M132 198L192 54L252 198" stroke-width="2.4" data-draw pathLength="1" style="--i:1"/>
-    <path d="M96 54v144" data-draw pathLength="1" style="--i:2"/>
-    <path d="M92 54h8M92 198h8" data-fade style="--i:3"/>
-    ${T(88, 126, 9, '1', 'text-anchor="end" data-fade style="--i:3"')}
-    ${T(24, 46, 9, '顶线', 'opacity=".55"')}
-    ${T(24, 214, 9, '基线', 'opacity=".55"')}
-    <path d="M152 150H232" stroke-dasharray="4 4" opacity=".45"/>
-    <circle cx="192" cy="150" r="3.5" fill="#FC3D21" stroke="none" data-fade style="--i:4"/>
-    ${T(240, 154, 9, '被拿掉的横杠', 'data-fade style="--i:4"')}
-    ${T(24, 262, 9, '1.7　网格施工图', 'opacity=".5"')}
-  </svg>`
+<h2 id="t2">1.7　先把网格画出来</h2>
+<p>手册在 1.7 节给了大字标的施工图：放大使用时，字形必须能在网格上重画，而不是靠肉眼估。这一节的用处不在“好看”，在于它把字标变成了可复制的量。</p>
+<p>本站没有放大到需要施工图的场合，所以不放施工图；但保留这条精神——<b>任何尺寸都从同一个源缩放，不重绘</b>。</p>
+
+<h2 id="t3">1.6　四条禁则（其余五条不适用网页）</h2>
+<p>手册把错误用法编成九条。其中四条在网页上仍然成立，这里做成本站的标本：</p>
+<div class="spec">
+  <div class="hd"><span>标本 S1　字标的四条禁则</span><em>1.6 / p.10</em></div>
+  <div class="bd">
+    <div class="donot" data-marktiles></div>
+  </div>
+  <div class="note">四条依次为：放进方框、加投影、竖排、用浅色网屏印在白底上。均不可。</div>
+</div>
+
+<h2 id="t4">1.4　底色决定颜色</h2>
+<p>字标本身只有两种呈现——在白底上是红或黑，在深底上一律白。这条规则在 1.4 节被写成四种背景的分档表，本站把它直接搬进行页脚：黑色页脚上的字标是白的，没有例外。</p>
+<p>另外一句必须写清楚：<b>NASA 的 Worm 字标不能用</b>。它受法规保护，个人站点无权使用；本站的 NOVA 是照 1.1 的原则另画的原创字形。</p>`
 },
-/* 1.5 网格：12 栏、栏距、三块内容各就各位。 */
-'css-grid-as-print-grid': {
-  caption:'<b>图 1.5a</b>　12 栏网格上的一次落位：标题挂第 1–3 栏，正文占第 4–9 栏，图在第 10–12 栏。栏距 24px，红色的那一段就是被量出来的栏距。',
-  art:`<svg viewBox="0 0 480 270" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1">
-    <g fill="currentColor" stroke="none" opacity=".07">${colBands(24, 432, 12, 12, 48, 184)}</g>
-    <path d="${colBands(24, 432, 12, 12, 48, 184).match(/x="[^"]+"/g).map(m => `M${m.slice(3, -1)} 48V232`).join('')}M456 48V232" opacity=".26"/>
-    <path d="M24 48H456M24 232H456" opacity=".4" data-draw pathLength="1"/>
-    <rect x="24" y="64" width="99" height="7" fill="currentColor" stroke="none" data-fade style="--i:1"/>
-    <path d="M135 92H345M135 108H345M135 124H303M135 140H345M135 156H245" stroke-width="2.4" opacity=".72" data-draw pathLength="1" style="--i:2"/>
-    <rect x="357" y="64" width="99" height="116" data-draw pathLength="1" style="--i:3"/>
-    <path d="M357 64l99 116M357 180l99-116" opacity=".25"/>
-    <path d="M49 248h12" stroke="#FC3D21" stroke-width="2.4" data-draw pathLength="1" style="--i:4"/>
-    ${T(66, 252, 9, '栏距 24', 'opacity=".6"')}
-    ${T(24, 266, 9, '5.14　先有网格，再放内容', 'opacity=".5"')}
-  </svg>`
+{
+  id:'color', no:'02', title:'色彩', en:'Color', folio:'1.3',
+  brief:'两种颜色，一条关于红的条件句。',
+  lede:'手册只定义了两个专色，然后用整整两页写清红色什么时候不许用。限制比颜色本身更重要。',
+  cite:'1.3 The NASA Color（p.7）· 1.4 Use of Color（p.8）· 1.5 Color Standards（p.9）',
+  html:`
+<h2 id="c1">1.3　红色的条件</h2>
+<blockquote><p>NASA red should be used only when a second color is available and appropriate. It is intended to be used only on white or a light value neutral color background. NASA red should not be used with other bright saturated colors, or medium and dark value colors, as they will dilute the effectiveness and impact of the NASA red.</p><cite>1.3 The NASA Color</cite></blockquote>
+<p>这段话里没有一句是在讲“红好看”。它讲的是三个条件：<b>有第二色才用</b>、<b>只在白或浅中性底上用</b>、<b>不和别的饱和色或中深色并用</b>。本站因此把红色收窄到只做三件事：当前项的下划线、阅读进度的填充、刻度与记号。</p>
+<p>手册对红色的描述只有一句形容，值得原样保留：它是一种“非常活跃的颜色”，给字母带来动感（<i>brings a kinetic dimension to the letterforms</i>）。活跃的东西更需要管住次数。</p>
+
+<h2 id="c2">1.4　底色决定用法</h2>
+<p>这一页给的是四档背景下的合法组合，本站照抄成表：</p>
+<table>
+  <tr><th>背景</th><th>字标可用</th><th>本站对应</th></tr>
+  <tr><td>白</td><td>红与黑 / 黑 / 暖灰</td><td>页眉字标（红）</td></tr>
+  <tr><td>很浅的值</td><td>黑（四色印刷里可用红）</td><td>浅底章节里的记号</td></tr>
+  <tr><td>黑或很深的值</td><td><b>一律白</b>；红不可</td><td>页脚字标（白）</td></tr>
+  <tr><td>中等明度</td><td>黑或白，看哪个合适；红不可</td><td>本站不使用中等明度底</td></tr>
+</table>
+<p>最容易犯的错是最后一行：把红放在深底上。手册说得直接——<i>The logotype should never be shown in NASA red against a black or very dark background.</i> 本站的红色因此从不进入页脚。</p>
+
+<h2 id="c3">1.5　取值与实测对比度</h2>
+<p>颜色取自手册的色标页（1.5）与 NASA Red 的色样（2.14）。文本用的暖灰不是原色，而是加深版，因为原色对白底的对比度不够：</p>
+<div class="spec">
+  <div class="hd"><span>标本 S2　四个取值</span><em>1.5 / p.9</em></div>
+  <div class="bd">
+    <div class="sw" data-swatches></div>
+  </div>
+  <div class="note">NASA Red #FC3D21 只做记号，不做正文；Warm Gray #A39C93 只做色块；小字一律用加深版 #6B655E。</div>
+</div>
+<p>实测：<code>#6B655E</code> 对白底 <b>5.76 : 1</b>，满足正文 4.5:1；页脚 <code>#cfcac3</code> 对黑底 <b>12.89 : 1</b>。这两个数字是用浏览器计算样式跑出来的，不是估的。</p>`
 },
-/* 1.4 旅行者：一条轴线，一次穿越。红的那一小段就是 2012 年 8 月。 */
-'voyager-49': {
-  caption:'<b>图 1.4a</b>　旅行者 1 号的距离轴，以天文单位计。它走了四十多年才到日球层顶，此后每一年只多走三个多天文单位——红色那一小段标的是穿越的时刻。',
-  art:`<svg viewBox="0 0 480 270" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1">
-    <path d="M56 196H428" data-draw pathLength="1"/>
-    <path d="M428 196l-10-4v8z" fill="currentColor" stroke="none" data-fade style="--i:1"/>
-    <path d="M56 196v-8M144 196v-8M232 196v-8M322 196v-8M408 196v-8" opacity=".6"/>
-    ${T(56, 214, 9, '0', 'text-anchor="middle" opacity=".7"')}
-    ${T(144, 214, 9, '40', 'text-anchor="middle" opacity=".7"')}
-    ${T(232, 214, 9, '80', 'text-anchor="middle" opacity=".7"')}
-    ${T(322, 214, 9, '121', 'text-anchor="middle" opacity=".7"')}
-    ${T(408, 214, 9, '160', 'text-anchor="middle" opacity=".7"')}
-    ${T(438, 200, 9, 'AU', 'opacity=".7"')}
-    <path d="M56 176C140 172 240 162 322 156S400 150 428 146" stroke-width="1.6" data-draw pathLength="1" style="--i:2"/>
-    <circle cx="56" cy="176" r="3" fill="currentColor" stroke="none" data-fade style="--i:3"/>
-    ${T(64, 168, 9, '1977 年 9 月', 'data-fade style="--i:3"')}
-    <path d="M322 68v128" stroke-dasharray="3 5" opacity=".5" data-draw pathLength="1" style="--i:3"/>
-    <path d="M322 70v16" stroke="#FC3D21" stroke-width="3" stroke-linecap="round" data-fade style="--i:4"/>
-    ${T(322, 58, 9, '日球层顶　2012 年 8 月', 'text-anchor="middle" data-fade style="--i:4"')}
-    ${T(24, 262, 9, '1.4　距离轴，不是时间轴；曲线的弯折只是示意', 'opacity=".5"')}
-  </svg>`
+{
+  id:'type', no:'03', title:'字体', en:'Typography', folio:'5.3',
+  brief:'一个家族，两个字重，四档字号。',
+  lede:'手册对字体的规定短得出奇：最重要的家族是 Helvetica，正文 Light，标题 Medium，标题用大小写混排。剩下的交给字号和留白。',
+  cite:'5.3 Sans Serif / Helvetica（p.27）· 5.5 Serif / Garamond（p.29）',
+  html:`
+<h2 id="ty1">5.3　Light 与 Medium 的分工</h2>
+<blockquote><p>Helvetica is the most important family of type in the NASA Unified Visual Communications System. Helvetica Light is used in combination with the logotype to form the fundamental elements of identification. … Headings which accompany Helvetica Light text settings are set in Helvetica Medium. … Headings are set in upper and lower case.</p><cite>5.3 Typography — Sans Serif, Helvetica</cite></blockquote>
+<p>三件事：<b>正文用 Light</b>、<b>标题用 Medium</b>、<b>标题不用全大写</b>。第三点在中文里看不出差别，但在英文里它决定了标题是“命令”还是“陈述”。本站所有英文小标题都不做大写化，只有 10px 的表头与微注用大写——那属于“标签”，不属于“标题”。</p>
+
+<h2 id="ty2">5.5　粗体不够重时怎么办</h2>
+<blockquote><p>Garamond Bold is not a particularly heavy weight and the designer must compensate by increasing the size of the headings or by using space around them.</p><cite>5.5 Typography — Serif, Garamond</cite></blockquote>
+<p>这是全册里最实用的一句：<b>层级不够时，加大字号、加留白，而不是换更粗的字重。</b>本站因此只有两个字重——300 与 500。再往上是靠字号档位拉开：</p>
+<div class="spec">
+  <div class="hd"><span>标本 S3　四档字号</span><em>8 : 4 : 2.3 : 1</em></div>
+  <div class="bd">
+    <div class="scale" data-scale></div>
+  </div>
+  <div class="note">显示字 / 标题 / 副标 / 正文 / 微注。没有第五档，也没有更粗的字重可用。</div>
+</div>
+
+<h2 id="ty3">中文没有 Helvetica</h2>
+<p>手册只解决西文。中文要复现同一套视觉，靠的是回退顺序：</p>
+<ul>
+  <li>macOS / iOS：<code>PingFang SC</code> 有完整的细体，<code>font-weight:300</code> 能选到 Light。</li>
+  <li>Windows：<b>“微软雅黑 Light”是一个独立的家族名</b>，只写“微软雅黑”再设 300 是选不到细体的——这是实际排版里最容易踩的坑，所以它被单独写进字体栈，而不是靠字重去撞。</li>
+  <li>Linux：回退到思源黑体 / Noto Sans SC。</li>
+</ul>
+<p>细体中文需要更大的字号和行距才读得动：本站正文 16–17px、行高 1.7–1.78，比西文常规更松。</p>`
 },
-/* 1.3 字体：同一个基线，两种字的度量。中文没有 x 高度。 */
-'helvetica-light-cjk': {
-  caption:'<b>图 1.3a</b>　同一条基线，两种字的度量。西文有字高、x 高度、下伸部；汉字占满一个正方形，所以「细体中文要更大字号和更大行距」不是审美偏好，是度量决定的。',
-  art:`<svg viewBox="0 0 480 270" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1">
-    <path d="M24 115H456" stroke-dasharray="3 5" opacity=".45" data-draw pathLength="1"/>
-    <path d="M24 134H456" stroke-dasharray="3 5" opacity=".45" data-draw pathLength="1" style="--i:1"/>
-    <path d="M24 190H456" stroke-dasharray="3 5" opacity=".45" data-draw pathLength="1" style="--i:1"/>
-    ${T(24, 109, 9, '字高', 'opacity=".55"')}
-    ${T(24, 128, 9, 'x 高度', 'opacity=".55"')}
-    ${T(24, 206, 9, '基线', 'opacity=".55"')}
-    <text x="104" y="190" fill="currentColor" stroke="none" font-size="104" data-fade style="--i:2">Aa</text>
-    <text x="284" y="190" fill="currentColor" stroke="none" font-size="104" data-fade style="--i:3">字</text>
-    <rect x="284" y="86" width="104" height="104" stroke-dasharray="3 4" opacity=".55" data-draw pathLength="1" style="--i:3"/>
-    <path d="M284 86h14M284 86v14" stroke="#FC3D21" stroke-width="2.4" data-draw pathLength="1" style="--i:4"/>
-    ${T(396, 132, 9, '1 em', 'opacity=".6"')}
-    ${T(24, 250, 9, '5.3　Helvetica Light 与 Medium：识别与正文的两种字重', 'opacity=".5"')}
-  </svg>`
+{
+  id:'grid', no:'04', title:'网格', en:'Grid', folio:'5.14',
+  brief:'先有网格，再放内容。',
+  lede:'手册把网格的用法写成三步，最后一句是关于页码的：页码永远放在外侧边距。这句话在网页上有一个直接的对应物——页脚右端那个随时在变的章节号。',
+  cite:'5.14 The Grid — What it is（p.38）',
+  html:`
+<h2 id="g1">5.14　三步</h2>
+<blockquote><p>A grid is a predetermined understructure which the designer can employ to give a publication cohesive style and character.</p><cite>5.14 The Grid</cite></blockquote>
+<p>三步原文是：① 从出版物整体尺寸出发，分析需要承载的信息、照片、图注；② 把网格应用到对开页上，由它决定全部边距、栏距、页码位置；③ 再把标题、正文、图注、页码一块块放进去。括号里那句是关键：<i>Folio placement should always be in the outside margins.</i></p>
+
+<h2 id="g2">本站的网格</h2>
+<p>12 栏，栏距 24px，最大宽度 1320px，外边距随视口在 20–72px 之间变化；手机收成 4 栏。标题挂在第 1–2 栏，正文从第 3 栏起，页边注在第 10–12 栏——这就是手册里“标题在左栏、正文在右”的页面结构。</p>
+<div class="spec">
+  <div class="hd"><span>标本 S4　12 栏</span><em>24px gutter</em></div>
+  <div class="bd">
+    <div class="bars" aria-hidden="true" data-bars></div>
+    <div class="ruler" aria-hidden="true" data-ruler></div>
+  </div>
+  <div class="note">按 G 键可以在任何一页上叠出这张网格，并带栏号——它是 5.14 描述的工具，不是装饰图层。</div>
+</div>
+
+<h2 id="g3">页码搬到屏幕上</h2>
+<p>纸质页的页码在外侧边距。网页没有外侧边距，但有视口两端：本站把页码放在页脚最右一格，并让它<b>随阅读位置变化</b>（例如读到 2.3 节，页脚显示 2.3）。这不是动效，是 5.14 那条规则在这个媒介里唯一说得通的实现。</p>
+<p>同理，页面滚过标题之后，顶部会出现一条运行头，左边是章节号与标题，右边是当前小节号——印刷里的 running head，换了个载体。</p>`
 },
-/* 1.2 零依赖：一个文件，三条注记。 */
-'zero-dependency-blog': {
-  caption:'<b>图 1.2a</b>　整个站点的构成：一个 HTML 文件，三条注记。没有构建步骤，没有外部字体，没有一次第三方请求——所以它可以在十年后、离线状态下打开。',
-  art:`<svg viewBox="0 0 480 270" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1">
-    <rect x="64" y="48" width="152" height="174" data-draw pathLength="1"/>
-    <path d="M196 48v22h20" opacity=".55" data-draw pathLength="1" style="--i:1"/>
-    <path d="M86 96h108M86 112h108M86 128h74M86 144h108M86 160h52M86 176h84M86 192h38" stroke-width="2.4" opacity=".6" data-draw pathLength="1" style="--i:1"/>
-    <rect x="64" y="48" width="7" height="7" fill="#FC3D21" stroke="none" data-fade style="--i:3"/>
-    <path d="M216 96h32M216 134h32M216 172h32" opacity=".5" data-draw pathLength="1" style="--i:2"/>
-    ${T(256, 99, 11, '1 个 HTML 文件', 'data-fade style="--i:3"')}
-    ${T(256, 137, 11, '0 个依赖', 'data-fade style="--i:3"')}
-    ${T(256, 175, 11, '0 次外部请求', 'data-fade style="--i:3"')}
-    ${T(24, 258, 9, '1.2　权重与依赖都是零，代价写在正文里', 'opacity=".5"')}
-  </svg>`
+{
+  id:'plate', no:'05', title:'图版', en:'Plates', folio:'—',
+  brief:'八个构件，全部标了出处。',
+  lede:'这一节的构件不来自 NASA 手册，而取自两条参考片：一条游戏 PV（以平面设计为主），一条动画 UI 集（以动效为主）。每个构件都写清从第几秒来、做什么用、在本站哪里出现。',
+  cite:'参考片：明日方舟四周年 PV（5:19）· 记忆管理局 UI 集（1:31）',
+  html:`
+<h2 id="p1">01　状态卡牌</h2>
+<p>来源：PV 00:00:31（\`01: Project Horizon Arc\` 卡）。橙黄矩形内一根细黑横线把内容分上下两栏，左上角一个超大索引号。它解决的是一件事：<b>一张卡里同时放索引、名称、和元数据，而不需要三个字号档以上的层级</b>。</p>
+<div class="spec">
+  <div class="hd"><span>标本 S5　状态卡牌</span><em>本站首页索引即用此式</em></div>
+  <div class="bd">
+    <div style="border:1px solid #000;display:grid;grid-template-columns:1fr 1fr">
+      <div style="padding:12px 14px;border-right:1px solid #000">
+        <div style="font-size:40px;font-weight:500;line-height:1;letter-spacing:-.03em">05</div>
+        <div style="border-top:1px solid #000;margin-top:10px;padding-top:8px;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#6B655E">Plate · system</div>
+        <div style="font-size:17px;font-weight:500;margin-top:4px">图版</div>
+      </div>
+      <div style="padding:12px 14px;font-size:10px;line-height:1.9;letter-spacing:.08em;text-transform:uppercase;color:#6B655E">
+        八个构件<br>全部单色<br>红只做当前
+      </div>
+    </div>
+  </div>
+  <div class="note">卡的边框、分栏线、索引号、底边微注——四件东西固定，内容换。</div>
+</div>
+
+<h2 id="p2">02　微注带</h2>
+<p>来源：几乎每一张图版的底边（PV 00:00:36、00:02:23）。一行 9–12px 全大写，用 <code>·</code> 分隔。它是“图版的底边”，没有它，卡片看起来像一块没写完的版。</p>
+<div class="spec">
+  <div class="hd"><span>标本 S6　微注带</span><em>本站每张卡、每节页脚</em></div>
+  <div class="bd">
+    <div class="metaband"><span>图版 05</span><span>NHB 1430.2</span><span>单色</span><span>红：当前项</span></div>
+  </div>
+  <div class="note">全站同一样式：10px、字距 .08em、全大写、暖灰。不设第二套小字。</div>
+</div>
+
+<h2 id="p3">03　页签</h2>
+<p>来源：PV 00:01:52（\`Arknights\` 实心页签 + \`New operator +\` 空心页签）；UI 片 00:01:04（左上角常驻的系统标签）。<b>实心=当前，空心=可去</b>，靠填充而不是靠颜色区分主次。</p>
+<div class="spec">
+  <div class="hd"><span>标本 S7　页签</span><em>本站主导航</em></div>
+  <div class="bd">
+    <div class="tabdemo"><span class="on">05 图版</span><span>06 动效</span><span>07 出处</span></div>
+  </div>
+  <div class="note">当前项：浅底 + 红色下划线。红色只出现在这条线上，是 1.3 允许的最小用量。</div>
+</div>
+
+<h2 id="p4">04　红细线＝当前</h2>
+<p>来源：PV 00:02:07 与 00:02:23——角色名牌在静止数秒后，名字下方长出一条红色横线，表示“选中”。整张图版的其他部分都不动，只有这一根线出现。</p>
+<p>这是全站最重要的一条借用：<b>“当前”这件事用一根红线表达，不用动画、不用位移。</b>导航当前项、目录当前项、进度刻度，三处都是它。</p>
+
+<h2 id="p5">05　出血显示字</h2>
+<p>来源：PV 00:02:23（\`Müels…\` 被画面切掉）、00:03:25（\`FROST AND MOUNTAIN\` 溢出画面）。显示字永远比画面大一点，被边缘切掉一截，版面才有呼吸。</p>
+<div class="spec">
+  <div class="hd"><span>标本 S8　出血</span><em>本站首页与封面数字</em></div>
+  <div class="bd">
+    <div class="bleeddemo"><span>1430.2</span></div>
+  </div>
+  <div class="note">只允许出现在两处：首页那段数字、章节页的大号索引。正文里不出现。</div>
+</div>
+
+<h2 id="p6">06　幽灵大号字</h2>
+<p>来源：PV 00:01:52——米色底上，人物的大头像以极低对比度铺在版面后面，像信笺的水印。它给版面一个“底纹”，但不用图案。</p>
+<div class="spec">
+  <div class="hd"><span>标本 S9　幽灵字</span><em>章节页右上</em></div>
+  <div class="bd">
+    <div class="ghostdemo"><em>Section 05</em><span>05</span></div>
+  </div>
+  <div class="note">不对它做动效。它只在章节页出现一次，作为节号的底纹。</div>
+</div>
+
+<h2 id="p7">07　读数带</h2>
+<p>来源：UI 片 00:00:22（\`SYS / FLT / VELC / ALT +1.854\` 一排标签与数值）。标签小、数值大、一字排开——用一排事实代替一段形容词。</p>
+<div class="spec">
+  <div class="hd"><span>标本 S10　读数带</span><em>首页与页脚</em></div>
+  <div class="bd">
+    <div class="readdemo">
+      <div><dt>色彩</dt><dd>2</dd></div>
+      <div><dt>栏</dt><dd>12</dd></div>
+      <div><dt>外部请求</dt><dd>0</dd></div>
+    </div>
+  </div>
+  <div class="note">首页用它报出全站的真实数字，不是形容词。</div>
+</div>
+
+<h2 id="p8">08　边缘注记</h2>
+<p>来源：UI 片 00:01:04（\`H1\`、\`M99\` 这类标在出血区的极小注记）。它们不参与阅读，只标记位置。</p>
+<div class="spec">
+  <div class="hd"><span>标本 S11　边缘注记</span><em>页边与页脚</em></div>
+  <div class="bd">
+    <div class="edgedemo">
+      <em>H1 · margin</em><strong>05</strong><em>M99 · bleed</em>
+    </div>
+  </div>
+  <div class="note">全站只保留两处：章节页左上角的 margin 标记、页脚右下角的页码。</div>
+</div>`
 },
-/* 1.1 随笔：先有很多，才能减少。 */
-'less-after-more': {
-  caption:'<b>图 1.1a</b>　左边是写完的样子，右边是删过一半的样子。删掉的那一笔被画成虚线：简化不是起点，是拿掉东西之后的结果。',
-  art:`<svg viewBox="0 0 480 270" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1">
-    <path d="M60 206L110 66L160 206" stroke-width="2.4" data-draw pathLength="1"/>
-    <path d="M81 140H139" stroke-width="2.4" data-draw pathLength="1" style="--i:1"/>
-    <path d="M190 136H262" opacity=".6" data-draw pathLength="1" style="--i:2"/>
-    <path d="M262 136l-10-4v8z" fill="currentColor" stroke="none" data-fade style="--i:2"/>
-    <path d="M300 206L350 66L400 206" stroke-width="2.4" data-draw pathLength="1" style="--i:3"/>
-    <path d="M321 140H379" stroke-dasharray="4 5" opacity=".35"/>
-    <circle cx="110" cy="140" r="3.5" fill="#FC3D21" stroke="none" data-fade style="--i:4"/>
-    ${T(110, 232, 9, '写完', 'text-anchor="middle" opacity=".6"')}
-    ${T(350, 232, 9, '删掉一半', 'text-anchor="middle" opacity=".6"')}
-    ${T(24, 258, 9, '1.1　Worm 的横杠也是这么没的', 'opacity=".5"')}
-  </svg>`
+{
+  id:'motion', no:'06', title:'动效', en:'Motion', folio:'—',
+  brief:'只留下会做事的东西。',
+  lede:'本站没有入场动画、没有滚动揭示、没有线条生长，也没有音效。留下的五件都是回答“我在哪”的工具——它们改变状态，不做表演。',
+  cite:'依据：5.14 页码规则 · 1.3 红色用量 · 两条参考片的实际用量统计',
+  html:`
+<h2 id="m1">留下的五件</h2>
+<table>
+  <tr><th>#</th><th>东西</th><th>它回答什么</th><th>实现</th></tr>
+  <tr><td>1</td><td>进度条 + 节刻度</td><td>整页还剩多少</td><td>滚动时只改一个 2px 填充宽度，另一层是每节一根刻度</td></tr>
+  <tr><td>2</td><td>运行头</td><td>我在哪一节、哪一小节</td><td><code>position:sticky</code>，滚过标题后自然停住，不淡入</td></tr>
+  <tr><td>3</td><td>活动页码</td><td>手册 5.14 的“页码放外侧”</td><td><code>IntersectionObserver</code> 跟踪每节，页脚右端换字</td></tr>
+  <tr><td>4</td><td>目录当前项</td><td>这一节里我在第几段</td><td>同上，当前项加一根红细线</td></tr>
+  <tr><td>5</td><td>网格叠加层（G）</td><td>版心到底在哪</td><td>12 栏 + 栏号，纯 CSS，无动画</td></tr>
+</table>
+<p>这五件有一个共同点：<b>它们的状态由内容决定，不由时间决定。</b>所以它们不需要缓动、不需要时长、也不会在你不看的时候自己动。</p>
+
+<h2 id="m2">删掉的六件，以及为什么</h2>
+<table>
+  <tr><th>删掉的</th><th>为什么删</th></tr>
+  <tr><td>入场动画（字标推进、标题逐行落版）</td><td>只在新页面第一次出现时发生，第二次就没有信息了。是装饰。</td></tr>
+  <tr><td>滚动揭示（卡片划线、淡入）</td><td>内容本来就在那里，让它“逐渐出现”只是在拖延阅读。</td></tr>
+  <tr><td>线条生长 / 数字落版（六张插图）</td><td>插图本身是给文章配的装饰，动效再叠一层，等于两次跑题。</td></tr>
+  <tr><td>悬停位移、卡片抬升</td><td>鼠标已经在指向它，位移没有新增任何信息。</td></tr>
+  <tr><td>换页淡入</td><td>参考片里所有切换都是硬切；淡入是我自己加的，不是它们做的。</td></tr>
+  <tr><td>音效</td><td>合成音在文本站里不承担信息。播放器状态还多一个要维护的开关。</td></tr>
+</table>
+
+<h2 id="m3">从参考片里学到的分寸</h2>
+<p>按 1 秒 1 帧看完两条片之后，做了一次统计：UI 片 1:31 里，真正承担信息的动作只有两类——<b>“已到达/已选中”的状态变化</b>（红条、红线、当前项）和<b>“还剩多少”的累加</b>（进度、点数）；其余大量动效（线条生长、面板滑入、整屏色涌）都在做气氛。<b>气氛不能搬进一个读文字的页面。</b>PV 片 5:19 也一样：它的版面几乎全是静止的图版，动效只做两件事——缓慢推近，和一条表示“选中”的红线。</p>
+<p>所以本站的动效预算只有上面那五件，全部是状态，没有一件是时间。</p>
+
+<h2 id="m4">如果关掉 JavaScript</h2>
+<p>五件里有四件依赖脚本（进度、运行头的页码、活动页码、目录当前项）。关掉脚本之后，页面仍然可读：所有栏目是静态 HTML 渲染的？——不是。本站是脚本渲染的单文件站点，这是它的已知代价：<b>关掉脚本只剩一行说明。</b>这条写在这里，而不是藏起来。</p>`
+},
+{
+  id:'refs', no:'07', title:'出处', en:'Sources', folio:'—',
+  brief:'每一句引文都能翻到页码。',
+  lede:'本页列出支撑上面六节的全部依据：手册的章节与页码、两条参考片的时间码、以及本站的实现事实。',
+  cite:'NASA Graphics Standards Manual, NHB 1430.2, January 1976（60 页，PDF 已逐页核对）',
+  html:`
+<h2 id="r1">手册对照表</h2>
+<table>
+  <tr><th>站内规则</th><th>手册</th><th>页</th></tr>
+  <tr><td>字标笔画同宽、去掉 A 的横杠、不可重画</td><td>1.1 The NASA Logotype</td><td>5</td></tr>
+  <tr><td>识别文字：机构名 Light、中心名 Medium、大小写混排</td><td>1.2 Agency and Center Identification</td><td>6</td></tr>
+  <tr><td>红色只在有第二色时用、只在白或浅底上用</td><td>1.3 The NASA Color</td><td>7</td></tr>
+  <tr><td>深底一律白；红不可置于深底</td><td>1.4 Use of Color</td><td>8</td></tr>
+  <tr><td>两个专色的取值</td><td>1.5 Color Standards</td><td>9</td></tr>
+  <tr><td>字标的四条禁则</td><td>1.6 Incorrect Uses</td><td>10</td></tr>
+  <tr><td>大字标按网格施工</td><td>1.7 Grid Drawing</td><td>11</td></tr>
+  <tr><td>信笺：左边距即正文左边距，用行距代替首行缩进</td><td>3.3 Typing Style</td><td>21</td></tr>
+  <tr><td>Helvetica Light 正文、Medium 标题、标题不大写</td><td>5.3 Sans Serif / Helvetica</td><td>27</td></tr>
+  <tr><td>层级靠字号与留白，不靠换更粗的字重</td><td>5.5 Serif / Garamond</td><td>29</td></tr>
+  <tr><td>封面用被裁切的大号字</td><td>5.12 Press Kits / 5.13 Posters</td><td>36–37</td></tr>
+  <tr><td>网格三步法；页码永远放外侧边距</td><td>5.14 The Grid</td><td>38</td></tr>
+</table>
+
+<h2 id="r2">参考片</h2>
+<p>两条片各按 1 秒 1 帧通读，抽帧与切点清单留档。本站只取版面与状态标记，不取画面、不取音轨、不使用其中任何一帧。</p>
+<table>
+  <tr><th>片</th><th>时长</th><th>取用</th><th>未取用</th></tr>
+  <tr>
+    <td>明日方舟四周年 PV</td><td>5:19</td>
+    <td>状态卡牌（00:00:31）、微注带、页签（00:01:52）、红细线＝当前（00:02:07）、出血显示字（00:02:23）、幽灵字（00:01:52）</td>
+    <td>整屏红、渐变与光谱、3D 镜头运动、角色立绘</td>
+  </tr>
+  <tr>
+    <td>记忆管理局 UI 集</td><td>1:31</td>
+    <td>读数带（00:00:22）、边缘注记（00:01:04）、红条＝选中（00:00:49）、标签先于图形出现的次序</td>
+    <td>线条生长、面板滑入、整屏色涌等气氛动效</td>
+  </tr>
+</table>
+
+<h2 id="r3">实现事实</h2>
+<div class="readout" data-readout></div>
+<p style="margin-top:14px">全部可复核：单页 HTML；字体、图标、统计、音视频一律没有外部请求；手写 12 栏网格；字标由同一段函数生成三处。体积与节数见上方读数带。</p>`
 }
-};
+];
 
-const artFor = p => {
-  const a = PLATES[p.slug];
-  return a ? `<figure class="art">${a.art}<figcaption>${a.caption}</figcaption></figure>` : '';
-};
+/* 小工具 */
+const $ = s => document.querySelector(s);
+const app = $('#app');
+const fill = $('#pfill');
+const rm = matchMedia('(prefers-reduced-motion: reduce)');
+/* 小节标题自带的手册编号，例如「1.3　红色的条件」→ 1.3；「01　状态卡牌」→ 01 */
+const headingNum = t => (String(t).match(/^\s*([0-9]+(?:\.[0-9]+)?)/) || [])[1] || '';
 
-/* 头条封面的施工线：黑底白线。只在左右两边留一对定位短划，避开左上角的编号和右上角的字标 */
-const coverFrame = `<span class="frame" aria-hidden="true"><svg viewBox="0 0 560 420" preserveAspectRatio="xMidYMid slice" fill="none" stroke="currentColor" stroke-width="1">
-  <path d="M140 0V420M280 0V420M420 0V420" opacity=".2" data-draw pathLength="1"/>
-  <path d="M0 105H560M0 210H560M0 315H560" opacity=".2" data-draw pathLength="1" style="--i:1"/>
-  <path d="M0 210h16M544 210h16" stroke-width="2" opacity=".8" data-draw pathLength="1" style="--i:2"/>
-</svg></span>`;
+const TABS = SECTIONS.map(s => `<a href="#/${s.id}" data-nav="${s.id}"><b>${s.no}</b>${s.title}</a>`).join('');
+$('#tabs').innerHTML = `<a href="#/" data-nav="home"><b>00</b>首页</a>` + TABS;
 
-/* ── 音效：全部用 Web Audio 现场合成，没有音频文件，默认关闭 ── */
-const Sound = (() => {
-  const KEY = 'nova-sound';
-  let ctx = null, master = null, noise = null, on = false;
-  const ensure = () => {
-    if (ctx) return ctx;
-    const AC = window.AudioContext || window.webkitAudioContext;
-    if (!AC) return null;
-    ctx = new AC();
-    master = ctx.createGain();
-    master.gain.value = 0.6;
-    master.connect(ctx.destination);
-    const n = Math.floor(ctx.sampleRate * 0.5);
-    noise = ctx.createBuffer(1, n, ctx.sampleRate);
-    const d = noise.getChannelData(0);
-    for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2);
-    return ctx;
-  };
-  const wake = () => { if (ctx.state === 'suspended') ctx.resume(); };
-  const tone = ({ f, to, type='sine', t=0.07, g=0.04, delay=0 }) => {
-    if (!on || !ensure()) return;
-    wake();
-    const now = ctx.currentTime + delay;
-    const o = ctx.createOscillator(), gn = ctx.createGain();
-    o.type = type;
-    o.frequency.setValueAtTime(f, now);
-    if (to) o.frequency.exponentialRampToValueAtTime(to, now + t);
-    gn.gain.setValueAtTime(0.0001, now);
-    gn.gain.exponentialRampToValueAtTime(g, now + 0.01);
-    gn.gain.exponentialRampToValueAtTime(0.0001, now + t);
-    o.connect(gn); gn.connect(master);
-    o.start(now); o.stop(now + t + 0.03);
-  };
-  const hiss = ({ t=0.24, g=0.045, f0=500, f1=2400 }) => {
-    if (!on || !ensure()) return;
-    wake();
-    const now = ctx.currentTime;
-    const src = ctx.createBufferSource(); src.buffer = noise;
-    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 1.1;
-    bp.frequency.setValueAtTime(f0, now);
-    bp.frequency.exponentialRampToValueAtTime(f1, now + t);
-    const gn = ctx.createGain();
-    gn.gain.setValueAtTime(g, now);
-    gn.gain.exponentialRampToValueAtTime(0.0004, now + t);
-    src.connect(bp); bp.connect(gn); gn.connect(master);
-    src.start(now); src.stop(now + t + 0.02);
-  };
-  const CUES = {
-    nav:  () => tone({ f:520, to:660, type:'triangle', t:0.06, g:0.03 }),
-    open: () => { hiss({ t:0.16, g:0.028, f0:900, f1:2200 }); tone({ f:330, to:440, type:'triangle', t:0.09, g:0.028, delay:0.02 }); },
-    grid: () => hiss({ t:0.26, g:0.045, f0:380, f1:2600 }),
-    flat: () => hiss({ t:0.2, g:0.03, f0:2400, f1:300 }),
-    logo: () => tone({ f:180, to:360, type:'triangle', t:0.45, g:0.025 })
-  };
-  return {
-    get on(){ return on; },
-    load(){ try { on = localStorage.getItem(KEY) === '1'; } catch(e) { on = false; } return on; },
-    toggle(){
-      on = !on;
-      try { localStorage.setItem(KEY, on ? '1' : '0'); } catch(e) {}
-      if (on) { ensure(); if (ctx && ctx.state === 'suspended') ctx.resume(); CUES.grid(); }
-      return on;
-    },
-    play(name){ if (!on || !ctx) return; try { const c = CUES[name]; if (c) c(); } catch(e) {} },
-    /* 第一次用户手势时把音频上下文唤醒：浏览器要求声音由手势解锁 */
-    arm(){ if (!on) return; const c = ensure(); if (c && ctx.state === 'suspended') ctx.resume(); }
-  };
-})();
-
-/* 插图入场：滚到视口里才开始描绘；关掉动效的读者一开始就拿到画好的图 */
-let io = null;
-if ('IntersectionObserver' in window && !rm.matches) {
-  io = new IntersectionObserver(list => {
-    list.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
-  }, { rootMargin:'0px 0px -8% 0px' });
-}
-function observeArt(root){
-  root.querySelectorAll('.art').forEach(el => { if (io) io.observe(el); else el.classList.add('in','always'); });
+/* 标本里的重复件，用脚本生成，避免手写十二个 i */
+function paintSpecimens(root){
+  root.querySelectorAll('[data-marktiles]').forEach(box=>{
+    const m = mark();
+    box.innerHTML = [
+      ['放进方框', `<span style="display:block;color:#000;outline:3px solid #000;outline-offset:6px">${m}</span>`],
+      ['加投影', `<span style="display:block;color:#000;filter:drop-shadow(4px 4px 0 #A39C93)">${m}</span>`],
+      ['竖排', `<span style="display:block;color:#000;transform:rotate(-90deg) scale(.55)">${m}</span>`],
+      ['浅色网屏', `<span style="display:block;color:#FC3D21;opacity:.3">${m}</span>`]
+    ].map(([t, art]) => `<figure><div class="box">${art}</div><figcaption><b>不可</b>　${t}</figcaption></figure>`).join('');
+  });
+  root.querySelectorAll('[data-swatches]').forEach(box=>{
+    box.innerHTML = [
+      ['NASA Red','#FC3D21','红：只做记号','#FC3D21'],
+      ['Warm Gray','#A39C93','大面积色块','#A39C93'],
+      ['Black','#000000','正文 / 细线','#000000'],
+      ['White','#FFFFFF','背景','#FFFFFF']
+    ].map(([nm, val, use, bg]) =>
+      `<div><div class="chip" style="background:${bg};${bg === '#FFFFFF' ? 'border:1px solid #d8d4ce' : ''}"></div>
+        <span class="nm">${nm}</span><span class="vl">${val}</span><span class="vl">${use}</span></div>`).join('');
+  });
+  root.querySelectorAll('[data-scale]').forEach(box=>{
+    box.innerHTML = `
+      <i class="d">显示 132</i><i class="t">标题 52</i><i class="s">副标 22</i>
+      <i class="b">正文 17　把想法变得可见。</i><i class="m">微注 12　NHB 1430.2 · 1976</i>
+      <i class="x">TINY 10 · LABEL</i>`;
+  });
+  root.querySelectorAll('[data-bars]').forEach(box=>{ box.innerHTML = '<i></i>'.repeat(12); });
+  root.querySelectorAll('[data-ruler]').forEach(box=>{
+    box.innerHTML = Array.from({length:12},(_,i)=>`<span>${String(i+1).padStart(2,'0')}</span>`).join('');
+  });
+  root.querySelectorAll('[data-readout]').forEach(box=>{
+    box.innerHTML = [
+      ['色彩', 2, ''], ['栏', 12, ''], ['字号档', 4, ''],
+      ['外部请求', 0, ''], ['依赖', 0, ''], ['章节', 7, '节']
+    ].map(([k,v,u]) => `<div><dt>${k}</dt><dd>${v}${u ? `<small>${u}</small>` : ''}</dd></div>`).join('');
+  });
 }
 
-/* ── 首页 ── */
+/* ── 视图 ── */
 function viewHome(){
-  const [lead, ...rest] = POSTS;
+  const cards = SECTIONS.map(s => `
+    <a class="card" href="#/${s.id}">
+      <div class="no">${s.no}</div>
+      <div class="nm">${s.title}</div>
+      <div class="en">${s.en}</div>
+      <p>${s.brief}</p>
+      <div class="band metaband" style="border-top-color:#d8d4ce"><span>${s.folio === '—' ? '本站构件' : '手册 ' + s.folio}</span></div>
+    </a>`).join('');
   return `
-  <section class="wrap hero" aria-labelledby="h-hero">
+  <section class="wrap hero" aria-labelledby="h-home">
     <div class="grid">
-      <h1 id="h-hero">让想法<br>变得可见。</h1>
-      <p class="note">「The main purpose of letters is the practical one of making thoughts visible.」手册在 5.3 到 5.6 这四页字体样张里，反复排印这句话来试字。这个博客写设计、工程和太空，也照着那本手册排版。
-        <cite class="muted">手册 5.3 Helvetica 样张的首句</cite></p>
+      <p class="eyebrow">NHB 1430.2 · 1976 年 1 月 · 60 页 · 已逐页核对</p>
+      <h1 id="h-home">用两种颜色、一个字体家族和一张网格，<br>管住一个站点的全部版面。</h1>
+      <p class="lede">这是《NASA Graphics Standards Manual》的网页转译：规则照抄，说法照抄，能核对的地方都标了页码。下面七节，每节对应手册的一条，或者对应一个从参考片里取出来、能在这里当场看见的构件。</p>
     </div>
+    <div class="bleed" aria-hidden="true"><span>1430.2</span></div>
   </section>
-  ${sect('最新文章','按发布时间倒序。编号沿用手册的「章.节」体例，第 1 章是文章，新的编号更大。')}
-  <section class="wrap lead" aria-label="头条文章">
-    <div class="grid">
-      <a class="cover" href="#/post/${lead.slug}" aria-label="${lead.title}">
-        ${coverFrame}
-        <span class="tag">${lead.no}　${lead.cat}</span>
-        <span class="mark" data-mark aria-hidden="true"></span>
-        <span class="big" aria-hidden="true">${lead.cover}</span>
-      </a>
-      <div class="txt">
-        <div class="meta"><span>${lead.cat}</span><time datetime="${lead.date}">${fmt(lead.date)}</time><span>${lead.read} 分钟</span></div>
-        <h3><a href="#/post/${lead.slug}">${lead.title}</a></h3>
-        <p>${lead.deck}</p>
-      </div>
-    </div>
+  <section class="wrap" aria-label="章节索引">
+    <div class="grid cards">${cards}</div>
   </section>
-  <section class="wrap" aria-label="更多文章"><div class="grid cards">${rest.map(card).join('')}</div></section>`;
-}
-
-/* ── 归档 ── */
-function viewArchive(){
-  const years = {};
-  POSTS.forEach(p => (years[p.date.slice(0,4)] ||= []).push(p));
-  return sect('归档', `共 ${POSTS.length} 篇。按年份分组，年份只出现一次。`, true) +
-  Object.keys(years).sort().reverse().map(y => `
-  <section class="wrap" aria-label="${y} 年"><div class="grid arch">
-    <div class="yr">${y}</div>
-    <ol>${years[y].map(p=>`
-      <li><span>${p.no}</span><time class="d muted" datetime="${p.date}">${+p.date.slice(5,7)} 月 ${+p.date.slice(8)} 日</time>
-      <a href="#/post/${p.slug}">${p.title}</a><span class="cat muted">${p.cat}</span></li>`).join('')}
-    </ol>
-  </div></section>`).join('');
-}
-
-/* ── 文章页 ── */
-function viewPost(slug){
-  const i = POSTS.findIndex(p => p.slug === slug);
-  if (i < 0) return sect('没有找到这篇文章', '链接可能已经变更。<a href="#/archive">在归档里查找</a>，或<a href="#/">回到首页</a>。', true);
-  const p = POSTS[i], newer = POSTS[i-1], older = POSTS[i+1];
-  const toc = [...p.body.matchAll(/<h2 id="([^"]+)">([^<]+)<\/h2>/g)];
-  return `
-  <article>
-    <div class="wrap"><div class="grid post-head">
-      <div class="no">${p.no}　${p.cat}</div>
-      <h1>${p.title}</h1>
-      <p class="deck muted">${p.deck}</p>
-    </div><hr class="hair"></div>
-    <div class="wrap"><div class="grid post-body">
-      <aside class="side"><div class="sticky">
-        <dl><dt>发布</dt><dd><time datetime="${p.date}">${fmt(p.date)}</time></dd>
-            <dt>阅读</dt><dd>约 ${p.read} 分钟</dd><dt>分类</dt><dd>${p.cat}</dd></dl>
-        ${toc.length ? `<nav aria-label="本文目录"><ol class="toc">${toc.map(m=>`<li><a href="#/post/${p.slug}/${m[1]}">${m[2]}</a></li>`).join('')}</ol></nav>` : ''}
-      </div></aside>
-      <div class="prose">${artFor(p)}${p.body}</div>
+  <section class="wrap" style="padding-bottom:64px">
+    <div class="grid"><div style="grid-column:1 / -1">
+      <div class="readout" data-readout></div>
     </div></div>
-  </article>
-  <nav class="wrap" aria-label="上一篇和下一篇"><div class="grid pager">
-    ${older ? `<a href="#/post/${older.slug}"><small>较早一篇　${older.no}</small><span>${older.title}</span></a>` : '<span style="grid-column:span 6"></span>'}
-    ${newer ? `<a class="next" href="#/post/${newer.slug}"><small>较新一篇　${newer.no}</small><span>${newer.title}</span></a>` : ''}
-  </div></nav>`;
+  </section>`;
 }
 
-/* ── 关于：信笺 ── */
-function viewAbout(){
-  const today = new Date();
-  const date = `${today.getFullYear()} 年 ${today.getMonth()+1} 月 ${today.getDate()} 日`;
-  return sect('关于', '这一页按手册 3.1–3.3 的信笺格式排版：字标在左上，识别文字决定左边距，正文从同一条边距开始，段落之间空行，不缩进。', true) + `
-  <section class="wrap letter"><div class="grid">
-    <div class="head" data-mark></div>
-    <div class="addr"><b>${SITE.author}</b>${SITE.role}<br>${SITE.place}</div>
-    <div class="addr"><b>联系</b><a href="${SITE.contact}" rel="me noopener">${SITE.contactLabel}</a><br><a href="#/archive">全部文章</a></div>
-    <div class="body">
-      <p class="muted">${date}</p>
-      <p>你好，</p>
-      <p>我叫${SITE.author}，做界面设计，也写前端代码。这个博客记录我在设计系统、排版和工程实现之间来回的笔记，偶尔写一点太空。</p>
-      <p>整个站点是一次练习：把一本 1976 年的印刷规范，原样翻译成网页。规则不是我定的，我只是想看看它们在今天的屏幕上是否依然成立。目前看来，大部分成立。</p>
-      <p>如果你想聊聊这些，在 GitHub 上找我。</p>
-      <p class="sig">${SITE.author}</p>
+function viewSection(s, i){
+  const prev = SECTIONS[i-1], next = SECTIONS[i+1];
+  const toc = [...s.html.matchAll(/<h2 id="([^"]+)">([^<]+)<\/h2>/g)]
+    .map((m, i) => {
+      const num = headingNum(m[2]);
+      return `<li><a href="#/${s.id}/${m[1]}"><b>${num || '—'}</b>${m[2].replace(/^[\d.]+\s*　?/,'')}</a></li>`;
+    }).join('');
+  return `
+  <div class="wrap">
+    <div class="grid head">
+      <div class="no">${s.no}</div>
+      <div class="ttl"><h1>${s.title}</h1><div class="en">${s.en}</div></div>
+      <p class="lede">${s.lede}</p>
+      <p class="cite">${s.cite}</p>
     </div>
-  </div></section>`;
+    <hr class="hair" style="margin-top:24px">
+  </div>
+  <div class="runhead" aria-hidden="true">
+    <div class="wrap"><span class="n">${s.no}</span><span class="t">${s.en}</span><span class="f" id="runfolio">${s.folio === '—' ? s.no : s.folio}</span></div>
+  </div>
+  <div class="wrap">
+    <div class="grid body">
+      <nav class="side" aria-label="本节目录"><div class="sticky"><ol>${toc}</ol></div></nav>
+      <article class="prose">${s.html}</article>
+      <aside class="gutter"><div class="sticky">
+        <div class="gblock"><b>本章</b>${s.no}　${s.title}</div>
+        <div class="gblock"><b>依据</b>${s.folio === '—' ? '本站构件，出处见 07' : '手册 ' + s.folio}</div>
+        <div class="gblock"><b>下一页</b>${next ? `<a href="#/${next.id}">${next.no} ${next.title}</a>` : '<a href="#/">回到首页</a>'}</div>
+      </div></aside>
+    </div>
+  </div>
+  <nav class="wrap" aria-label="上一节与下一节">
+    <div class="grid" style="padding-bottom:56px">
+      ${prev ? `<a href="#/${prev.id}" style="grid-column:span 6;border-top:1px solid #000;padding-top:12px;text-decoration:none;font-size:15px;font-weight:500">${prev.no}　${prev.title}</a>` : '<span style="grid-column:span 6"></span>'}
+      ${next ? `<a href="#/${next.id}" style="grid-column:span 6;text-align:right;border-top:1px solid #000;padding-top:12px;text-decoration:none;font-size:15px;font-weight:500">${next.no}　${next.title}</a>` : ''}
+    </div>
+  </nav>`;
 }
 
-/* ── 设计规范页：本站自己的「图形标准手册」 ── */
-function viewStandards(){
-  const tile = (cls, style, svgStyle, text) => `
-    <div class="use ${cls}"><div class="tile" style="${style}"><span style="display:block;width:58%;${svgStyle}">${mark()}</span></div><p>${text}</p></div>`;
-  return sect('设计规范', '本站的视觉规则，逐条对应 NASA 图形标准手册（NHB 1430.2）的章节。', true) + `
-  <section class="wrap std"><div class="grid">
-    <h2 class="lab">4.1　色彩</h2>
-    <div class="cont">
-      <div class="sw">
-        <div><div class="chip" style="background:#FC3D21"></div><b>NASA Red</b><p class="muted">#FC3D21。只用于字标、阅读进度条、网格叠加层与插图里的记号，只出现在白色或浅色背景上（1.3）。</p></div>
-        <div><div class="chip" style="background:#A39C93"></div><b>Warm Gray</b><p class="muted">#A39C93。大面积色块（1.5）。小字改用加深的 #6B655E，保证对比度。</p></div>
-        <div><div class="chip" style="background:#000"></div><b>Black</b><p class="muted">#000。正文、标题、链接、细线。</p></div>
-        <div><div class="chip" style="background:#fff;border:1px solid #d8d4ce"></div><b>White</b><p class="muted">#FFF。背景。深色背景上的字标一律白色（1.4）。</p></div>
-      </div>
+function viewMissing(){
+  return `
+  <div class="wrap" style="padding:88px 0 120px">
+    <div class="grid">
+      <p class="eyebrow" style="grid-column:1 / span 4;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#6B655E">404</p>
+      <h1 style="grid-column:1 / span 8;font-size:clamp(28px,4.4vw,52px);font-weight:300;margin-top:14px">这里没有页面。</h1>
+      <p style="grid-column:1 / span 6;margin-top:20px;font-size:16px">地址可能变了。<a href="#/">回到首页</a>看七节索引。</p>
     </div>
-  </div></section>
-  <section class="wrap std"><div class="grid">
-    <h2 class="lab">4.2　字体</h2>
-    <div class="cont">
-      <p class="spec" style="font-weight:300">Light 300　让想法可见</p>
-      <p class="spec" style="font-weight:500">Medium 500　让想法可见</p>
-      <div class="spec-note">
-        <p><b>正文与识别</b>Helvetica Light，中文回退苹方细体、微软雅黑 Light 或思源黑体。正文 18/33px。</p>
-        <p><b>标题</b>Helvetica Medium，大小写混排，不用全大写（5.3）。层级靠字号和留白。</p>
-        <p><b>不使用</b>斜体强调、单词变色、全大写标签。</p>
-      </div>
-    </div>
-  </div></section>
-  <section class="wrap std"><div class="grid">
-    <h2 class="lab">4.3　网格</h2>
-    <div class="cont">
-      <p>12 栏，栏距 24px，外边距随视口在 20–72px 之间变化，最大宽度 1320px。标题挂在第 1–3 栏，正文从第 4 栏开始。页码放在页脚外侧（5.14）。手机上收为 4 栏。按 G 键显示网格。</p>
-      <div class="mini-grid" aria-hidden="true">${'<i></i>'.repeat(12)}</div>
-    </div>
-  </div></section>
-  <section class="wrap std"><div class="grid">
-    <h2 class="lab">4.4　字标</h2>
-    <div class="cont">
-      <div class="uses">
-        ${tile('ok','', 'color:#FC3D21', '白底上使用红色。')}
-        ${tile('ok','', 'color:#000', '单色时使用黑色或暖灰。')}
-        ${tile('ok','background:#000;border-color:#000', 'color:#fff', '深色背景上一律使用白色。')}
-        ${tile('ok','background:#F7F6F4', 'color:#000', '很浅的背景上使用黑色。')}
-        ${tile('bad','', 'color:#000;outline:3px solid #000;outline-offset:6px', '放进方框或其他形状里。')}
-        ${tile('bad','', 'color:#FC3D21;opacity:.3', '用浅色网屏印在白底上。')}
-        ${tile('bad','', 'color:#000;filter:drop-shadow(4px 4px 0 #A39C93)', '添加投影。')}
-        ${tile('bad','', 'color:#000;transform:rotate(-90deg) scale(.55)', '竖排。字标只能坐在水平基线上。')}
-      </div>
-      <p class="small muted" style="margin-top:28px">NASA 的 Worm 字标不能用：它是 NASA 的识别标志，受法规保护，个人站点不能使用。本站字标 NOVA 是按手册 1.1 的原则重新绘制的原创字形。</p>
-    </div>
-  </div></section>
-  <section class="wrap std"><div class="grid">
-    <h2 class="lab">4.5　插图、动效、音效</h2>
-    <div class="cont">
-      <p>每篇文章开头一张图。图都是内联 SVG 画的施工图：只有细线、只用黑与暖灰，红色每张最多出现一处，作为唯一的「动点」。没有照片，没有渐变，没有第三种颜色——和手册里那些示范页一个办法。</p>
-      <p>动效只有一个动作：<b>描绘</b>。细线从起点画到终点，其余元素淡入，滚到视口里才开始；关掉动效的读者直接拿到画好的图，内容一个不少。换页只做 0.2 秒的透明度，不做位移。</p>
-      <p>音效全部由 Web Audio 现场合成，没有音频文件，默认关闭。按 S 或页脚按钮打开，只有按过之后才会出声：一次换页是一声短促的三角波，网格叠加层是一段带通噪声的扫频。声音不承担信息，只标记「点什么发生了什么」。</p>
-    </div>
-  </div></section>`;
+  </div>`;
 }
 
-/* ── 每个路由的标题、描述、页码，以及 head 里的元信息 ── */
-const ROUTES = {
-  home:      { view:viewHome,      title:'文章',     folio:'1.0', desc:SITE.desc },
-  archive:   { view:viewArchive,   title:'归档',     folio:'2.0', desc:'按年份分组的全部文章。' },
-  about:     { view:viewAbout,     title:'关于',     folio:'3.0', desc:'关于这个博客，以及它为什么按 1976 年的 NASA 图形标准手册排版。' },
-  standards: { view:viewStandards, title:'设计规范', folio:'4.0', desc:'本站的视觉规则，逐条对应 NASA 图形标准手册（NHB 1430.2）的章节。' }
-};
+/* ── 元信息 ── */
 function setMeta(name, value, prop){
   const sel = prop ? `meta[property="${name}"]` : `meta[name="${name}"]`;
   let el = document.querySelector(sel);
-  if (!el) {
-    el = document.createElement('meta');
-    el.setAttribute(prop ? 'property' : 'name', name);
-    document.head.appendChild(el);
-  }
+  if (!el) { el = document.createElement('meta'); el.setAttribute(prop ? 'property' : 'name', name); document.head.appendChild(el); }
   el.setAttribute('content', value);
 }
-function writeHead(title, desc){
+function writeHead(title, desc, rest){
   document.title = title;
   setMeta('description', desc);
   setMeta('og:title', title, true);
   setMeta('og:description', desc, true);
-  const rest = (location.hash || '').replace(/^#\/?/, '');
   setMeta('og:url', SITE.origin + '/' + rest, true);
 }
 
-/* ── 路由：#/、#/archive、#/about、#/standards、#/post/slug[/heading] ── */
+/* ── 功能动效：全部是状态，不是时间 ── */
+const marks = [];           /* 每节的页码锚点 {el, folio} */
+let io = null;
+
+let lastFolio = '';
+function setFolio(v){
+  if (v === lastFolio) return;
+  lastFolio = v;
+  const f = $('#folio'); if (f) f.textContent = v;
+  const r = $('#runfolio'); if (r) r.textContent = v;
+}
+function observe(root, section){
+  marks.length = 0;
+  root.querySelectorAll('.prose h2[id]').forEach((h, i) => {
+    /* 只有带手册编号的小节改变页码；没有编号的正文小节沿用上一节 */
+    marks.push({ el: h, folio: headingNum(h.textContent) || null });
+  });
+  if (io) io.disconnect();
+  if (!('IntersectionObserver' in window)) return;
+  io = new IntersectionObserver(list => {
+    list.forEach(e => {
+      if (!e.isIntersecting) return;
+      const m = marks.find(x => x.el === e.target);
+      if (!m) return;
+      if (m.folio) setFolio(m.folio);
+      document.querySelectorAll('.side a').forEach(a => {
+        if (a.getAttribute('href').endsWith('/' + e.target.id)) a.setAttribute('aria-current','true');
+        else a.removeAttribute('aria-current');
+      });
+    });
+  }, { rootMargin:'0px 0px -70% 0px', threshold:0 });
+  marks.forEach(m => io.observe(m.el));
+  const firstNum = marks.find(m => m.folio);
+  if (firstNum) setFolio(firstNum.folio);
+}
+
+/* 进度条：填充宽度 + 每节一根刻度（刻度用可用的节数均分） */
+function paintTicks(count){
+  document.querySelectorAll('.progress b').forEach(b => b.remove());
+  const box = $('#progress');
+  for (let i = 1; i < count; i++){
+    const b = document.createElement('b');
+    b.style.left = (i / count * 100) + '%';
+    box.appendChild(b);
+  }
+}
+let scrollable = 0;
+function measure(){ scrollable = document.documentElement.scrollHeight - innerHeight; }
+function progress(){
+  const h = location.hash || '';
+  if (!h.startsWith('#/') || h === '#/' || h === '#') { fill.style.width = '0'; measure(); return; }
+  if (scrollable <= 0) measure();
+  fill.style.width = (scrollable > 0 ? Math.min(100, scrollY / scrollable * 100) : 0) + '%';
+}
+addEventListener('scroll', progress, { passive:true });
+addEventListener('resize', () => { measure(); progress(); }, { passive:true });
+
+/* ── 路由 ── */
+const ALIAS = { standards:'plate', about:'refs', archive:'' };
 let lastKey = '';
 function route(){
   const hash = location.hash || '#/';
-  /* 页内跳转（例如跳到正文的 #app）不参与路由，否则会被当成首页 */
-  if (!hash.startsWith('#/')) {
-    if (hash === '#app') app.focus({ preventScroll:true });
-    return;
-  }
-  const [, page='', slug, anchor] = hash.split('/');
-  const key = page || 'home';
-  let html, title, folio, desc, article = false;
+  if (!hash.startsWith('#/')) { if (hash === '#app') app.focus({ preventScroll:true }); return; }
+  const [, page='', anchor] = hash.split('/');
+  const id = ALIAS[page] !== undefined ? ALIAS[page] : page;
 
-  if (key === 'post') {
-    const p = POSTS.find(x => x.slug === slug);
-    html = viewPost(slug);
-    title = p ? `${p.title} · ${SITE.name}` : `没有找到这篇文章 · ${SITE.name}`;
-    desc = p ? p.deck : '链接可能已经变更。';
-    folio = p ? p.no : '—';
-    article = !!p;
-  } else if (ROUTES[key]) {
-    const r = ROUTES[key];
-    html = r.view();
-    title = `${r.title} · ${SITE.name}`;
-    folio = r.folio;
-    desc = r.desc;
+  let html, title, desc, rest = id, active = id || 'home';
+  if (!id) {
+    html = viewHome();
+    title = `${SITE.name} · NHB 1430.2 的网页转译`;
+    desc = SITE.desc;
+    paintTicks(7);
   } else {
-    html = sect('没有这个页面', '<a href="#/">回到首页</a>查看全部文章。', true);
-    title = `没有这个页面 · ${SITE.name}`;
-    desc = '链接可能已经变更。';
-    folio = '—';
+    const i = SECTIONS.findIndex(s => s.id === id);
+    if (i < 0) {
+      html = viewMissing();
+      title = `没有这个页面 · ${SITE.name}`;
+      desc = '地址可能变了。';
+      active = 'none';
+      paintTicks(1);
+    } else {
+      const s = SECTIONS[i];
+      html = viewSection(s, i);
+      title = `${s.no} ${s.title} · 手册 ${s.folio} · ${SITE.name}`;
+      desc = s.lede;
+      paintTicks(1);
+    }
   }
 
-  const pageKey = key + '/' + (slug || '');
-  if (pageKey !== lastKey) {          // 同一篇文章内的目录跳转不重新渲染
+  const key = id + '|' + anchor;
+  if (key !== lastKey) {
     const first = lastKey === '';
     app.innerHTML = html;
-    hydrateMarks(app);
-    hydrateSite(app);
-    observeArt(app);
-    lastKey = pageKey;
+    paintSpecimens(app);
+    lastKey = key;
     window.scrollTo(0, 0);
-    /* 换页只做一次透明度过渡：重启动画 */
-    app.classList.remove('pagein');
-    void app.offsetWidth;
-    app.classList.add('pagein');
-    /* 首次进入不抢焦点：否则第一次按 Tab 会从正文里开始，跳过导航和「跳到正文」 */
     if (!first) app.focus({ preventScroll:true });
-    Sound.play(first ? 'logo' : (key === 'post' ? 'open' : 'nav'));
+    const sec = SECTIONS.find(s => s.id === id);
+    if (sec) observe(app, sec); else { marks.length = 0; setFolio('—'); }
+    document.querySelectorAll('.side a, .head, .body').forEach(el => el.removeAttribute('aria-current'));
     measure();
   }
   if (anchor) document.getElementById(anchor)?.scrollIntoView({ behavior: rm.matches ? 'auto' : 'smooth' });
 
-  writeHead(title, desc);
-  setMeta('og:type', article ? 'article' : 'website', true);
-  $('#folio').textContent = folio;
+  writeHead(title, desc, rest);
+  setMeta('og:type', 'website', true);
   document.querySelectorAll('[data-nav]').forEach(a => {
-    if (a.dataset.nav === (key === 'post' ? 'home' : key)) a.setAttribute('aria-current','page');
+    if (a.dataset.nav === active) a.setAttribute('aria-current','page');
     else a.removeAttribute('aria-current');
   });
   progress();
 }
-
-/* ── 阅读进度：仅文章页；只在渲染后和改变窗口大小时重新量一次高度 ── */
-let scrollable = 0;
-function measure(){
-  scrollable = document.documentElement.scrollHeight - innerHeight;
-}
-function progress(){
-  if (!location.hash.startsWith('#/post/')) { bar.style.width = '0'; return; }
-  if (scrollable <= 0) { measure(); }
-  bar.style.width = (scrollable > 0 ? Math.min(100, scrollY / scrollable * 100) : 0) + '%';
-}
-addEventListener('scroll', progress, { passive:true });
-addEventListener('resize', () => { measure(); progress(); }, { passive:true });
 addEventListener('hashchange', route);
 
-/* ── 点在当前页的链接上：回到顶部，而不是毫无反应 ── */
-document.addEventListener('click', e => {
-  const a = e.target.closest('a[href^="#/"]');
-  if (!a) return;
-  const href = a.getAttribute('href');
-  const target = href.replace(/^#\//,'') || 'home';
-  const current = (location.hash || '').replace(/^#\//,'') || 'home';
-  if (target === current && href.split('/').length <= 3) {
-    window.scrollTo({ top:0, behavior: rm.matches ? 'auto' : 'smooth' });
-  }
-});
-
-/* ── 网格叠加层（G） ── */
-const ov = $('#overlay'), gbtn = $('#gbtn');
+/* ── 网格叠加层（5.14）：带栏号 ── */
+const ov = $('#overlay'), gbtn = $('#gbtn'), ovcols = $('#ovcols');
+ovcols.innerHTML = Array.from({length:12},(_,i)=>`<i>${String(i+1).padStart(2,'0')}</i>`).join('');
 function toggleGrid(){
   const on = ov.classList.toggle('on');
   gbtn.setAttribute('aria-pressed', String(on));
   gbtn.textContent = on ? '隐藏网格（G）' : '显示网格（G）';
-  Sound.play(on ? 'grid' : 'flat');
 }
 gbtn.addEventListener('click', toggleGrid);
-
-/* ── 音效开关（S）：浏览器不允许自动出声，所以只有按过开关之后才有音效 ── */
-const sbtn = $('#sbtn');
-Sound.load();                 // 记住上次的选择
-function paintSound(){
-  sbtn.setAttribute('aria-pressed', String(Sound.on));
-  sbtn.textContent = Sound.on ? '音效：开（S）' : '音效：关（S）';
-}
-paintSound();
-/* 记住过「开」的读者，第一次点击或按键时解锁声音，之后每一次换页都有音效 */
-['pointerdown','keydown'].forEach(t => addEventListener(t, () => Sound.arm(), { passive:true }));
-sbtn.addEventListener('click', () => { Sound.toggle(); paintSound(); });
-
 addEventListener('keydown', e => {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
   if (/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)) return;
-  const k = e.key.toLowerCase();
-  if (k === 'g') toggleGrid();
-  if (k === 's') { Sound.toggle(); paintSound(); }
+  if (e.key.toLowerCase() === 'g') toggleGrid();
+});
+
+/* 点在当前页的链接上：回到顶部 */
+document.addEventListener('click', e => {
+  const a = e.target.closest('a[href^="#/"]');
+  if (!a) return;
+  const t = (a.getAttribute('href') || '').replace(/^#\//,'') || 'home';
+  const c = (location.hash || '').replace(/^#\//,'') || 'home';
+  if (t === c && a.getAttribute('href').split('/').length <= 2) window.scrollTo(0, 0);
 });
 
 route();
