@@ -187,6 +187,7 @@ p{margin:0}
 .std{padding-bottom:80px}
 .std .lab{grid-column:1 / span 3;font-size:15px;font-weight:var(--medium);padding-top:14px;border-top:1px solid #000}
 .std .cont{grid-column:4 / span 9;padding-top:14px;border-top:1px solid #000}
+.std .cont p + p{margin-top:1em}
 .sw{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--gutter)}
 .sw .chip{aspect-ratio:1/1;margin-bottom:12px}
 .sw p{font-size:13px;line-height:1.5}
@@ -227,10 +228,46 @@ p{margin:0}
 /* ── 页面载入：只有一个动作，字标上的红色从左向右「推进」 ── */
 @keyframes thrust{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
 .brand svg{animation:thrust .9s cubic-bezier(.2,.7,.1,1) both}
+
+/* ── 插图：施工图、轨迹、字范。全部内联 SVG，零外部请求；只用细线、黑、暖灰 ── */
+.art{margin:1.2em 0 2.4em}
+.art svg{display:block;width:100%;height:auto}
+.art svg text{font-family:var(--sans);font-weight:var(--light);letter-spacing:.04em}
+.art figcaption{font-size:13px;line-height:1.55;color:var(--gray-ink);margin-top:12px}
+.art figcaption b{font-weight:var(--medium);color:var(--black)}
+/* 描绘动效：pathLength="1" 归一化长度之后，只动 stroke-dashoffset，一个字都不多画 */
+[data-draw]{stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset .85s cubic-bezier(.2,.7,.1,1);transition-delay:calc(var(--i,0)*60ms)}
+[data-fade]{opacity:0;transition:opacity .5s ease;transition-delay:calc(240ms + var(--i,0)*60ms)}
+.art.in [data-draw],.art.always [data-draw]{stroke-dashoffset:0}
+.art.in [data-fade],.art.always [data-fade]{opacity:1}
+
+/* ── 头条封面：黑底上先描施工线，再压上被裁切的数字（5.12 的封面做法） ── */
+.cover .frame{position:absolute;inset:0;color:#fff}
+.cover .frame svg{width:100%;height:100%;display:block}
+.cover .frame [data-draw]{animation:draw 1.15s cubic-bezier(.2,.7,.1,1) both;animation-delay:calc(var(--i,0)*80ms)}
+@keyframes draw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+.cover .big{animation:press .45s cubic-bezier(.2,.7,.1,1) both;animation-delay:.42s}
+@keyframes press{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* ── 换页只有一个动作：透明度。卡片经过时顶线上再压一条细线（印刷里的双线） ── */
+@keyframes pagein{from{opacity:0}to{opacity:1}}
+#app.pagein > *{animation:pagein .2s ease both}
+.card{position:relative}
+.card::after{content:"";position:absolute;left:0;top:3px;width:100%;height:1px;background:#000;transform:scaleX(0);transform-origin:left;transition:transform .35s cubic-bezier(.2,.7,.1,1)}
+.card:hover::after{transform:scaleX(1)}
+
+/* ── 音效开关：全部由 Web Audio 合成，没有音频文件 ── */
+.sbtn{font:inherit;font-size:13px;color:#fff;background:none;border:1px solid #fff;padding:4px 10px;margin:10px 0 0 8px;cursor:pointer}
+.sbtn[aria-pressed="true"]{background:#fff;color:#000}
+
 @media (prefers-reduced-motion:reduce){
   .brand svg{animation:none}
   .progress{transition:none}
   .skip{transition:none}
+  [data-draw]{stroke-dashoffset:0!important;transition:none!important}
+  [data-fade]{opacity:1!important;transition:none!important}
+  .cover .frame [data-draw],.cover .big,#app.pagein > *{animation:none}
+  .card::after{transition:none;transform:scaleX(0)}
 }
 
 /* ── 平板 ── */
@@ -321,7 +358,7 @@ p{margin:0}
       <div class="fmeta">
         版式依据 NASA Graphics Standards Manual（NHB 1430.2，1976）排版，是与 NASA 无关的个人练习。
         <br><span id="year">2026</span> · <a href="https://github.com/fengzishiyi" rel="me noopener">GitHub</a>
-        <br><button class="gbtn" id="gbtn" type="button" aria-pressed="false">显示网格（G）</button>
+        <br><button class="gbtn" id="gbtn" type="button" aria-pressed="false">显示网格（G）</button><button class="sbtn" id="sbtn" type="button" aria-pressed="false">音效：关（S）</button>
       </div>
       <div class="folio" id="folio" aria-label="页码">1.0</div>
     </div>
@@ -389,11 +426,11 @@ const POSTS = [
 <h2 id="color">两种颜色，以及红色的使用条件</h2>
 <p>手册只定义了两种专色：NASA Red 和 NASA Warm Gray。红色被描述为「一种非常活跃的颜色，给字母带来动感」，但它的使用条件写得很清楚：只在有第二色可用时使用，只用在白色或浅色背景上，不与其他鲜艳色或中深色同时出现，否则红色会被稀释。</p>
 <blockquote>NASA red should not be used with other bright saturated colors, or medium and dark value colors, as they will dilute the effectiveness and impact of the NASA red.</blockquote>
-<p>所以这个博客里，红色只出现在页眉字标、阅读进度条，以及按 G 显示的网格叠加层上——最后一项是给排版看的工具，不是阅读内容。正文、链接、按钮全部是黑白与暖灰。</p>
+<p>所以这个博客里，红色只出现在页眉字标、阅读进度条、网格叠加层，以及每张插图里那一个记号上——最后两项是给排版看的工具，不是阅读内容。正文、链接、按钮全部是黑白与暖灰。</p>
 <h2 id="type">Helvetica Light 与 Medium</h2>
 <p>Helvetica 是整个系统里「最重要的字体家族」。Light 和字标一起构成识别的基础，标题用 Medium，并且使用大小写混排而不是全大写。手册在 Garamond 一页里还有一条很实用的话：粗体不够重时，靠加大字号或在标题周围留空来补偿，而不是换更粗的字重。</p>
 <p>中文没有 Helvetica，但原则可以翻译：正文用细体，标题用中等字重，用尺寸和空白而不是粗细建立层级。</p>
-<figure class="fig"><div class="plate" data-mark></div><figcaption>图 1.6a　本站字标 NOVA，按手册 1.1 的原则绘制：单一笔画宽度、无横杠、水平基线。白色字标用于深色背景（1.4）。</figcaption></figure>
+<figure class="fig"><div class="plate" data-mark></div><figcaption>图 1.6b　本站字标 NOVA，按手册 1.1 的原则绘制：单一笔画宽度、无横杠、水平基线。白色字标用于深色背景（1.4）。</figcaption></figure>
 <h2 id="grid">网格先于内容</h2>
 <p>5.14 节把网格的用法写成三步：先分析出版物的尺寸和内容类型，再把网格应用到对开页上，由它决定边距、栏距和页码位置，最后才把标题、正文、图片和图注放进去。还有一个细节：页码永远放在外侧边距。</p>
 <p>网页没有对开页，但有视口。把 CSS Grid 当成印刷网格用，每个元素就有了确定的位置，而不是靠一次次调 margin。本站用 12 栏，按 G 键可以看到它。</p>
@@ -462,6 +499,226 @@ const card = p => `
     <div class="meta"><span>${p.cat}</span><time datetime="${p.date}">${fmt(p.date)}</time><span>${p.read} 分钟</span></div>
   </article>`;
 
+/* ─────────────────────────────────────────────
+   插图：六张原创施工图，全部是内联 SVG。
+   规则照手册来：只有细线；不用照片、不用渐变、不用第三种颜色；
+   每张图里红色只允许出现一处，作为唯一的「动点」。
+   ───────────────────────────────────────────── */
+const n1 = v => Math.round(v * 10) / 10;
+const gridPath = (x0, y0, x1, y1, step) => {
+  let d = '';
+  for (let x = x0; x <= x1; x += step) d += `M${n1(x)} ${y0}V${y1}`;
+  for (let y = y0; y <= y1; y += step) d += `M${x0} ${n1(y)}H${x1}`;
+  return d;
+};
+const colBands = (x0, total, n, gap, y, h) => {
+  const w = (total - gap * (n - 1)) / n;
+  let s = '';
+  for (let i = 0; i < n; i++) s += `<rect x="${n1(x0 + i * (w + gap))}" y="${y}" width="${n1(w)}" height="${h}"/>`;
+  return s;
+};
+const T = (x, y, size, txt, opt='') =>
+  `<text x="${x}" y="${y}" fill="currentColor" stroke="none" font-size="${size}" ${opt}>${txt}</text>`;
+
+const PLATES = {
+/* 1.6 手册：1.7 节的大字标施工图。字先上网格，笔画再落位；横杠是后来被拿掉的那一笔。 */
+'graphics-standards-1976': {
+  caption:'<b>图 1.6a</b>　字标的施工图。手册 1.7 节要求大字标按网格绘制、经得起翻拍：先有网格和基线，笔画才有落点。两个 A 的横杠是后来拿掉的那一笔——拿掉之后，字才有了向上的推力。',
+  art:`<svg viewBox="0 0 480 270" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1">
+    <path d="${gridPath(24, 30, 456, 234, 24)}" opacity=".13"/>
+    <path d="M24 54H456" stroke-dasharray="3 5" opacity=".5" data-draw pathLength="1"/>
+    <path d="M24 198H456" stroke-dasharray="3 5" opacity=".5" data-draw pathLength="1"/>
+    <path d="M132 198L192 54L252 198" stroke-width="2.4" data-draw pathLength="1" style="--i:1"/>
+    <path d="M96 54v144" data-draw pathLength="1" style="--i:2"/>
+    <path d="M92 54h8M92 198h8" data-fade style="--i:3"/>
+    ${T(88, 126, 9, '1', 'text-anchor="end" data-fade style="--i:3"')}
+    ${T(24, 46, 9, '顶线', 'opacity=".55"')}
+    ${T(24, 214, 9, '基线', 'opacity=".55"')}
+    <path d="M152 150H232" stroke-dasharray="4 4" opacity=".45"/>
+    <circle cx="192" cy="150" r="3.5" fill="#FC3D21" stroke="none" data-fade style="--i:4"/>
+    ${T(240, 154, 9, '被拿掉的横杠', 'data-fade style="--i:4"')}
+    ${T(24, 262, 9, '1.7　网格施工图', 'opacity=".5"')}
+  </svg>`
+},
+/* 1.5 网格：12 栏、栏距、三块内容各就各位。 */
+'css-grid-as-print-grid': {
+  caption:'<b>图 1.5a</b>　12 栏网格上的一次落位：标题挂第 1–3 栏，正文占第 4–9 栏，图在第 10–12 栏。栏距 24px，红色的那一段就是被量出来的栏距。',
+  art:`<svg viewBox="0 0 480 270" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1">
+    <g fill="currentColor" stroke="none" opacity=".07">${colBands(24, 432, 12, 12, 48, 184)}</g>
+    <path d="${colBands(24, 432, 12, 12, 48, 184).match(/x="[^"]+"/g).map(m => `M${m.slice(3, -1)} 48V232`).join('')}M456 48V232" opacity=".26"/>
+    <path d="M24 48H456M24 232H456" opacity=".4" data-draw pathLength="1"/>
+    <rect x="24" y="64" width="99" height="7" fill="currentColor" stroke="none" data-fade style="--i:1"/>
+    <path d="M135 92H345M135 108H345M135 124H303M135 140H345M135 156H245" stroke-width="2.4" opacity=".72" data-draw pathLength="1" style="--i:2"/>
+    <rect x="357" y="64" width="99" height="116" data-draw pathLength="1" style="--i:3"/>
+    <path d="M357 64l99 116M357 180l99-116" opacity=".25"/>
+    <path d="M49 248h12" stroke="#FC3D21" stroke-width="2.4" data-draw pathLength="1" style="--i:4"/>
+    ${T(66, 252, 9, '栏距 24', 'opacity=".6"')}
+    ${T(24, 266, 9, '5.14　先有网格，再放内容', 'opacity=".5"')}
+  </svg>`
+},
+/* 1.4 旅行者：一条轴线，一次穿越。红的那一小段就是 2012 年 8 月。 */
+'voyager-49': {
+  caption:'<b>图 1.4a</b>　旅行者 1 号的距离轴，以天文单位计。它走了四十多年才到日球层顶，此后每一年只多走三个多天文单位——红色那一小段标的是穿越的时刻。',
+  art:`<svg viewBox="0 0 480 270" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1">
+    <path d="M56 196H428" data-draw pathLength="1"/>
+    <path d="M428 196l-10-4v8z" fill="currentColor" stroke="none" data-fade style="--i:1"/>
+    <path d="M56 196v-8M144 196v-8M232 196v-8M322 196v-8M408 196v-8" opacity=".6"/>
+    ${T(56, 214, 9, '0', 'text-anchor="middle" opacity=".7"')}
+    ${T(144, 214, 9, '40', 'text-anchor="middle" opacity=".7"')}
+    ${T(232, 214, 9, '80', 'text-anchor="middle" opacity=".7"')}
+    ${T(322, 214, 9, '121', 'text-anchor="middle" opacity=".7"')}
+    ${T(408, 214, 9, '160', 'text-anchor="middle" opacity=".7"')}
+    ${T(438, 200, 9, 'AU', 'opacity=".7"')}
+    <path d="M56 176C140 172 240 162 322 156S400 150 428 146" stroke-width="1.6" data-draw pathLength="1" style="--i:2"/>
+    <circle cx="56" cy="176" r="3" fill="currentColor" stroke="none" data-fade style="--i:3"/>
+    ${T(64, 168, 9, '1977 年 9 月', 'data-fade style="--i:3"')}
+    <path d="M322 68v128" stroke-dasharray="3 5" opacity=".5" data-draw pathLength="1" style="--i:3"/>
+    <path d="M322 70v16" stroke="#FC3D21" stroke-width="3" stroke-linecap="round" data-fade style="--i:4"/>
+    ${T(322, 58, 9, '日球层顶　2012 年 8 月', 'text-anchor="middle" data-fade style="--i:4"')}
+    ${T(24, 262, 9, '1.4　距离轴，不是时间轴；曲线的弯折只是示意', 'opacity=".5"')}
+  </svg>`
+},
+/* 1.3 字体：同一个基线，两种字的度量。中文没有 x 高度。 */
+'helvetica-light-cjk': {
+  caption:'<b>图 1.3a</b>　同一条基线，两种字的度量。西文有字高、x 高度、下伸部；汉字占满一个正方形，所以「细体中文要更大字号和更大行距」不是审美偏好，是度量决定的。',
+  art:`<svg viewBox="0 0 480 270" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1">
+    <path d="M24 115H456" stroke-dasharray="3 5" opacity=".45" data-draw pathLength="1"/>
+    <path d="M24 134H456" stroke-dasharray="3 5" opacity=".45" data-draw pathLength="1" style="--i:1"/>
+    <path d="M24 190H456" stroke-dasharray="3 5" opacity=".45" data-draw pathLength="1" style="--i:1"/>
+    ${T(24, 109, 9, '字高', 'opacity=".55"')}
+    ${T(24, 128, 9, 'x 高度', 'opacity=".55"')}
+    ${T(24, 206, 9, '基线', 'opacity=".55"')}
+    <text x="104" y="190" fill="currentColor" stroke="none" font-size="104" data-fade style="--i:2">Aa</text>
+    <text x="284" y="190" fill="currentColor" stroke="none" font-size="104" data-fade style="--i:3">字</text>
+    <rect x="284" y="86" width="104" height="104" stroke-dasharray="3 4" opacity=".55" data-draw pathLength="1" style="--i:3"/>
+    <path d="M284 86h14M284 86v14" stroke="#FC3D21" stroke-width="2.4" data-draw pathLength="1" style="--i:4"/>
+    ${T(396, 132, 9, '1 em', 'opacity=".6"')}
+    ${T(24, 250, 9, '5.3　Helvetica Light 与 Medium：识别与正文的两种字重', 'opacity=".5"')}
+  </svg>`
+},
+/* 1.2 零依赖：一个文件，三条注记。 */
+'zero-dependency-blog': {
+  caption:'<b>图 1.2a</b>　整个站点的构成：一个 HTML 文件，三条注记。没有构建步骤，没有外部字体，没有一次第三方请求——所以它可以在十年后、离线状态下打开。',
+  art:`<svg viewBox="0 0 480 270" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1">
+    <rect x="64" y="48" width="152" height="174" data-draw pathLength="1"/>
+    <path d="M196 48v22h20" opacity=".55" data-draw pathLength="1" style="--i:1"/>
+    <path d="M86 96h108M86 112h108M86 128h74M86 144h108M86 160h52M86 176h84M86 192h38" stroke-width="2.4" opacity=".6" data-draw pathLength="1" style="--i:1"/>
+    <rect x="64" y="48" width="7" height="7" fill="#FC3D21" stroke="none" data-fade style="--i:3"/>
+    <path d="M216 96h32M216 134h32M216 172h32" opacity=".5" data-draw pathLength="1" style="--i:2"/>
+    ${T(256, 99, 11, '1 个 HTML 文件', 'data-fade style="--i:3"')}
+    ${T(256, 137, 11, '0 个依赖', 'data-fade style="--i:3"')}
+    ${T(256, 175, 11, '0 次外部请求', 'data-fade style="--i:3"')}
+    ${T(24, 258, 9, '1.2　权重与依赖都是零，代价写在正文里', 'opacity=".5"')}
+  </svg>`
+},
+/* 1.1 随笔：先有很多，才能减少。 */
+'less-after-more': {
+  caption:'<b>图 1.1a</b>　左边是写完的样子，右边是删过一半的样子。删掉的那一笔被画成虚线：简化不是起点，是拿掉东西之后的结果。',
+  art:`<svg viewBox="0 0 480 270" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1">
+    <path d="M60 206L110 66L160 206" stroke-width="2.4" data-draw pathLength="1"/>
+    <path d="M81 140H139" stroke-width="2.4" data-draw pathLength="1" style="--i:1"/>
+    <path d="M190 136H262" opacity=".6" data-draw pathLength="1" style="--i:2"/>
+    <path d="M262 136l-10-4v8z" fill="currentColor" stroke="none" data-fade style="--i:2"/>
+    <path d="M300 206L350 66L400 206" stroke-width="2.4" data-draw pathLength="1" style="--i:3"/>
+    <path d="M321 140H379" stroke-dasharray="4 5" opacity=".35"/>
+    <circle cx="110" cy="140" r="3.5" fill="#FC3D21" stroke="none" data-fade style="--i:4"/>
+    ${T(110, 232, 9, '写完', 'text-anchor="middle" opacity=".6"')}
+    ${T(350, 232, 9, '删掉一半', 'text-anchor="middle" opacity=".6"')}
+    ${T(24, 258, 9, '1.1　Worm 的横杠也是这么没的', 'opacity=".5"')}
+  </svg>`
+}
+};
+
+const artFor = p => {
+  const a = PLATES[p.slug];
+  return a ? `<figure class="art">${a.art}<figcaption>${a.caption}</figcaption></figure>` : '';
+};
+
+/* 头条封面的施工线：黑底白线。只在左右两边留一对定位短划，避开左上角的编号和右上角的字标 */
+const coverFrame = `<span class="frame" aria-hidden="true"><svg viewBox="0 0 560 420" preserveAspectRatio="xMidYMid slice" fill="none" stroke="currentColor" stroke-width="1">
+  <path d="M140 0V420M280 0V420M420 0V420" opacity=".2" data-draw pathLength="1"/>
+  <path d="M0 105H560M0 210H560M0 315H560" opacity=".2" data-draw pathLength="1" style="--i:1"/>
+  <path d="M0 210h16M544 210h16" stroke-width="2" opacity=".8" data-draw pathLength="1" style="--i:2"/>
+</svg></span>`;
+
+/* ── 音效：全部用 Web Audio 现场合成，没有音频文件，默认关闭 ── */
+const Sound = (() => {
+  const KEY = 'nova-sound';
+  let ctx = null, master = null, noise = null, on = false;
+  const ensure = () => {
+    if (ctx) return ctx;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    ctx = new AC();
+    master = ctx.createGain();
+    master.gain.value = 0.6;
+    master.connect(ctx.destination);
+    const n = Math.floor(ctx.sampleRate * 0.5);
+    noise = ctx.createBuffer(1, n, ctx.sampleRate);
+    const d = noise.getChannelData(0);
+    for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2);
+    return ctx;
+  };
+  const wake = () => { if (ctx.state === 'suspended') ctx.resume(); };
+  const tone = ({ f, to, type='sine', t=0.07, g=0.04, delay=0 }) => {
+    if (!on || !ensure()) return;
+    wake();
+    const now = ctx.currentTime + delay;
+    const o = ctx.createOscillator(), gn = ctx.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(f, now);
+    if (to) o.frequency.exponentialRampToValueAtTime(to, now + t);
+    gn.gain.setValueAtTime(0.0001, now);
+    gn.gain.exponentialRampToValueAtTime(g, now + 0.01);
+    gn.gain.exponentialRampToValueAtTime(0.0001, now + t);
+    o.connect(gn); gn.connect(master);
+    o.start(now); o.stop(now + t + 0.03);
+  };
+  const hiss = ({ t=0.24, g=0.045, f0=500, f1=2400 }) => {
+    if (!on || !ensure()) return;
+    wake();
+    const now = ctx.currentTime;
+    const src = ctx.createBufferSource(); src.buffer = noise;
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 1.1;
+    bp.frequency.setValueAtTime(f0, now);
+    bp.frequency.exponentialRampToValueAtTime(f1, now + t);
+    const gn = ctx.createGain();
+    gn.gain.setValueAtTime(g, now);
+    gn.gain.exponentialRampToValueAtTime(0.0004, now + t);
+    src.connect(bp); bp.connect(gn); gn.connect(master);
+    src.start(now); src.stop(now + t + 0.02);
+  };
+  const CUES = {
+    nav:  () => tone({ f:520, to:660, type:'triangle', t:0.06, g:0.03 }),
+    open: () => { hiss({ t:0.16, g:0.028, f0:900, f1:2200 }); tone({ f:330, to:440, type:'triangle', t:0.09, g:0.028, delay:0.02 }); },
+    grid: () => hiss({ t:0.26, g:0.045, f0:380, f1:2600 }),
+    flat: () => hiss({ t:0.2, g:0.03, f0:2400, f1:300 }),
+    logo: () => tone({ f:180, to:360, type:'triangle', t:0.45, g:0.025 })
+  };
+  return {
+    get on(){ return on; },
+    load(){ try { on = localStorage.getItem(KEY) === '1'; } catch(e) { on = false; } return on; },
+    toggle(){
+      on = !on;
+      try { localStorage.setItem(KEY, on ? '1' : '0'); } catch(e) {}
+      if (on) { ensure(); if (ctx && ctx.state === 'suspended') ctx.resume(); CUES.grid(); }
+      return on;
+    },
+    play(name){ if (!on) return; try { const c = CUES[name]; if (c) c(); } catch(e) {} }
+  };
+})();
+
+/* 插图入场：滚到视口里才开始描绘；关掉动效的读者一开始就拿到画好的图 */
+let io = null;
+if ('IntersectionObserver' in window && !rm.matches) {
+  io = new IntersectionObserver(list => {
+    list.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, { rootMargin:'0px 0px -8% 0px' });
+}
+function observeArt(root){
+  root.querySelectorAll('.art').forEach(el => { if (io) io.observe(el); else el.classList.add('in','always'); });
+}
+
 /* ── 首页 ── */
 function viewHome(){
   const [lead, ...rest] = POSTS;
@@ -477,6 +734,7 @@ function viewHome(){
   <section class="wrap lead" aria-label="头条文章">
     <div class="grid">
       <a class="cover" href="#/post/${lead.slug}" aria-label="${lead.title}">
+        ${coverFrame}
         <span class="tag">${lead.no}　${lead.cat}</span>
         <span class="mark" data-mark aria-hidden="true"></span>
         <span class="big" aria-hidden="true">${lead.cover}</span>
@@ -525,7 +783,7 @@ function viewPost(slug){
             <dt>阅读</dt><dd>约 ${p.read} 分钟</dd><dt>分类</dt><dd>${p.cat}</dd></dl>
         ${toc.length ? `<nav aria-label="本文目录"><ol class="toc">${toc.map(m=>`<li><a href="#/post/${p.slug}/${m[1]}">${m[2]}</a></li>`).join('')}</ol></nav>` : ''}
       </div></aside>
-      <div class="prose">${p.body}</div>
+      <div class="prose">${artFor(p)}${p.body}</div>
     </div></div>
   </article>
   <nav class="wrap" aria-label="上一篇和下一篇"><div class="grid pager">
@@ -563,7 +821,7 @@ function viewStandards(){
     <h2 class="lab">4.1　色彩</h2>
     <div class="cont">
       <div class="sw">
-        <div><div class="chip" style="background:#FC3D21"></div><b>NASA Red</b><p class="muted">#FC3D21。只用于字标、阅读进度条与网格叠加层，只出现在白色或浅色背景上（1.3）。</p></div>
+        <div><div class="chip" style="background:#FC3D21"></div><b>NASA Red</b><p class="muted">#FC3D21。只用于字标、阅读进度条、网格叠加层与插图里的记号，只出现在白色或浅色背景上（1.3）。</p></div>
         <div><div class="chip" style="background:#A39C93"></div><b>Warm Gray</b><p class="muted">#A39C93。大面积色块（1.5）。小字改用加深的 #6B655E，保证对比度。</p></div>
         <div><div class="chip" style="background:#000"></div><b>Black</b><p class="muted">#000。正文、标题、链接、细线。</p></div>
         <div><div class="chip" style="background:#fff;border:1px solid #d8d4ce"></div><b>White</b><p class="muted">#FFF。背景。深色背景上的字标一律白色（1.4）。</p></div>
@@ -603,6 +861,14 @@ function viewStandards(){
         ${tile('bad','', 'color:#000;transform:rotate(-90deg) scale(.55)', '竖排。字标只能坐在水平基线上。')}
       </div>
       <p class="small muted" style="margin-top:28px">NASA 的 Worm 字标不能用：它是 NASA 的识别标志，受法规保护，个人站点不能使用。本站字标 NOVA 是按手册 1.1 的原则重新绘制的原创字形。</p>
+    </div>
+  </div></section>
+  <section class="wrap std"><div class="grid">
+    <h2 class="lab">4.5　插图、动效、音效</h2>
+    <div class="cont">
+      <p>每篇文章开头一张图。图都是内联 SVG 画的施工图：只有细线、只用黑与暖灰，红色每张最多出现一处，作为唯一的「动点」。没有照片，没有渐变，没有第三种颜色——和手册里那些示范页一个办法。</p>
+      <p>动效只有一个动作：<b>描绘</b>。细线从起点画到终点，其余元素淡入，滚到视口里才开始；关掉动效的读者直接拿到画好的图，内容一个不少。换页只做 0.2 秒的透明度，不做位移。</p>
+      <p>音效全部由 Web Audio 现场合成，没有音频文件，默认关闭。按 S 或页脚按钮打开，只有按过之后才会出声：一次换页是一声短促的三角波，网格叠加层是一段带通噪声的扫频。声音不承担信息，只标记「点什么发生了什么」。</p>
     </div>
   </div></section>`;
 }
@@ -672,10 +938,16 @@ function route(){
     app.innerHTML = html;
     hydrateMarks(app);
     hydrateSite(app);
+    observeArt(app);
     lastKey = pageKey;
     window.scrollTo(0, 0);
+    /* 换页只做一次透明度过渡：重启动画 */
+    app.classList.remove('pagein');
+    void app.offsetWidth;
+    app.classList.add('pagein');
     /* 首次进入不抢焦点：否则第一次按 Tab 会从正文里开始，跳过导航和「跳到正文」 */
     if (!first) app.focus({ preventScroll:true });
+    Sound.play(first ? 'logo' : (key === 'post' ? 'open' : 'nav'));
     measure();
   }
   if (anchor) document.getElementById(anchor)?.scrollIntoView({ behavior: rm.matches ? 'auto' : 'smooth' });
@@ -722,11 +994,26 @@ function toggleGrid(){
   const on = ov.classList.toggle('on');
   gbtn.setAttribute('aria-pressed', String(on));
   gbtn.textContent = on ? '隐藏网格（G）' : '显示网格（G）';
+  Sound.play(on ? 'grid' : 'flat');
 }
 gbtn.addEventListener('click', toggleGrid);
+
+/* ── 音效开关（S）：浏览器不允许自动出声，所以只有按过开关之后才有音效 ── */
+const sbtn = $('#sbtn');
+Sound.load();                 // 记住上次的选择
+function paintSound(){
+  sbtn.setAttribute('aria-pressed', String(Sound.on));
+  sbtn.textContent = Sound.on ? '音效：开（S）' : '音效：关（S）';
+}
+paintSound();
+sbtn.addEventListener('click', () => { Sound.toggle(); paintSound(); });
+
 addEventListener('keydown', e => {
-  if ((e.key === 'g' || e.key === 'G') && !e.metaKey && !e.ctrlKey && !e.altKey &&
-      !/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)) toggleGrid();
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)) return;
+  const k = e.key.toLowerCase();
+  if (k === 'g') toggleGrid();
+  if (k === 's') { Sound.toggle(); paintSound(); }
 });
 
 route();
