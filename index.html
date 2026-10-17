@@ -704,7 +704,9 @@ const Sound = (() => {
       if (on) { ensure(); if (ctx && ctx.state === 'suspended') ctx.resume(); CUES.grid(); }
       return on;
     },
-    play(name){ if (!on) return; try { const c = CUES[name]; if (c) c(); } catch(e) {} }
+    play(name){ if (!on || !ctx) return; try { const c = CUES[name]; if (c) c(); } catch(e) {} },
+    /* 第一次用户手势时把音频上下文唤醒：浏览器要求声音由手势解锁 */
+    arm(){ if (!on) return; const c = ensure(); if (c && ctx.state === 'suspended') ctx.resume(); }
   };
 })();
 
@@ -1006,6 +1008,8 @@ function paintSound(){
   sbtn.textContent = Sound.on ? '音效：开（S）' : '音效：关（S）';
 }
 paintSound();
+/* 记住过「开」的读者，第一次点击或按键时解锁声音，之后每一次换页都有音效 */
+['pointerdown','keydown'].forEach(t => addEventListener(t, () => Sound.arm(), { passive:true }));
 sbtn.addEventListener('click', () => { Sound.toggle(); paintSound(); });
 
 addEventListener('keydown', e => {
