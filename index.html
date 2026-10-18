@@ -242,7 +242,8 @@ p{margin:0}
 .corns > i:nth-child(3){bottom:0;left:0;border-bottom:1px solid #000;border-left:1px solid #000}
 .corns > i:nth-child(4){bottom:0;right:0;border-bottom:1px solid #000;border-right:1px solid #000}
 
-/* 竖排边注 */
+/* 标本里收窄，免得读成又一条分栏线 */
+.spec .bd .ticks,.spec .bd .leader,.spec .bd .corns{max-width:320px}
 .wrap.rel{position:relative}
 .vnote{position:absolute;left:0;top:0;writing-mode:vertical-rl;font-size:9px;line-height:1;letter-spacing:.16em;text-transform:uppercase;color:var(--gray-ink)}
 
@@ -727,7 +728,6 @@ function viewPost(slug){
       <p class="cite as-set" style="--d:270ms">约 <span data-count="${p.read}">${p.read}</span> 分钟<br><span data-count="${subCount}">${subCount}</span> 个小节<br><span data-count="${charCount}">${charCount}</span> 字</p>
     </div>
     <hr class="hair as-line" style="margin-top:24px">
-    <div class="ticks" aria-hidden="true">${Array.from({length:12},(_,i)=>`<i style="--d:${i*20}ms"></i>`).join('')}</div>
   </div>
   <div class="runhead" aria-hidden="true">
     <div class="wrap"><span class="n">${p.no}</span><span class="t">${p.cat}</span><span class="f" id="runfolio">${p.no}</span></div>
@@ -884,7 +884,7 @@ function viewStandards(){
           <tr><td>8</td><td>边缘注记：出血区的极小字</td><td>UI 00:01:04</td><td>页眉节号、页脚页码</td></tr>
           <tr><td>9</td><td>色标条：四段细条</td><td>PV 名牌底边</td><td>页脚上沿</td></tr>
           <tr><td>10</td><td>角标纸牌：四角各一段 8px L 线</td><td>PV 奶油牌 / UI 面板角</td><td>引文牌、标本</td></tr>
-          <tr><td>11</td><td>刻度尺：细线挂等距刻度，每 4 格一根长刻</td><td>PV 技术图版、UI 00:38</td><td>文章页眉、目录</td></tr>
+          <tr><td>11</td><td>刻度尺：细线挂等距刻度，每 4 格一根长刻</td><td>PV 技术图版、UI 00:38</td><td>只在规范标本里出现</td></tr>
           <tr><td>12</td><td>竖排边注：版面左缘的竖排 10px 注记</td><td>PV / UI 左缘</td><td>章节页左缘</td></tr>
           <tr><td>13</td><td>编号芯片：1px 边小牌，内文 <code>01 / 1976</code></td><td>UI 每帧右上</td><td>卡片角标、图版角标</td></tr>
           <tr><td>14</td><td>引线标注：折线拉到标签，端子是一道短横杠</td><td>UI 00:02:38</td><td>标本、图版标注</td></tr>
@@ -914,7 +914,7 @@ function viewStandards(){
           <div class="bd">
             <div class="ticks" aria-hidden="true">${Array.from({length:12},(_,i)=>`<i style="--d:${i*20}ms"></i>`).join('')}</div>
             <div class="leader" aria-hidden="true"><span class="dot"></span><span class="ln"></span><span class="end"></span><span class="chip">A-56</span></div>
-            <div class="corns" style="height:64px;border:1px solid var(--hair);padding:10px 12px"><i></i><i></i><i></i><i></i><span class="tiny">框角：由角点揭开，不缩放</span></div>
+            <div class="corns" style="height:56px;padding:8px 10px"><i></i><i></i><i></i><i></i><span class="tiny">框角：由角点揭开，不缩放</span></div>
           </div>
           <div class="note">刻度 12×20ms；引线 220ms；框角 220ms。三条都只用裁切与线长，不动位置。</div>
         </div>
