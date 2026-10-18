@@ -26,11 +26,14 @@
   color-scheme: light;
   --red:#FC3D21;         /* NASA Red：只做状态与非文字记号，只在白或浅底上（1.3 / 1.4） */
   --gray:#A39C93;        /* Warm Gray：大面积色块（1.5） */
-  --gray-ink:#6B655E;    /* 加深版，小字用：对白底 5.76:1（实测） */
+  --gray-ink:#6B655E;    /* 加深版，小字用：对纸面 5.33:1（实测） */
   --black:#000;
   --white:#fff;
   --paper:#F7F6F4;
   --hair:#d8d4ce;
+  /* 第二专色的两个值阶：同一支暖灰，只变浓度（1.5） */
+  --g-12:rgba(163,156,147,.12);   /* 读数带底：合成 #EDEBE8，黑字 17.65:1 */
+  --g-30:rgba(163,156,147,.30);   /* 章节号牌底：合成 #DEDBD7，黑字 15.22:1 */
 
   --sans:"Helvetica Neue", Helvetica, "Nimbus Sans", Arial,
          "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei Light",
@@ -90,13 +93,14 @@ p{margin:0}
 .tabs a:first-child{padding-left:0}
 .tabs a b{font-weight:500;color:#000;margin-right:.55em;letter-spacing:.04em}
 .tabs a:hover{color:#000}
-/* 红线＝当前：从左向右长出来（PV 00:02:07），不是换一种颜色 */
+/* 红线＝当前：出现时播放，移除时瞬时（只进不退） */
 .tabs a::after{
   content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--red);
-  transform:scaleX(0);transform-origin:left;transition:transform .22s linear;
+  transform:scaleX(0);transform-origin:left;
 }
 .tabs a[aria-current="page"]{color:#000;background:var(--paper)}
-.tabs a[aria-current="page"]::after{transform:scaleX(1)}
+.tabs a[aria-current="page"]::after{transform:scaleX(1);animation:markIn .22s linear}
+@keyframes markIn{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 .tabs a[aria-current="page"] b{color:#000}
 
 /* ── 运行头：滚过标题后停在顶部（5.14 的页码规则搬到屏幕上） ── */
@@ -104,25 +108,55 @@ p{margin:0}
 .runhead .wrap{display:flex;align-items:baseline;gap:16px;padding-top:7px;padding-bottom:7px}
 .runhead .n{font-size:11px;font-weight:500;letter-spacing:.08em}
 .runhead .t{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--gray-ink)}
-.runhead .f{margin-left:auto;font-size:11px;font-weight:500;letter-spacing:.06em}
+.runhead .f{margin-left:auto;font-size:11px;font-weight:500;letter-spacing:.06em;font-variant-numeric:tabular-nums}
 
 /* ── 进度：红色填充 + 节刻度 ── */
 .progress{position:fixed;left:0;top:0;height:2px;width:100%;background:transparent;z-index:40;pointer-events:none}
 .progress i{position:absolute;left:0;top:0;height:2px;width:0;background:var(--red)}
 .progress b{position:absolute;top:0;width:1px;height:5px;background:rgba(0,0,0,.32);transform:translateX(-.5px)}
 
-/* ─────────────────────────────────────────────
-   就地组装：只有两种动作，都只进不退；出场一律硬切。
-   出处：UI 片 00:00:03（线先、字后，元件长在格线上）、PV 00:02:07（红线＝当前）。
-   没有位移、没有缩放、没有淡出；关掉动效时全部直接到位。
-   ───────────────────────────────────────────── */
+/* 就地组装：只进不退，出场硬切；无位移、无缩放、无淡出 */
 .as-line,.as-set{--d:0ms}
 @media (prefers-reduced-motion: no-preference){
   .as-line{transform:scaleX(0);transform-origin:left;transition:transform .34s linear var(--d)}
-  /* 字是被“排”出来的：从左缘揭开，不是淡入 */
-  .as-set{clip-path:inset(0 100% 0 0);transition:clip-path .44s cubic-bezier(.2,.7,.1,1) var(--d)}
+  .as-set{clip-path:inset(0 100% 0 0);transition:clip-path .44s cubic-bezier(.2,.7,.1,1) calc(var(--base,0ms) + var(--d))}
   .mount .as-line{transform:scaleX(1)}
   .mount .as-set{clip-path:inset(0 0 0 0)}
+
+  .as-plq{clip-path:inset(0 100% 0 0);transition:clip-path .16s linear .56s}
+  .mount .as-plq{clip-path:inset(0 0 0 0)}
+
+  .plate .fra{transform-origin:left;animation:scanX .7s linear both}
+  .plate .frt{transform-origin:top;animation:scanY .62s linear .08s both}
+
+  .ticks i{animation:tickOn .08s linear both;animation-delay:calc(var(--base,0ms) + var(--d,0ms))}
+
+  .leader .ln{transform:scaleX(0);transition:transform .22s linear var(--d,0ms)}
+  .mount .leader .ln{transform:scaleX(1)}
+  .leader .end{visibility:hidden;animation:hardShow .01s linear .22s forwards}
+  .mount .leader .end{animation-delay:calc(var(--d,0ms) + .22s)}
+
+  .curtain{clip-path:inset(0 0 100% 0);transition:clip-path .32s linear var(--d,0ms)}
+  .mount .curtain{clip-path:inset(0 0 0 0)}
+
+  .ribbon{clip-path:inset(0 100% 0 0);transition:clip-path .24s linear .08s}
+  .mount .ribbon{clip-path:inset(0 0 0 0)}
+
+  .corns i{clip-path:inset(0 100% 100% 0);animation:cornerIn .22s linear both;animation-delay:calc(var(--base,0ms) + 40ms)}
+
+  .card::after{transition:transform .22s linear}
+}
+@keyframes scanX{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes scanY{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+@keyframes tickOn{from{background:var(--hair)}to{background:#000}}
+@keyframes hardShow{to{visibility:visible}}
+@keyframes cornerIn{from{clip-path:inset(0 100% 100% 0)}to{clip-path:inset(0 0 0 0)}}
+@media (prefers-reduced-motion: reduce){
+  .tabs a[aria-current="page"]::after{animation:none}
+  .card::after,.side li a[aria-current="true"]{transition:none}
+  .plate .fra,.plate .frt,.ticks i,.leader .end,.corns i{animation:none}
+  .leader .end{visibility:visible}
+  .corns i,.curtain,.as-plq,.ribbon{clip-path:none}
 }
 
 /* ── hero：出血显示字 + 一句定位 ── */
@@ -165,6 +199,53 @@ p{margin:0}
 }
 .metaband b{font-weight:500;color:#000;letter-spacing:.06em}
 
+/* 红牌：每页最多一块（1.3 + 5.12） */
+.plq{
+  width:96px;height:96px;flex:0 0 auto;background:var(--red);color:#000;
+  display:flex;flex-direction:column;justify-content:space-between;padding:9px 10px 8px;
+  text-decoration:none;
+}
+.plq .k{font-size:9px;line-height:1;letter-spacing:.14em;text-transform:uppercase}
+.plq .v{font-size:34px;font-weight:500;line-height:.86;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+/* 牛皮牌：暖灰 30%，靠 1px 边定界 */
+.plq--g{background:var(--g-30);box-shadow:inset 0 0 0 1px var(--hair)}
+.head .plq{grid-column:1 / span 2;justify-self:start}
+.lead .ltxt .plq{align-self:flex-end;margin-bottom:18px}
+
+/* 红带：20px 实色带 + 黑微注 */
+.ribbon{
+  display:inline-flex;align-items:center;gap:.7em;height:20px;padding:0 8px;
+  background:var(--red);color:#000;font-size:9px;line-height:1;letter-spacing:.14em;
+  text-transform:uppercase;white-space:nowrap;
+}
+
+/* 编号芯片 */
+.chip{display:inline-block;border:1px solid #000;padding:2px 6px;font-size:9px;line-height:1.4;letter-spacing:.12em;text-transform:uppercase;background:#fff;font-weight:400}
+
+/* 刻度尺：12 格，每 4 格长刻 */
+.ticks{display:flex;justify-content:space-between;align-items:flex-end;height:12px;border-bottom:1px solid #000;margin-top:14px}
+.ticks i{width:1px;height:4px;background:var(--hair)}
+.ticks i:nth-child(4n+1){height:8px}
+
+/* 引线标注：端子是短横杠，不是箭头 */
+.leader{display:flex;align-items:center;font-size:9px;letter-spacing:.1em;text-transform:uppercase}
+.leader .dot{width:7px;height:7px;background:var(--red);flex:0 0 auto}
+.leader .ln{flex:1;height:1px;background:#000;min-width:24px}
+.leader .end{width:1px;height:9px;background:#000;flex:0 0 auto}
+.leader .chip{margin-left:0}
+
+/* 角标纸牌：四角 8px L 线 */
+.corns{position:relative}
+.corns > i{position:absolute;width:8px;height:8px;pointer-events:none}
+.corns > i:nth-child(1){top:0;left:0;border-top:1px solid #000;border-left:1px solid #000}
+.corns > i:nth-child(2){top:0;right:0;border-top:1px solid #000;border-right:1px solid #000}
+.corns > i:nth-child(3){bottom:0;left:0;border-bottom:1px solid #000;border-left:1px solid #000}
+.corns > i:nth-child(4){bottom:0;right:0;border-bottom:1px solid #000;border-right:1px solid #000}
+
+/* 竖排边注 */
+.wrap.rel{position:relative}
+.vnote{position:absolute;left:0;top:0;writing-mode:vertical-rl;font-size:9px;line-height:1;letter-spacing:.16em;text-transform:uppercase;color:var(--gray-ink)}
+
 /* ── 图版：状态卡牌（参考片 00:00:31 / 00:02:23） ── */
 .cards{row-gap:0;padding:0 0 8px}
 .card{
@@ -174,7 +255,7 @@ p{margin:0}
 /* 悬停＝“指向当前”那一根红线：盖在黑色顶线上，从左长出，不是位移 */
 .card::after{
   content:"";position:absolute;left:0;top:-1px;width:100%;height:2px;background:var(--red);
-  transform:scaleX(0);transform-origin:left;transition:transform .22s linear;
+  transform:scaleX(0);transform-origin:left;
 }
 .card:hover::after,.card:focus-visible::after{transform:scaleX(1)}
 .card .crow{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
@@ -187,11 +268,12 @@ p{margin:0}
 .card:hover .nm{text-decoration:underline;text-decoration-thickness:1px}
 
 /* ── 读数带：标签 + 数值，一行一个事实（UI 00:00:22） ── */
-.readout{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));border-top:1px solid #000;border-bottom:1px solid #000}
+.readout{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));border-top:1px solid #000;border-bottom:1px solid #000;background:var(--g-12)}
 .readout div{padding:12px 12px 14px 0;border-right:1px solid var(--hair)}
-.readout div:last-child{border-right:0}
+.readout div:first-child{padding-left:14px}
+.readout div:last-child{border-right:0;padding-right:14px}
 .readout dt{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--gray-ink)}
-.readout dd{margin:6px 0 0;font-size:26px;font-weight:500;line-height:1;letter-spacing:-.01em}
+.readout dd{margin:6px 0 0;font-size:26px;font-weight:500;line-height:1;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
 .readout dd small{font-size:11px;font-weight:400;letter-spacing:.04em;margin-left:.3em}
 
 /* ── 章节页 / 文章页眉 ── */
@@ -233,7 +315,7 @@ p{margin:0}
 .gutter .facts{margin-top:20px}
 .gutter .facts div{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:4px 0;border-bottom:1px solid var(--hair)}
 .gutter .facts span{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--gray-ink)}
-.gutter .facts b{font-size:11px;font-weight:500;letter-spacing:.02em}
+.gutter .facts b{font-size:11px;font-weight:500;letter-spacing:.02em;font-variant-numeric:tabular-nums}
 
 /* ── 标本框：规范页与正文共用 ── */
 .spec{border:1px solid #000;padding:0;margin-top:1.6em}
@@ -251,8 +333,10 @@ p{margin:0}
 .scale .m{font-size:12px;letter-spacing:.02em;color:var(--gray-ink)}
 .scale .x{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--gray-ink)}
 .sw{display:grid;grid-template-columns:repeat(4,1fr)}
+.sw.five{grid-template-columns:repeat(5,1fr)}
 .sw > div{display:flex;flex-direction:column}
-.sw .chip{height:88px;margin-bottom:8px}
+.sw .swatch{height:88px;margin-bottom:8px}
+.plqrow{display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap}
 .sw .nm{font-size:11px;font-weight:500}
 .sw .vl{font-size:10px;letter-spacing:.06em;color:var(--gray-ink);margin-top:2px}
 .bars{display:grid;grid-template-columns:repeat(12,1fr);gap:10px;height:96px}
@@ -306,7 +390,7 @@ p{margin:0}
 .foot .fmeta{grid-column:8 / span 4;font-size:10px;line-height:1.7;letter-spacing:.06em;text-transform:uppercase;color:#cfcac3}
 .foot a{color:#fff}
 .foot :focus-visible{outline-color:#fff}
-.foot .folio{grid-column:12 / span 1;text-align:right;font-size:13px;font-weight:500;letter-spacing:.04em}
+.foot .folio{grid-column:12 / span 1;text-align:right;font-size:13px;font-weight:500;letter-spacing:.04em;font-variant-numeric:tabular-nums}
 .gbtn,.sbtn{font:inherit;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#fff;background:none;border:1px solid #fff;padding:4px 9px;margin-top:10px;cursor:pointer}
 .sbtn{margin-left:6px}
 .gbtn[aria-pressed="true"],.sbtn[aria-pressed="true"]{background:#fff;color:#000}
@@ -342,6 +426,8 @@ p{margin:0}
   .hero{padding-top:28px}
   .hero h1{font-size:clamp(30px,9vw,44px)}
   .lead .plate{aspect-ratio:5/4}
+  .lead .plate,.lead .ltxt{grid-column:1 / -1}
+  .lead .ltxt .plq{align-self:flex-start}
   .lead .ltxt{margin-top:20px}
   .card p{min-height:0}
   .side{display:none}
@@ -357,6 +443,9 @@ p{margin:0}
   .scale .t{font-size:26px}
   .donot{grid-template-columns:repeat(2,1fr)}
   .sw{grid-template-columns:repeat(2,1fr);gap:16px}
+  .plq{width:76px;height:76px}
+  .plq .v{font-size:27px}
+  .vnote,.ticks{display:none}
   .foot .fident,.foot .fmeta{margin-top:18px}
   .foot .folio{text-align:left;margin-top:18px}
   .runhead .t{display:none}
@@ -365,9 +454,11 @@ p{margin:0}
 }
 /* ── 打印 ── */
 @media print{
-  .mast .stamp,.tabs,.progress,.overlay,.gbtn,.sbtn,.side,.gutter,.runhead,.colorbars{display:none}
+  .mast .stamp,.tabs,.progress,.overlay,.gbtn,.sbtn,.side,.gutter,.runhead,.colorbars,.ticks,.vnote{display:none}
   .as-line{transform:none}
   .as-set{clip-path:none}
+  .plq{background:#fff;box-shadow:inset 0 0 0 1px #000;color:#000}
+  .ribbon{background:#fff;color:#000;box-shadow:inset 0 0 0 1px #000}
   body{font-size:11pt}
   .wrap{max-width:none;padding:0}
   .grid{display:block}
@@ -432,7 +523,10 @@ function mark(){
     <path d="M373 100L412 9L451 100" stroke-linejoin="round"/>
   </svg>`;
 }
-document.querySelectorAll('[data-mark]').forEach(el=>{ el.insertAdjacentHTML('afterbegin', mark()); });
+function hydrateMarks(root){
+  root.querySelectorAll('[data-mark]:empty').forEach(el=>{ el.insertAdjacentHTML('afterbegin', mark()); });
+}
+hydrateMarks(document);
 
 /* ── 文章数据。编号沿用手册的「章.节」体例：1.x 为文章 ── */
 const POSTS = [
@@ -552,6 +646,7 @@ function viewHome(){
         <span class="big" aria-hidden="true">${lead.cover}</span>
       </a>
       <div class="ltxt">
+        <span class="plq as-plq" aria-hidden="true"><span class="k">${lead.cat}</span><span class="v">${lead.no}</span></span>
         <div class="metaband"><b>${lead.cat}</b><span>${fmt(lead.date)}</span><span>${lead.read} 分钟</span></div>
         <h2><a href="#/post/${lead.slug}" style="text-decoration:none">${lead.title}</a></h2>
         <p>${lead.deck}</p>
@@ -567,12 +662,12 @@ function viewHome(){
   <section class="wrap" style="padding:40px 0 64px" aria-label="本站读数">
     <div class="grid"><div style="grid-column:1 / -1">
       <div class="readout" role="list">
-        <div role="listitem"><dt>文章</dt><dd>${POSTS.length}</dd></div>
-        <div role="listitem"><dt>分类</dt><dd>${new Set(POSTS.map(p=>p.cat)).size}</dd></div>
-        <div role="listitem"><dt>专色</dt><dd>2</dd></div>
-        <div role="listitem"><dt>栏</dt><dd>12</dd></div>
-        <div role="listitem"><dt>外部请求</dt><dd>0</dd></div>
-        <div role="listitem"><dt>依赖</dt><dd>0</dd></div>
+        <div role="listitem"><dt>文章</dt><dd data-count="${POSTS.length}">${POSTS.length}</dd></div>
+        <div role="listitem"><dt>分类</dt><dd data-count="${new Set(POSTS.map(p=>p.cat)).size}">${new Set(POSTS.map(p=>p.cat)).size}</dd></div>
+        <div role="listitem"><dt>专色</dt><dd data-count="2">2</dd></div>
+        <div role="listitem"><dt>栏</dt><dd data-count="12">12</dd></div>
+        <div role="listitem"><dt>外部请求</dt><dd data-count="0">0</dd></div>
+        <div role="listitem"><dt>依赖</dt><dd data-count="0">0</dd></div>
       </div>
     </div></div>
   </section>`;
@@ -583,15 +678,17 @@ function viewArchive(){
   const years = {};
   POSTS.forEach(p => (years[p.date.slice(0,4)] ||= []).push(p));
   return `
-  <div class="wrap">
+  <div class="wrap rel">
+    <span class="vnote" aria-hidden="true">Archive · 01</span>
     <div class="grid head">
       <span class="ghostno" aria-hidden="true">${String(POSTS.length).padStart(2,'0')}</span>
-      <div class="no as-set">01</div>
+      <div class="plq plq--g"><span class="k">Section</span><span class="v">01</span></div>
       <div class="ttl as-set" style="--d:90ms"><h1>归档</h1><div class="en">Archive</div></div>
       <p class="lede as-set" style="--d:190ms">共 ${POSTS.length} 篇。按年份分组，年份只出现一次——这是手册里「页码放外侧」的同一种做法：可数的东西只数一次。</p>
       <p class="cite as-set" style="--d:270ms">5.14 The Grid（p.38）<br>页码永远放在外侧边距</p>
     </div>
     <hr class="hair as-line" style="margin-top:24px">
+    <div class="ribbon" style="margin-top:14px">Archive · ${POSTS.length} entries · 按年分组</div>
   </div>
   ${Object.keys(years).sort().reverse().map(y => `
   <section class="wrap" aria-label="${y} 年"><div class="grid arch">
@@ -620,15 +717,17 @@ function viewPost(slug){
     ? `<nav aria-label="本文目录"><ol>${toc.map((m,k) => `<li><a href="#/post/${p.slug}/${m[1]}"><b>${k+1}</b>${m[2]}</a></li>`).join('')}</ol></nav>`
     : '';
   return `
-  <div class="wrap">
+  <div class="wrap rel">
+    <span class="vnote" aria-hidden="true">NHB 1430.2 · 1976</span>
     <div class="grid head">
       <span class="ghostno" aria-hidden="true">${p.no}</span>
-      <div class="no as-set">${p.no}</div>
+      <div class="plq as-plq"><span class="k">${p.cat}</span><span class="v">${p.no}</span></div>
       <div class="ttl as-set" style="--d:90ms"><h1>${p.title}</h1><div class="en">${p.cat} · ${fmtCN(p.date)}</div></div>
       <p class="lede as-set" style="--d:190ms">${p.deck}</p>
-      <p class="cite as-set" style="--d:270ms">约 ${p.read} 分钟<br>${subCount} 个小节<br>${charCount} 字</p>
+      <p class="cite as-set" style="--d:270ms">约 <span data-count="${p.read}">${p.read}</span> 分钟<br><span data-count="${subCount}">${subCount}</span> 个小节<br><span data-count="${charCount}">${charCount}</span> 字</p>
     </div>
     <hr class="hair as-line" style="margin-top:24px">
+    <div class="ticks" aria-hidden="true">${Array.from({length:12},(_,i)=>`<i style="--d:${i*20}ms"></i>`).join('')}</div>
   </div>
   <div class="runhead" aria-hidden="true">
     <div class="wrap"><span class="n">${p.no}</span><span class="t">${p.cat}</span><span class="f" id="runfolio">${p.no}</span></div>
@@ -661,10 +760,11 @@ function viewPost(slug){
 function viewAbout(){
   const today = new Date();
   return `
-  <div class="wrap">
+  <div class="wrap rel">
+    <span class="vnote" aria-hidden="true">About · 02</span>
     <div class="grid head">
       <span class="ghostno" aria-hidden="true">02</span>
-      <div class="no as-set">02</div>
+      <div class="plq plq--g"><span class="k">Section</span><span class="v">02</span></div>
       <div class="ttl as-set" style="--d:90ms"><h1>关于</h1><div class="en">About</div></div>
       <p class="lede as-set" style="--d:190ms">这一页按手册 3.1–3.3 的信笺格式排版：字标在左上，识别文字决定左边距，正文从同一条边距开始，段落之间空行，不缩进。</p>
       <p class="cite as-set" style="--d:270ms">3.1 HQ Letterhead<br>3.3 Typing Style（p.21）</p>
@@ -690,10 +790,11 @@ function viewAbout(){
 /* ── 规范：本站自己的图版手册 ── */
 function viewStandards(){
   return `
-  <div class="wrap">
+  <div class="wrap rel">
+    <span class="vnote" aria-hidden="true">Standards · 03</span>
     <div class="grid head">
       <span class="ghostno" aria-hidden="true">03</span>
-      <div class="no as-set">03</div>
+      <div class="plq plq--g"><span class="k">Section</span><span class="v">03</span></div>
       <div class="ttl as-set" style="--d:90ms"><h1>规范</h1><div class="en">Standards</div></div>
       <p class="lede as-set" style="--d:190ms">这一页是本站自己的图形标准：色彩、字体、网格、图版、动效，逐条对应手册的章节，或者对应参考片里的一个时间码。</p>
       <p class="cite as-set" style="--d:270ms">NHB 1430.2（1976）<br>参考片：PV 5:19 · UI 1:31</p>
@@ -711,18 +812,28 @@ function viewStandards(){
         <li><a href="#/standards/motion"><b>06</b>动效</a></li>
       </ol></div></nav>
       <article class="prose">
-        <h2 id="colo">01　色彩</h2>
-        <p>手册只定义两个专色，然后用两页写清红色什么时候不许用。<b>有第二色才用、只在白或浅底上用、不和饱和色并用</b>——本站因此把红收窄到只做四件事：页签下划线、阅读进度、卡片悬停的顶线、色标条里的一段。</p>
-        <div class="spec">
-          <div class="hd"><span>标本 S1　四个取值</span><em>1.5 / p.9</em></div>
-          <div class="bd"><div class="sw">
-            <div><div class="chip" style="background:#FC3D21"></div><span class="nm">NASA Red</span><span class="vl">#FC3D21</span><span class="vl">只做状态与记号</span></div>
-            <div><div class="chip" style="background:#A39C93"></div><span class="nm">Warm Gray</span><span class="vl">#A39C93</span><span class="vl">大面积色块</span></div>
-            <div><div class="chip" style="background:#000"></div><span class="nm">Black</span><span class="vl">#000000</span><span class="vl">正文 / 细线</span></div>
-            <div><div class="chip" style="background:#fff;border:1px solid #d8d4ce"></div><span class="nm">White</span><span class="vl">#FFFFFF</span><span class="vl">背景</span></div>
-          </div></div>
-          <div class="note">实测：加深暖灰 #6B655E 对白底 5.76 : 1；页脚 #cfcac3 对黑底 12.89 : 1。</div>
+        <h2 id="colo">01　色彩：三个面 + 一块红牌</h2>
+        <p>手册只定义两个专色（NASA Red、Warm Gray），然后用两页写清红色什么时候不许用：<b>有第二色才用、只在白或浅底上用、不和饱和色并用</b>。所以本站没有第三种颜色，只有同一支暖灰的两个值阶，和一块红。</p>
+        <p>版面因此是四级值阶：纸白 → 灰 12% → 灰 30% → 黑。红只做两件事：一块 96×96 的红牌（每页最多一块，承载一个编号），以及页签、进度、悬停那几根 2px 线。</p>
+        <div class="spec curtain">
+          <div class="hd"><span>标本 S1　三个面 + 一块红牌</span><em>1.3 / 1.5 / 5.12</em></div>
+          <div class="bd">
+            <div class="sw five">
+              <div><div class="swatch" style="background:#F7F6F4;border:1px solid #d8d4ce"></div><span class="nm">纸面</span><span class="vl">#F7F6F4</span></div>
+              <div><div class="swatch" style="background:#EDEBE8"></div><span class="nm">灰 12</span><span class="vl">#EDEBE8</span></div>
+              <div><div class="swatch" style="background:#DEDBD7"></div><span class="nm">灰 30</span><span class="vl">#DEDBD7</span></div>
+              <div><div class="swatch" style="background:#000"></div><span class="nm">黑</span><span class="vl">#000000</span></div>
+              <div><div class="swatch" style="background:#FC3D21"></div><span class="nm">NASA Red</span><span class="vl">#FC3D21</span></div>
+            </div>
+            <div class="plqrow">
+              <span class="plq"><span class="k">POST</span><span class="v">1.6</span></span>
+              <span class="plq plq--g"><span class="k">SECTION</span><span class="v">01</span></span>
+              <span class="ribbon">Ribbon · 20px</span>
+            </div>
+          </div>
+          <div class="note">实测：黑 on 红 5.83:1 ｜ 黑 on 灰30 15.22:1 ｜ 小字 #6B655E on 纸 5.33:1 ｜ 暖灰 #A39C93 on 纸 2.51:1，只做面，不做字。</div>
         </div>
+        <p>面积预算：纸面 84–90%，黑 6–12%，灰屏 2–6%，红 ≤0.8%。红牌 96×96 在 1440×900 上占 0.71%，已经是全站唯一一块饱和面——所以每页只许一块，红牌与红带不并存。灰屏只差 3.2 / 8.6 个 L*，必须靠 1px 边线定界，不单独承担结构。</p>
 
         <h2 id="type">02　字体</h2>
         <p>正文 Light、标题 Medium、标题不做全大写（5.3）。层级不够时靠字号和留白，不靠换更粗的字重（5.5）。全站只有两个字重、四档字号。</p>
@@ -772,17 +883,43 @@ function viewStandards(){
           <tr><td>7</td><td>读数带：标签小、数值大</td><td>UI 00:00:22</td><td>首页读数、页边读数</td></tr>
           <tr><td>8</td><td>边缘注记：出血区的极小字</td><td>UI 00:01:04</td><td>页眉节号、页脚页码</td></tr>
           <tr><td>9</td><td>色标条：四段细条</td><td>PV 名牌底边</td><td>页脚上沿</td></tr>
+          <tr><td>10</td><td>角标纸牌：四角各一段 8px L 线</td><td>PV 奶油牌 / UI 面板角</td><td>引文牌、标本</td></tr>
+          <tr><td>11</td><td>刻度尺：细线挂等距刻度，每 4 格一根长刻</td><td>PV 技术图版、UI 00:38</td><td>文章页眉、目录</td></tr>
+          <tr><td>12</td><td>竖排边注：版面左缘的竖排 10px 注记</td><td>PV / UI 左缘</td><td>章节页左缘</td></tr>
+          <tr><td>13</td><td>编号芯片：1px 边小牌，内文 <code>01 / 1976</code></td><td>UI 每帧右上</td><td>卡片角标、图版角标</td></tr>
+          <tr><td>14</td><td>引线标注：折线拉到标签，端子是一道短横杠</td><td>UI 00:02:38</td><td>标本、图版标注</td></tr>
+          <tr><td>15</td><td>叠层纸：2–3 层各偏移 8px，1px 边，无阴影</td><td>UI 00:03:31</td><td>侧栏、标本</td></tr>
+          <tr><td>16</td><td>红带：20px 实色带，内嵌黑微注</td><td>UI 红缎带 / PV 横带</td><td>归档页眉、标本</td></tr>
         </table>
 
-        <h2 id="motion">06　动效</h2>
-        <p>只剩两种动作，都只进不退，出场一律硬切。它们做的是「排版」，不是表演：</p>
+        <h2 id="motion">06　动效：十二条语汇</h2>
+        <p>两片都是「静帧为主、动作为短爆发」：PV 有 44% 的时间画面是静的，靠硬切在异质静帧之间制造能量；UI 有 81% 是静的，整屏入场只靠一次 0.25–0.30s 的色带展开。本站照此定预算：<b>换页硬切，屏内只组装一次，之后不动</b>。</p>
         <table>
-          <tr><th>动作</th><th>时长</th><th>出处</th></tr>
-          <tr><td>细线生长（<code>scaleX</code> 0→1）</td><td>340ms 线性</td><td>UI 00:00:03</td></tr>
-          <tr><td>字被「排」出来（<code>clip-path</code> 从左揭开）</td><td>440ms，组内 60–90ms 递进</td><td>UI 00:00:04</td></tr>
-          <tr><td>红线＝当前（从左长出）</td><td>220ms 线性</td><td>PV 00:02:07</td></tr>
+          <tr><th>#</th><th>语汇</th><th>时长</th><th>出处</th></tr>
+          <tr><td>1</td><td>线生长（<code>scaleX</code> 0→1）</td><td>340ms 线性</td><td>UI 00:00:03</td></tr>
+          <tr><td>2</td><td>字被「排」出来（<code>clip-path</code> 左→右）</td><td>440ms，组内 40–90ms</td><td>UI 00:00:04</td></tr>
+          <tr><td>3</td><td>记号长出：2px 线 / 20px 红带 / 96px 红牌</td><td>220 / 240 / 160ms</td><td>PV 00:02:07、UI 红缎带</td></tr>
+          <tr><td>4</td><td>骨架先行：线、牌、幽灵字先到，字晚 120ms</td><td>基延迟 120ms</td><td>PV 顿切簇</td></tr>
+          <tr><td>5</td><td>图版扫描：黑板发丝线沿自身轴画出</td><td>700ms 线性</td><td>PV 每张图版</td></tr>
+          <tr><td>6</td><td>读数跳格：<code>tabular-nums</code>，5 格递增</td><td>320ms</td><td>UI 00:00:22</td></tr>
+          <tr><td>7</td><td>红牌落位（<code>clip</code> 揭开，不缩放）</td><td>160ms</td><td>PV 00:02:07</td></tr>
+          <tr><td>8</td><td>页码跳号（状态，非动画）</td><td>0ms</td><td>手册 5.14</td></tr>
+          <tr><td>9</td><td>刻度逐格点亮（12 格 × 20ms）</td><td>240ms</td><td>PV 刻度线</td></tr>
+          <tr><td>10</td><td>引线生长，末端横杠 0ms 硬现</td><td>220ms</td><td>UI 00:02:38</td></tr>
+          <tr><td>11</td><td>纵向卷帘：引文牌自上而下揭开</td><td>320ms</td><td>PV 奶油牌</td></tr>
+          <tr><td>12</td><td>框线收束：四角 L 线由角点揭开</td><td>220ms</td><td>PV 角标</td></tr>
         </table>
-        <p>不做的事写清楚：没有滚动揭示、没有位移与缩放、没有换页淡入、不给插图配动效。系统里打开「减少动态效果」时，三种动作全部直接到位，状态照常工作。</p>
+        <div class="spec curtain">
+          <div class="hd"><span>标本 S7　刻度 / 引线 / 框角</span><em>语汇 9–12</em></div>
+          <div class="bd">
+            <div class="ticks" aria-hidden="true">${Array.from({length:12},(_,i)=>`<i style="--d:${i*20}ms"></i>`).join('')}</div>
+            <div class="leader" aria-hidden="true"><span class="dot"></span><span class="ln"></span><span class="end"></span><span class="chip">A-56</span></div>
+            <div class="corns" style="height:64px;border:1px solid var(--hair);padding:10px 12px"><i></i><i></i><i></i><i></i><span class="tiny">框角：由角点揭开，不缩放</span></div>
+          </div>
+          <div class="note">刻度 12×20ms；引线 220ms；框角 220ms。三条都只用裁切与线长，不动位置。</div>
+        </div>
+        <p>不做的事写清楚：没有滚动揭示、没有位移与缩放、没有换页淡入、没有循环动效、不给插图配动效。内容元素的透明度恒为 1——所有「出现」都是裁切揭开，不是淡入；斜切色块、雷达环这类需要位移或大量 SVG 的做法，在参考片里很好看，但不进本站。</p>
+        <p>并发上限 32，整页转场 ≤950ms；语汇 9–12 只在文章页与规范页触发，每页最多同时两条。系统里打开「减少动态效果」时，十二条全部瞬时到位，状态照常工作。</p>
         <p>音效全部由 Web Audio 现场合成，没有音频文件，默认关闭，按 S 或页脚按钮打开。</p>
       </article>
       <aside class="gutter"><div class="sticky">
@@ -919,6 +1056,37 @@ const Sound = (() => {
 
 /* ── 路由：#/、#/archive、#/about、#/standards[/小节]、#/post/slug[/小节] ── */
 let lastKey = '';
+/* ── 换页：CUT（同帧交接）→ SKELETON（骨架）→ SET（文字） ── */
+let navSeq = 0, rafA = 0, rafB = 0;
+try { history.scrollRestoration = 'manual'; } catch(e) {}
+function mountCut(textDelay){
+  const seq = ++navSeq;
+  cancelAnimationFrame(rafA); cancelAnimationFrame(rafB);
+  app.style.setProperty('--base', textDelay + 'ms');
+  if (rm.matches){ app.classList.add('mount'); countUp(app); return; }
+  rafA = requestAnimationFrame(() => {
+    rafB = requestAnimationFrame(() => {
+      if (seq !== navSeq) return;
+      app.classList.add('mount');
+      countUp(app);
+    });
+  });
+}
+/* 语汇 6：读数跳格。只跳由内容决定的数，5 格递增 */
+function countUp(root){
+  root.querySelectorAll('[data-count]').forEach(el => {
+    const target = parseInt(el.dataset.count, 10);
+    if (!isFinite(target) || rm.matches){ el.textContent = target; return; }
+    const t0 = performance.now(), dur = 320, steps = 5;
+    const step = now => {
+      const k = Math.min(1, (now - t0) / dur);
+      el.textContent = Math.round(target * (Math.floor(k * steps) / steps));
+      if (k < 1) requestAnimationFrame(step); else el.textContent = target;
+    };
+    requestAnimationFrame(step);
+  });
+}
+
 function route(){
   const hash = location.hash || '#/';
   if (!hash.startsWith('#/')) { if (hash === '#app') app.focus({ preventScroll:true }); return; }
@@ -951,22 +1119,24 @@ function route(){
     html = viewMissing(); title = `没有这个页面 · ${SITE.name}`; desc = '地址可能变了。'; folio = '—'; active = 'none';
   }
 
-  const key = page + '|' + (isPost ? slug : '') + '|' + (anchor || '');
+  const key = page + '|' + (isPost ? slug : '');   /* anchor 不参与：点目录不重渲染 */
   if (key !== lastKey) {
     const first = lastKey === '';
     app.classList.remove('mount');
     app.innerHTML = html;
     lastKey = key;
-    window.scrollTo(0, 0);
+    hydrateMarks(app);
+    if (!first) scrollTo(0, 0);
+    app.setAttribute('aria-label', title);
     if (!first) app.focus({ preventScroll:true });
     observeSections(app);
-    requestAnimationFrame(() => requestAnimationFrame(() => app.classList.add('mount')));
+    requestAnimationFrame(() => { measure(); progress(); });
+    mountCut(first ? 0 : 120);
     Sound.play(first ? 'logo' : (isPost ? 'open' : 'nav'));
-    measure();
   }
   if (anchor) {
     const t = document.getElementById(anchor);
-    if (t) t.scrollIntoView({ behavior: rm.matches ? 'auto' : 'smooth' });
+    if (t) t.scrollIntoView({ behavior: 'auto', block: 'start' });
   }
 
   writeHead(title, desc, rest);
@@ -978,6 +1148,9 @@ function route(){
   progress();
 }
 addEventListener('hashchange', route);
+/* bfcache 恢复或 reduce 中途切换时，补一次挂载，避免停在裁切态 */
+addEventListener('pageshow', e => { if (e.persisted) app.classList.add('mount'); });
+rm.addEventListener('change', () => { if (rm.matches) app.classList.add('mount'); });
 
 /* ── 网格叠加层（5.14）：带栏号 ── */
 const ov = $('#overlay'), gbtn = $('#gbtn'), ovcols = $('#ovcols');
